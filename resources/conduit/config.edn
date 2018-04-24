@@ -78,7 +78,7 @@
 
  :conduit.handler.sql/run-query {}
 
- :conduit.handler.walkable/query
+ :conduit.handler.walkable/resolver
  #:walkable.sql-query-builder {:duct/logger #ig/ref :duct/logger
                                :run-query   #ig/ref :conduit.handler.sql/run-query
                                :sql-db      #ig/ref :duct.database.sql/hikaricp
@@ -91,6 +91,9 @@
   [:post "/login" {{:keys [username password]} :body-params}]
   [:user/login username password]
 
+  [:get "/all-users"]
+  ^:jws-auth [:user/all-users]
+
   [:get "/whoami"]
   ^:jws-auth [:user/whoami]}
 
@@ -98,6 +101,9 @@
 
  :conduit.handler.user/whoami
  {}
+
+ :conduit.handler.user/all-users
+ {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.user/create
  {:db     #ig/ref :duct.database/sql}

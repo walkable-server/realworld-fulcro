@@ -26,9 +26,7 @@
                         :quote-marks      sqb/quotation-marks
                         :extra-conditions extra-conditions)))
 
-(defmethod ig/init-key ::query [_ env]
-  (fn walkable-query
-    ([query]
-     (pathom-parser env query))
+(defmethod ig/init-key ::resolver [_ env]
+  (fn resolver
     ([current-user query]
-     (pathom-parser (assoc-in env :current-user current-user) query))))
+     (pathom-parser (assoc env :current-user current-user) query))))

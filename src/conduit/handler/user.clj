@@ -21,3 +21,13 @@
   [_ opts]
   (fn [{id :identity}]
     [::response/ok {:message (str "your user id: " (:user-id id))}]))
+
+(defmethod ig/init-key ::all-users
+  [_ {:keys [resolver]}]
+  (fn [{id :identity}]
+    [::response/ok
+     (resolver (:user-id id)
+       '[{(:users/all {})
+          [:user/id :user/email :user/username :user/bio :user/image
+           {:user/followed-by-me? [:agg/count]}
+           {:user/followed-by [:user/id :user/username]}]}])]))
