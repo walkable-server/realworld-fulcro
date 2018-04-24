@@ -5,7 +5,9 @@
 
 (defprotocol User
   (create-user [db email username password])
-  (find-user [db username password]))
+  (find-user [db username password])
+  (follow [db follower-id followee-id])
+  (unfollow [db follower-id followee-id]))
 
 (extend-protocol User
   duct.database.sql.Boundary
