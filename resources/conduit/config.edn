@@ -43,17 +43,23 @@
 
 
  :duct.module/ataraxy
- {[:post "/login" {{:keys [username password]} :body-params}]
-  [:login username password]
+ {[:post "/create" {{:keys [email username password]} :body-params}]
+  [:user/create email username password]
+
+  [:post "/login" {{:keys [username password]} :body-params}]
+  [:user/login username password]
 
   [:get "/whoami"]
-  ^:jws-auth [:whoami]}
+  ^:jws-auth [:user/whoami]}
 
  :duct.router/ataraxy {:middleware {:jws-auth #ig/ref :duct.middleware.buddy/authentication}}
 
- :conduit.handler/whoami
+ :conduit.handler.user/whoami
  {}
 
- :conduit.handler/login
- {:db #ig/ref :duct.database/sql
+ :conduit.handler.user/create
+ {:db     #ig/ref :duct.database/sql}
+
+ :conduit.handler.user/login
+ {:db     #ig/ref :duct.database/sql
   :secret #duct/env "JWT_SECRET"}}
