@@ -86,7 +86,7 @@
                                :sql-schema  #ig/ref :conduit.handler.walkable/compile-schema}
 
  :duct.module/ataraxy
- {[:post "/create" {{:keys [email username password]} :body-params}]
+ {[:post "/user/create" {{:keys [email username password]} :body-params}]
   [:user/create email username password]
 
   [:post "/login" {{:keys [username password]} :body-params}]
@@ -94,6 +94,12 @@
 
   [:get "/all-users"]
   ^:jws-auth [:user/all-users]
+
+  [:post "/article/create" {article :body-params}]
+  ^:jws-auth [:article/create article]
+
+  [:get "/all-articles"]
+  ^:jws-auth [:article/all-articles]
 
   [:get "/whoami"]
   ^:jws-auth [:user/whoami]}
@@ -107,6 +113,12 @@
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.user/create
+ {:db     #ig/ref :duct.database/sql}
+
+ :conduit.handler.article/all-articles
+ {:resolver #ig/ref :conduit.handler.walkable/resolver}
+
+ :conduit.handler.article/create
  {:db     #ig/ref :duct.database/sql}
 
  :conduit.handler.user/login
