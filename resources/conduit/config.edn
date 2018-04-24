@@ -1,6 +1,10 @@
 {:duct.core/project-ns  conduit
  :duct.core/environment :production
 
+ :duct.middleware.buddy/authentication
+ {:backend :jws
+  :secret  #duct/env "JWT_SECRET"}
+
  :duct.module/logging {}
  :duct.module.web/api {}
  :duct.module/sql     {}
@@ -39,7 +43,17 @@
 
 
  :duct.module/ataraxy
- {[:get "/example"] [:example]}
+ {[:post "/login" {{:keys [username password]} :body-params}]
+  [:login username password]
 
- :conduit.handler/example
- {:db #ig/ref :duct.database/sql}}
+  [:get "/whoami"]
+  ^:jws-auth [:whoami]}
+
+ :duct.router/ataraxy {:middleware {:jws-auth #ig/ref :duct.middleware.buddy/authentication}}
+
+ :conduit.handler/whoami
+ {}
+
+ :conduit.handler/login
+ {:db #ig/ref :duct.database/sql
+  :secret #duct/env "JWT_SECRET"}}
