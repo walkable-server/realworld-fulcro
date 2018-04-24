@@ -3,14 +3,24 @@
             [integrant.core :as ig]
             [com.wsscode.pathom.core :as p]))
 
-(def derive-count-to-boolean
+(def post-processing
   {::p/wrap-read
    (fn [reader]
      (fn [env]
        (let [k (-> env :ast :dispatch-key)]
-         (if (#{:article/liked-by-me? :user/followed-by-me?} k)
+         (case k
+           :article/tags
+           (let [tags (reader env)]
+             (mapv :tag/tag tags))
+
+           (:article/liked-by-me? :user/followed-by-me?)
            (let [{n :agg/count} (reader env)]
              (not= 0 n))
+
+           :article/liked-by-count
+           (let [{n :agg/count} (reader env)]
+             n)
+           ;; default
            (reader env)))))})
 
 (def pathom-parser
@@ -19,7 +29,7 @@
      [(p/env-plugin
         {::p/reader
          [sqb/pull-entities p/map-reader]})
-      derive-count-to-boolean]}))
+      post-processing]}))
 
 (def extra-conditions
   {:articles/feed
