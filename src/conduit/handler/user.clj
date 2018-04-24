@@ -11,13 +11,6 @@
     (let [id (user/create-user db email username password)]
       [::response/created (str "/users/" id)])))
 
-(defmethod ig/init-key ::destroy [_ {:keys [db]}]
-  (fn [{[_ user-id] :ataraxy/result}]
-    [::response/ok "cool"]
-    #_
-    (let [id (user/destroy-user db email username password)]
-      [::response/created (str "/users/" id)])))
-
 (defmethod ig/init-key ::login [_ {:keys [db secret]}]
   (fn [{[_kw username password] :ataraxy/result}]
     (if-let [user (user/find-user db username password)]
