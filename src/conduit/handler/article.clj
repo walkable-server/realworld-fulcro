@@ -13,20 +13,52 @@
                          (assoc article :author_id (:user-id id)))]
         [::response/created (str "/artiles/" article-id)]))))
 
+(defmethod ig/init-key ::destroy [_ {:keys [db]}]
+  (fn [{[_ article-slug] :ataraxy/result
+        id          :identity}]
+    (when id
+      (let [article-id (article/destroy-article db
+                         (:user-id id) article-slug)]
+        [::response/ok "deleted"]))))
+
+(defn parse-int [s]
+  (when-let [d (re-find  #"\d+" s )]
+    (Integer. d)))
+
+(defn handle-articles
+  [feed? resolver]
+  (fn [{[_ {tag    "tag"    username "username" liked-by "favorited"
+            offset "offset" limit    "limit"}] :ataraxy/result
+        id                                   :identity}]
+    (let [top-query (if (= :feed feed?)
+                      :articles/feed
+                      :articles/all)]
+      [::response/ok
+       (resolver (:user-id id)
+         `[{(~top-query
+             {:order-by [:article/created-at]
+              :offset   ~(when (string? offset) (parse-int offset))
+              :limit    ~(when (string? limit) (parse-int limit))
+              :filters  ~(merge
+                           (when (and tag (string? tag) (seq tag))
+                             {:article/tags [:in :tag/tag tag]})
+                           (when (and username (string? username) (seq username))
+                             {:article/author [:in :user/username username]})
+                           (when (and liked-by (string? liked-by (seq liked-by)))
+                             {:article/liked-by [:in :user/username liked-by]}))})
+            [:article/slug :article/title :article/description :article/body
+             :article/created-at :article/updated-at
+             {:article/liked-by-count [:agg/count]}
+             {:article/liked-by [:user/username]}
+             {:article/liked-by-me? [:agg/count]}
+             {:article/tags [:tag/tag]}
+             {:article/comments [:comment/id :comment/created-at :comment/updated-at :comment/body]}
+             {:article/author [:user/username :user/bio :user/image {:user/followed-by-me? [:agg/count]}]}]}])])))
+
 (defmethod ig/init-key ::all-articles
   [_ {:keys [resolver]}]
-  (fn [{id :identity}]
-    [::response/ok
-     (resolver (:user-id id)
-       '[{(:articles/all {:order-by [:article/created-at]
-                          :filters  {:article/tags     [:in :tag/tag "me"]
-                                     :article/author   [:in :user/username "kope"]
-                                     :article/liked-by [:in :user/username "jope"]}})
-          [:article/slug :article/title :article/description :article/body
-           :article/created-at :article/updated-at
-           {:article/liked-by-count [:agg/count]}
-           {:article/liked-by [:user/username]}
-           {:article/liked-by-me? [:agg/count]}
-           {:article/tags [:tag/tag]}
-           {:article/comments [:comment/id :comment/created-at :comment/updated-at :comment/body]}
-           {:article/author [:user/username :user/bio :user/image {:user/followed-by-me? [:agg/count]}]}]}])]))
+  (handle-articles :not-feed resolver))
+
+(defmethod ig/init-key ::feed
+  [_ {:keys [resolver]}]
+  (handle-articles :feed resolver))
