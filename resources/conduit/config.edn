@@ -73,6 +73,7 @@
   :cardinality    {:user/by-id             :one
                    :article/by-id          :one
                    :article/author         :one
+                   :article/liked-by-me?   :one
                    :user/followed-by-me?   :one
                    :article/liked-by-count :one}}
 
