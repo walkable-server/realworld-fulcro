@@ -4,6 +4,7 @@
 
 (defprotocol Article
   (create-article [db article])
+  (destroy-article [db author-id article-slug])
   (update-article [db article])
   (find-article [db slug])
   (like [db user-id article-id])
@@ -19,4 +20,7 @@
       (when (and new-article-id (seq tags))
         (jdbc/insert-multi! db "\"tag\""
           (mapv (fn [tag] {:article_id new-article-id :tag tag}) tags))
-        new-article-id))))
+        new-article-id)))
+  (destroy-article [db author-id article-slug]
+    (jdbc/delete! db "\"article\"" ["author_id = ? AND article.slug = ?" author-id article-slug]))
+  )
