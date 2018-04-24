@@ -95,8 +95,8 @@
   [:get "/api/profiles/" username]
   ^:jws-auth [:user/by-username username]
 
-  [:delete "/api/users/" user-id]
-  ^:jws-auth [:user/destroy ^int user-id]
+  [:delete "/api/articles/" slug]
+  ^:jws-auth [:article/destroy slug]
 
   [:get "/api/users"]
   ^:jws-auth [:user/all-users]
@@ -104,8 +104,11 @@
   [:post "/article/create" {article :body-params}]
   ^:jws-auth [:article/create article]
 
-  [:get "/api/articles"]
-  ^:jws-auth [:article/all-articles]
+  [:get "/api/articles" {params :query-params}]
+  ^:jws-auth [:article/all-articles params]
+
+  [:get "/api/articles/feed" {params :query-params}]
+  ^:jws-auth [:article/feed params]
 
   [:get "/api/user"]
   ^:jws-auth [:user/whoami]}
@@ -121,13 +124,16 @@
  :conduit.handler.user/by-username
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
- :conduit.handler.user/destroy
+ :conduit.handler.article/destroy
  {:db     #ig/ref :duct.database/sql}
 
  :conduit.handler.user/create
  {:db     #ig/ref :duct.database/sql}
 
  :conduit.handler.article/all-articles
+ {:resolver #ig/ref :conduit.handler.walkable/resolver}
+
+  :conduit.handler.article/feed
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.article/create
