@@ -104,6 +104,12 @@
   [:delete "/api/articles/" slug "/favorite"]
   ^:jws-auth [:article/unlike slug]
 
+  [:post "/api/articles/" slug "/comments" {comment-item :body-params}]
+  ^:jws-auth [:article/create-comment slug comment-item]
+
+  [:delete "/api/articles/" slug "/comments/" id]
+  ^:jws-auth [:article/destroy-comment ^int id]
+
   [:get "/api/users"]
   ^:jws-auth [:user/all-users]
 
@@ -149,6 +155,12 @@
  {:db     #ig/ref :duct.database/sql}
 
  :conduit.handler.article/unlike
+ {:db     #ig/ref :duct.database/sql}
+
+ :conduit.handler.article/create-comment
+ {:db     #ig/ref :duct.database/sql}
+
+ :conduit.handler.article/destroy-comment
  {:db     #ig/ref :duct.database/sql}
 
  :conduit.handler.user/login

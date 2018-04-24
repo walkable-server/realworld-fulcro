@@ -34,6 +34,21 @@
       (let [article-id (article/unlike db (:user-id id) article-slug)]
         [::response/ok "unliked"]))))
 
+(defmethod ig/init-key ::create-comment [_ {:keys [db]}]
+  (fn [{[_ article-slug comment-item] :ataraxy/result
+        id          :identity}]
+    (when id
+      (let [comment-id (article/create-comment db article-slug
+                         (assoc comment-item :author_id (:user-id id)))]
+        [::response/created "comment"]))))
+
+(defmethod ig/init-key ::destroy-comment [_ {:keys [db]}]
+  (fn [{[_ comment-id] :ataraxy/result
+        id          :identity}]
+    (when id
+      (let [article-id (article/destroy-comment db (:user-id id) comment-id)]
+        [::response/ok "deleted"]))))
+
 (defn parse-int [s]
   (when-let [d (re-find  #"\d+" s )]
     (Integer. d)))
