@@ -3,6 +3,6 @@ CREATE TABLE "comment" (
  body TEXT,
  created_at TIMESTAMP DEFAULT NOW(),
  updated_at TIMESTAMP DEFAULT NOW(),
- article_id INTEGER REFERENCES "article"("id"),
- author_id INTEGER REFERENCES "user"("id")
+ article_id INTEGER REFERENCES "article"("id") ON DELETE CASCADE,
+ author_id INTEGER REFERENCES "user"("id") ON DELETE CASCADE
 )

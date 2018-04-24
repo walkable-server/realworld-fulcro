@@ -1,4 +1,4 @@
 CREATE TABLE "favorite" (
- user_id INTEGER REFERENCES "user"("id"),
- article_id INTEGER REFERENCES "article"("id")
+ user_id INTEGER REFERENCES "user"("id") ON DELETE CASCADE,
+ article_id INTEGER REFERENCES "article"("id") ON DELETE CASCADE
 )

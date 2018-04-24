@@ -6,5 +6,5 @@ CREATE TABLE "article" (
  body TEXT,
  created_at TIMESTAMP DEFAULT NOW(),
  updated_at TIMESTAMP DEFAULT NOW(),
- author_id INTEGER REFERENCES "user"("id")
+ author_id INTEGER REFERENCES "user"("id") ON DELETE CASCADE
 )
