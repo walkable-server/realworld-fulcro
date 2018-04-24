@@ -3,7 +3,40 @@
 
  :duct.module/logging {}
  :duct.module.web/api {}
- :duct.module/sql {}
+ :duct.module/sql     {}
+
+ :duct.migrator/ragtime
+ {:migrations [#ig/ref :conduit.migration/create-table-user
+               #ig/ref :conduit.migration/create-table-follow
+               #ig/ref :conduit.migration/create-table-article
+               #ig/ref :conduit.migration/create-table-tag
+               #ig/ref :conduit.migration/create-table-favorite
+               #ig/ref :conduit.migration/create-table-comment]}
+
+ [:duct.migrator.ragtime/sql :conduit.migration/create-table-user]
+ {:up   [#duct/resource "migrations/create-table-user-2018-04-23.sql"]
+  :down [#duct/resource "migrations/drop-table-user-2018-04-23.sql"]}
+
+ [:duct.migrator.ragtime/sql :conduit.migration/create-table-follow]
+ {:up   [#duct/resource "migrations/create-table-follow-2018-04-23.sql"]
+  :down [#duct/resource "migrations/drop-table-follow-2018-04-23.sql"]}
+
+ [:duct.migrator.ragtime/sql :conduit.migration/create-table-article]
+ {:up   [#duct/resource "migrations/create-table-article-2018-04-23.sql"]
+  :down [#duct/resource "migrations/drop-table-article-2018-04-23.sql"]}
+
+ [:duct.migrator.ragtime/sql :conduit.migration/create-table-tag]
+ {:up   [#duct/resource "migrations/create-table-tag-2018-04-23.sql"]
+  :down [#duct/resource "migrations/drop-table-tag-2018-04-23.sql"]}
+
+ [:duct.migrator.ragtime/sql :conduit.migration/create-table-favorite]
+ {:up   [#duct/resource "migrations/create-table-favorite-2018-04-23.sql"]
+  :down [#duct/resource "migrations/drop-table-favorite-2018-04-23.sql"]}
+
+ [:duct.migrator.ragtime/sql :conduit.migration/create-table-comment]
+ {:up   [#duct/resource "migrations/create-table-comment-2018-04-23.sql"]
+  :down [#duct/resource "migrations/drop-table-comment-2018-04-23.sql"]}
+
 
  :duct.module/ataraxy
  {[:get "/example"] [:example]}
