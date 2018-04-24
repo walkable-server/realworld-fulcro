@@ -12,6 +12,7 @@
                  [duct/handler.sql "0.3.1"]
                  [buddy/buddy-hashers "1.3.0"]
                  [walkable "1.0.0-SNAPSHOT"]
+                 [org.clojure/core.async "0.4.474"]
                  [org.postgresql/postgresql "42.1.4"]]
   :plugins [[duct/lein-duct "0.10.6"]]
   :main ^:skip-aot conduit.main
