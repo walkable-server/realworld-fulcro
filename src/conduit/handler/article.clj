@@ -17,9 +17,22 @@
   (fn [{[_ article-slug] :ataraxy/result
         id          :identity}]
     (when id
-      (let [article-id (article/destroy-article db
-                         (:user-id id) article-slug)]
+      (let [article-id (article/destroy-article db (:user-id id) article-slug)]
         [::response/ok "deleted"]))))
+
+(defmethod ig/init-key ::like [_ {:keys [db]}]
+  (fn [{[_ article-slug] :ataraxy/result
+        id          :identity}]
+    (when id
+      (let [article-id (article/like db (:user-id id) article-slug)]
+        [::response/ok "liked"]))))
+
+(defmethod ig/init-key ::unlike [_ {:keys [db]}]
+  (fn [{[_ article-slug] :ataraxy/result
+        id          :identity}]
+    (when id
+      (let [article-id (article/unlike db (:user-id id) article-slug)]
+        [::response/ok "unliked"]))))
 
 (defn parse-int [s]
   (when-let [d (re-find  #"\d+" s )]

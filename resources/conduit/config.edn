@@ -98,10 +98,16 @@
   [:delete "/api/articles/" slug]
   ^:jws-auth [:article/destroy slug]
 
+  [:post "/api/articles/" slug "/favorite"]
+  ^:jws-auth [:article/like slug]
+
+  [:delete "/api/articles/" slug "/favorite"]
+  ^:jws-auth [:article/unlike slug]
+
   [:get "/api/users"]
   ^:jws-auth [:user/all-users]
 
-  [:post "/article/create" {article :body-params}]
+  [:post "/api/articles" {article :body-params}]
   ^:jws-auth [:article/create article]
 
   [:get "/api/articles" {params :query-params}]
@@ -137,6 +143,12 @@
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.article/create
+ {:db     #ig/ref :duct.database/sql}
+
+ :conduit.handler.article/like
+ {:db     #ig/ref :duct.database/sql}
+
+ :conduit.handler.article/unlike
  {:db     #ig/ref :duct.database/sql}
 
  :conduit.handler.user/login
