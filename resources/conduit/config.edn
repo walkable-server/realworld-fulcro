@@ -41,6 +41,48 @@
  {:up   [#duct/resource "migrations/create-table-comment-2018-04-23.sql"]
   :down [#duct/resource "migrations/drop-table-comment-2018-04-23.sql"]}
 
+ :conduit.handler.walkable/compile-schema
+ {:columns [:user/email :user/token :user/username :user/bio :user/image
+            :article/slug :article/title :article/description :article/body
+            :article/created-at :article/updated-at
+            :tag/tag
+            :comment/id :comment/created-at :comment/updated-at :comment/body]
+
+  :idents {:user/by-id    :user/id
+           :users/all     "user"
+           :articles/all  "article"
+           :articles/feed "article"
+           :article/by-id :article/id}
+
+  :joins {[:user/followed-by :user/followed-by-me?]
+          [:user/id :follow/followee_id :follow/follower_id :user/id]
+
+          :article/tags [:article/id :tag/article-id]
+
+          :article/comments [:article/id :comment/article-id]
+
+          [:article/liked-by :article/liked-by-count :article/liked-by-me?]
+          [:article/id :favorite/article_id :favorite/user_id :user/id]
+
+          :article/author [:article/author-id :user/id]
+
+          :comment/author [:comment/author-id :user/id]}
+  :reversed-joins {:user/follows     :user/followed-by
+                   :article/liked-by :user/like}
+  :pseudo-columns {:agg/count [:count-*]}
+  :cardinality    {:user/by-id             :one
+                   :article/by-id          :one
+                   :article/author         :one
+                   :user/followed-by-me?   :one
+                   :article/liked-by-count :one}}
+
+ :conduit.handler.sql/run-query {}
+
+ :conduit.handler.walkable/query
+ #:walkable.sql-query-builder {:duct/logger #ig/ref :duct/logger
+                               :run-query   #ig/ref :conduit.handler.sql/run-query
+                               :sql-db      #ig/ref :duct.database.sql/hikaricp
+                               :sql-schema  #ig/ref :conduit.handler.walkable/compile-schema}
 
  :duct.module/ataraxy
  {[:post "/create" {{:keys [email username password]} :body-params}]
