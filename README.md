@@ -4,3 +4,5 @@ A Clojure implementation of [RealWorld REST API Spec](https://github.com/gothink
 
 Please see [Duct guide](https://github.com/duct-framework/docs/blob/master/GUIDE.rst)
 and [Walkable readme](https://github.com/walkable-server/walkable) for documentation.
+
+Progress is reported in project's github issues.
