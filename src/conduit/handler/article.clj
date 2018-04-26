@@ -56,8 +56,8 @@
 
 (defn handle-articles
   [feed? resolver]
-  (fn [{[_ {tag    "tag"    username "username" liked-by "favorited"
-            offset "offset" limit    "limit"}] :ataraxy/result
+  (fn [{[_ {tag    "tag"    author "author" liked-by "favorited"
+            offset "offset" limit  "limit"}] :ataraxy/result
         id                                   :identity}]
     (let [top-query (if (= :feed feed?)
                       :articles/feed
@@ -71,9 +71,9 @@
                   :filters  (merge
                               (when (and tag (string? tag) (seq tag))
                                 {:article/tags [:in :tag/tag tag]})
-                              (when (and username (string? username) (seq username))
-                                {:article/author [:in :user/username username]})
-                              (when (and liked-by (string? liked-by (seq liked-by)))
+                              (when (and author (string? author) (seq author))
+                                {:article/author [:in :user/username author]})
+                              (when (and liked-by (string? liked-by) (seq liked-by))
                                 {:article/liked-by [:in :user/username liked-by]}))})
                common/article-query}])
          common/with-articles-count
