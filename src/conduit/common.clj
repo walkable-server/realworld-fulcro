@@ -3,6 +3,7 @@
 
 (def profile-query
   [:user/id :user/username :user/bio :user/image
+   {:user/articles-count [:agg/count]}
    {:user/followed-by-me? [:agg/count]}
    {:user/followed-by [:user/id :user/username]}])
 
@@ -27,7 +28,7 @@
     (:article/updated-at :comment/updated-at)
     "updatedAt"
 
-    :article/count
+    :user/articles-count
     "articlesCount"
 
     (name k)))

@@ -69,8 +69,9 @@
           :article/author [:article/author-id :user/id]
 
           :comment/author [:comment/author-id :user/id]}
-  :reversed-joins {:user/follows     :user/followed-by
-                   :article/liked-by :user/like}
+  :reversed-joins {:user/follows        :user/followed-by
+                   :user/articles-count :article/author
+                   :article/liked-by    :user/like}
   :pseudo-columns {:agg/count [:count-*]}
   :cardinality    {:user/by-id             :one
                    :user/by-username       :one
@@ -79,6 +80,7 @@
                    :article/author         :one
                    :article/liked-by-me?   :one
                    :user/followed-by-me?   :one
+                   :user/articles-count    :one
                    :article/liked-by-count :one}}
 
  :conduit.handler.sql/run-query {}

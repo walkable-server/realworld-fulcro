@@ -17,7 +17,7 @@
            (let [{n :agg/count} (reader env)]
              (not= 0 n))
 
-           :article/liked-by-count
+           (:article/liked-by-count :user/articles-count)
            (let [{n :agg/count} (reader env)]
              n)
            ;; default
