@@ -3,9 +3,18 @@
 
 (def profile-query
   [:user/id :user/username :user/bio :user/image
-   {:user/articles-count [:agg/count]}
    {:user/followed-by-me? [:agg/count]}
    {:user/followed-by [:user/id :user/username]}])
+
+(def articles-query
+  [:article/slug :article/title :article/description :article/body
+   :article/created-at :article/updated-at
+   {:article/liked-by-count [:agg/count]}
+   {:article/liked-by [:user/username]}
+   {:article/liked-by-me? [:agg/count]}
+   {:article/tags [:tag/tag]}
+   {:article/comments [:comment/id :comment/created-at :comment/updated-at :comment/body]}
+   {:article/author profile-query}])
 
 (defn json-key
   [k]
@@ -31,8 +40,14 @@
     :user/articles-count
     "articlesCount"
 
+    :articles/all
+    "articles"
+
     (name k)))
 
 (defn clj->json
   ([data]
    (generate-string data {:key-fn json-key})))
+
+(defn with-articles-count [{:articles/keys [all] :as data}]
+  (assoc data "articlesCount" (count all)))

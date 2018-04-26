@@ -1,6 +1,7 @@
 (ns conduit.handler.article
   (:require [ataraxy.core :as ataraxy]
             [buddy.sign.jwt :as jwt]
+            [conduit.common :as common]
             [conduit.boundary.article :as article]
             [ataraxy.response :as response]
             [integrant.core :as ig]))
@@ -62,26 +63,21 @@
                       :articles/feed
                       :articles/all)]
       [::response/ok
-       (resolver (:user-id id)
-         `[{(~top-query
-             {:order-by [:article/created-at]
-              :offset   ~(when (string? offset) (parse-int offset))
-              :limit    ~(when (string? limit) (parse-int limit))
-              :filters  ~(merge
-                           (when (and tag (string? tag) (seq tag))
-                             {:article/tags [:in :tag/tag tag]})
-                           (when (and username (string? username) (seq username))
-                             {:article/author [:in :user/username username]})
-                           (when (and liked-by (string? liked-by (seq liked-by)))
-                             {:article/liked-by [:in :user/username liked-by]}))})
-            [:article/slug :article/title :article/description :article/body
-             :article/created-at :article/updated-at
-             {:article/liked-by-count [:agg/count]}
-             {:article/liked-by [:user/username]}
-             {:article/liked-by-me? [:agg/count]}
-             {:article/tags [:tag/tag]}
-             {:article/comments [:comment/id :comment/created-at :comment/updated-at :comment/body]}
-             {:article/author [:user/username :user/bio :user/image {:user/followed-by-me? [:agg/count]}]}]}])])))
+       (-> (resolver (:user-id id)
+             [{(list top-query
+                 {:order-by [:article/created-at]
+                  :offset   (when (string? offset) (parse-int offset))
+                  :limit    (when (string? limit) (parse-int limit))
+                  :filters  (merge
+                              (when (and tag (string? tag) (seq tag))
+                                {:article/tags [:in :tag/tag tag]})
+                              (when (and username (string? username) (seq username))
+                                {:article/author [:in :user/username username]})
+                              (when (and liked-by (string? liked-by (seq liked-by)))
+                                {:article/liked-by [:in :user/username liked-by]}))})
+               common/articles-query}])
+         common/with-articles-count
+         common/clj->json)])))
 
 (defmethod ig/init-key ::all-articles
   [_ {:keys [resolver]}]
