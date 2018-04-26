@@ -4,17 +4,19 @@
             [duct.database.sql]))
 
 (defprotocol User
-  (create-user [db email username password])
+  (create-user [db user])
   (find-user [db username password])
   (follow [db follower-id followee-id])
   (unfollow [db follower-id followee-id]))
 
 (extend-protocol User
   duct.database.sql.Boundary
-  (create-user [{db :spec} email username password]
+  (create-user [{db :spec} {:keys [password] :as user}]
     (let [pw-hash (hashers/derive password)
-          results (jdbc/insert! db "\"user\"" {:username username, :email email, :password pw-hash})]
-      (-> results ffirst val)))
+          results (jdbc/insert! db "\"user\""
+                    (-> user (select-keys [:username :email :bio :image])
+                      (assoc :password pw-hash)))]
+      (-> results first (dissoc :password))))
   (find-user [{db :spec} username password]
     (when-let [user (first (jdbc/find-by-keys db "\"user\"" {:username username}))]
       (when (hashers/check password (:password user))
