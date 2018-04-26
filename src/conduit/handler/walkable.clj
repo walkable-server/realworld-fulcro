@@ -43,9 +43,10 @@
    (fn [{:keys [current-user]}] [:= current-user :user/id])})
 
 (defmethod ig/init-key ::compile-schema [_ schema]
-  (sqb/compile-schema (assoc schema
-                        :quote-marks      sqb/quotation-marks
-                        :extra-conditions extra-conditions)))
+  (-> schema
+    (assoc :quote-marks sqb/quotation-marks
+      :extra-conditions extra-conditions)
+    sqb/compile-schema))
 
 (defmethod ig/init-key ::resolver [_ env]
   (fn resolver
