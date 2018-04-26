@@ -97,3 +97,14 @@
       (if (seq result)
         [::response/ok (common/clj->json result)]
         [::response/not-found]))))
+
+(defmethod ig/init-key ::comments-by-slug
+  [_ {:keys [resolver]}]
+  (fn [{[_ slug] :ataraxy/result
+        id       :identity}]
+    (let [ident-key [:article/by-slug slug]
+          result (-> (resolver (:user-id id) [{ident-key common/comment-query}])
+                   (get ident-key))]
+      (if (seq result)
+        [::response/ok (common/clj->json result)]
+        [::response/not-found]))))

@@ -3,8 +3,11 @@
 
 (def profile-query
   [:user/id :user/username :user/bio :user/image
-   {:user/followed-by-me? [:agg/count]}
-   {:user/followed-by [:user/id :user/username]}])
+   {:user/followed-by-me? [:agg/count]}])
+
+(def comment-query
+  [{:article/comments [:comment/id :comment/created-at :comment/updated-at :comment/body
+                       {:comment/author profile-query}]}])
 
 (def article-query
   [:article/slug :article/title :article/description :article/body
@@ -13,7 +16,6 @@
    {:article/liked-by [:user/username]}
    {:article/liked-by-me? [:agg/count]}
    {:article/tags [:tag/tag]}
-   {:article/comments [:comment/id :comment/created-at :comment/updated-at :comment/body]}
    {:article/author profile-query}])
 
 (defn json-key

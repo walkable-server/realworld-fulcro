@@ -108,6 +108,9 @@
   [:get "/api/articles/" slug]
   ^:jws-auth [:article/by-slug slug]
 
+  [:get "/api/articles/" slug "/comments"]
+  ^:jws-auth [:article/comments-by-slug slug]
+
   [:delete "/api/articles/" slug]
   ^:jws-auth [:article/destroy slug]
 
@@ -117,13 +120,13 @@
   [:delete "/api/articles/" slug "/favorite"]
   ^:jws-auth [:article/unlike slug]
 
-  [:post "/api/articles/" slug "/comments" {comment-item :body-params}]
+  [:post "/api/articles/" slug "/comments" {{comment-item :comment} :body-params}]
   ^:jws-auth [:article/create-comment slug comment-item]
 
   [:delete "/api/articles/" slug "/comments/" id]
   ^:jws-auth [:article/destroy-comment ^int id]
 
-  [:post "/api/articles" {article :body-params}]
+  [:post "/api/articles" {{:keys [article]} :body-params}]
   ^:jws-auth [:article/create article]
 
   [:get "/api/articles" {params :query-params}]
@@ -148,6 +151,9 @@
  {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.article/by-slug
+ {:resolver #ig/ref :conduit.handler.walkable/resolver}
+
+ :conduit.handler.article/comments-by-slug
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.user/create
