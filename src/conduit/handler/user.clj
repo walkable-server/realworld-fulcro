@@ -6,15 +6,17 @@
             [ataraxy.response :as response]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key ::create [_ {:keys [db]}]
-  (fn [{[_ email username password] :ataraxy/result}]
-    (let [id (user/create-user db email username password)]
-      [::response/created (str "/users/" id)])))
+(defmethod ig/init-key ::create [_ {:keys [db jwt-secret]}]
+  (fn [{[_ user] :ataraxy/result}]
+    (if-let [new-user (user/create-user db user)]
+      [::response/ok {:user (assoc new-user
+                              :token (jwt/sign {:user-id (:id new-user)} jwt-secret))}]
+      [::response/bad-request {:errors {:body "Can't create user!"}}])))
 
-(defmethod ig/init-key ::login [_ {:keys [db secret]}]
+(defmethod ig/init-key ::login [_ {:keys [db jwt-secret]}]
   (fn [{[_kw username password] :ataraxy/result}]
-    (if-let [user (user/find-user db username password)]
-      [::response/ok {:token (jwt/sign {:user-id (:id user)} secret)}]
+    (if-let [user (user/find-login db username password)]
+      [::response/ok {:token (jwt/sign {:user-id (:id user)} jwt-secret)}]
       [::response/bad-request "Failed!"])))
 
 (defmethod ig/init-key ::whoami
