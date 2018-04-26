@@ -44,5 +44,5 @@
         id             :identity}]
     [::response/ok
      (resolver (:user-id id)
-       `[{(:user/by-username ~username)
+       `[{[:user/by-username ~username]
           ~profile-query}])]))
