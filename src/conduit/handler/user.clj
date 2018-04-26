@@ -40,6 +40,6 @@
         id             :identity}]
     (let [ident-key [:user/by-username username]]
       [::response/ok
-       (-> (resolver (:user-id id) [{ident-key common/profile-query}])
+       (-> (resolver (:user-id id) [{ident-key [{:placeholder/profile common/profile-query}]}])
          (get ident-key)
-         (common/clj->json "profile"))])))
+         (common/clj->json))])))

@@ -35,6 +35,4 @@
 
 (defn clj->json
   ([data]
-   (generate-string data {:key-fn json-key}))
-  ([data k]
-   (generate-string {k data} {:key-fn json-key})))
+   (generate-string data {:key-fn json-key})))
