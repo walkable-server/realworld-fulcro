@@ -48,11 +48,13 @@
             :tag/tag
             :comment/id :comment/created-at :comment/updated-at :comment/body]
 
-  :idents {:user/by-id    :user/id
-           :users/all     "user"
-           :articles/all  "article"
-           :articles/feed "article"
-           :article/by-id :article/id}
+  :idents {:user/by-id       :user/id
+           :user/by-username :user/username
+           :users/all        "user"
+           :articles/all     "article"
+           :articles/feed    "article"
+           :article/by-slug  :article/slug
+           :article/by-id    :article/id}
 
   :joins {[:user/followed-by :user/followed-by-me?]
           [:user/id :follow/followee_id :follow/follower_id :user/id]
@@ -71,7 +73,9 @@
                    :article/liked-by :user/like}
   :pseudo-columns {:agg/count [:count-*]}
   :cardinality    {:user/by-id             :one
+                   :user/by-username       :one
                    :article/by-id          :one
+                   :article/by-slug        :one
                    :article/author         :one
                    :article/liked-by-me?   :one
                    :user/followed-by-me?   :one
