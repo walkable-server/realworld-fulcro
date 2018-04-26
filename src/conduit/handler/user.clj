@@ -3,6 +3,7 @@
             [buddy.sign.jwt :as jwt]
             [conduit.boundary.user :as user]
             [buddy.hashers :as hashers]
+            [conduit.common :as common]
             [ataraxy.response :as response]
             [integrant.core :as ig]))
 
@@ -33,16 +34,12 @@
         (error-message "No such user!"))
       (error-message "You must login first!"))))
 
-(def profile-query
-  [:user/id :user/username :user/bio :user/image
-   {:user/followed-by-me? [:agg/count]}
-   {:user/followed-by [:user/id :user/username]}])
-
 (defmethod ig/init-key ::by-username
   [_ {:keys [resolver]}]
   (fn [{[_kw username] :ataraxy/result
         id             :identity}]
-    [::response/ok
-     (resolver (:user-id id)
-       `[{[:user/by-username ~username]
-          ~profile-query}])]))
+    (let [ident-key [:user/by-username username]]
+      [::response/ok
+       (-> (resolver (:user-id id) [{ident-key common/profile-query}])
+         (get ident-key)
+         (common/clj->json "profile"))])))
