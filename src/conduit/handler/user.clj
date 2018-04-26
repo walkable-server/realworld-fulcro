@@ -14,7 +14,7 @@
   (fn [{[_ user] :ataraxy/result}]
     (if-let [new-user (user/create-user db user)]
       [::response/ok {:user (with-token new-user jwt-secret)}]
-      [::response/bad-request {:errors {:body "Can't create user!"}}])))
+      [::response/bad-request {:errors {:body "Failed create user!"}}])))
 
 (defmethod ig/init-key ::login [_ {:keys [db jwt-secret]}]
   (fn [{[_kw {:keys [email password]}] :ataraxy/result}]
