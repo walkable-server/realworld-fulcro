@@ -5,7 +5,7 @@
 
 (defprotocol User
   (create-user [db user])
-  (find-user [db username password])
+  (find-login [db username password])
   (follow [db follower-id followee-id])
   (unfollow [db follower-id followee-id]))
 
@@ -17,7 +17,7 @@
                     (-> user (select-keys [:username :email :bio :image])
                       (assoc :password pw-hash)))]
       (-> results first (dissoc :password))))
-  (find-user [{db :spec} username password]
+  (find-login [{db :spec} username password]
     (when-let [user (first (jdbc/find-by-keys db "\"user\"" {:username username}))]
       (when (hashers/check password (:password user))
         (dissoc user :password)))))
