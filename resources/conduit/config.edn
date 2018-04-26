@@ -86,8 +86,8 @@
                                :sql-schema  #ig/ref :conduit.handler.walkable/compile-schema}
 
  :duct.module/ataraxy
- {[:post "/api/users" {{:keys [email username password]} :body-params}]
-  [:user/create email username password]
+ {[:post "/api/users" {{:keys [user]} :body-params}]
+  [:user/create user]
 
   [:post "/api/users/login" {{:keys [username password]} :body-params}]
   [:user/login username password]
@@ -137,32 +137,33 @@
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.article/destroy
- {:db     #ig/ref :duct.database/sql}
+ {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.user/create
- {:db     #ig/ref :duct.database/sql}
+ {:db         #ig/ref :duct.database/sql
+  :jwt-secret #duct/env "JWT_SECRET"}
 
  :conduit.handler.article/all-articles
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
-  :conduit.handler.article/feed
+ :conduit.handler.article/feed
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.article/create
- {:db     #ig/ref :duct.database/sql}
+ {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.article/like
- {:db     #ig/ref :duct.database/sql}
+ {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.article/unlike
- {:db     #ig/ref :duct.database/sql}
+ {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.article/create-comment
- {:db     #ig/ref :duct.database/sql}
+ {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.article/destroy-comment
- {:db     #ig/ref :duct.database/sql}
+ {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.user/login
- {:db     #ig/ref :duct.database/sql
-  :secret #duct/env "JWT_SECRET"}}
+ {:db         #ig/ref :duct.database/sql
+  :jwt-secret #duct/env "JWT_SECRET"}}
