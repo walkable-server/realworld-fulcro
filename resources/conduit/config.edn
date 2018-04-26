@@ -101,6 +101,12 @@
   [:get "/api/profiles/" username]
   ^:jws-auth [:user/by-username username]
 
+  [:post "/api/profiles/" username "/follow"]
+  ^:jws-auth [:user/follow username]
+
+  [:delete "/api/profiles/" username "/follow"]
+  ^:jws-auth [:user/unfollow username]
+
   [:delete "/api/articles/" slug]
   ^:jws-auth [:article/destroy slug]
 
@@ -157,6 +163,12 @@
  {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.article/unlike
+ {:db #ig/ref :duct.database/sql}
+
+ :conduit.handler.user/follow
+ {:db #ig/ref :duct.database/sql}
+
+ :conduit.handler.user/unfollow
  {:db #ig/ref :duct.database/sql}
 
  :conduit.handler.article/create-comment

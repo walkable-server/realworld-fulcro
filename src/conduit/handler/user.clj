@@ -31,7 +31,37 @@
     (if id
       (if-let [user (user/by-id db (:user-id id))]
         [::response/ok {:user (with-token user jwt-secret)}]
-        (error-message "No such user!"))
+        (error-message "We don't recognize you!"))
+      (error-message "You must login first!"))))
+
+(defmethod ig/init-key ::follow [_ {:keys [db]}]
+  (fn [{[_kw username] :ataraxy/result
+        id :identity}]
+    (if id
+      (if-let [current-user (user/by-id db (:user-id id))]
+        (if-let [followee (user/by-username db username)]
+          (let [[follower-id followee-id] (map :id [current-user followee])]
+            (if (= follower-id followee-id)
+              (error-message "You can't follow yourself!")
+              (do (user/follow db follower-id followee-id)
+                  [::response/ok "Followed!"])))
+          (error-message "No such user!"))
+        (error-message "We don't recognize you!"))
+      (error-message "You must login first!"))))
+
+(defmethod ig/init-key ::unfollow [_ {:keys [db]}]
+  (fn [{[_kw username] :ataraxy/result
+        id :identity}]
+    (if id
+      (if-let [current-user (user/by-id db (:user-id id))]
+        (if-let [followee (user/by-username db username)]
+          (let [[follower-id followee-id] (map :id [current-user followee])]
+            (if (= follower-id followee-id)
+              (error-message "You can't unfollow yourself!")
+              (do (user/unfollow db follower-id followee-id)
+                  [::response/ok "Unfollowed!"])))
+          (error-message "No such user!"))
+        (error-message "We don't recognize you!"))
       (error-message "You must login first!"))))
 
 (defmethod ig/init-key ::by-username
