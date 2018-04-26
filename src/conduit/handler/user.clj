@@ -10,22 +10,28 @@
   (->> (jwt/sign {:user-id (:id user)} jwt-secret)
     (assoc user :token)))
 
+(defn error-message [body]
+  [::response/bad-request {:errors {:body body}}])
+
 (defmethod ig/init-key ::create [_ {:keys [db jwt-secret]}]
   (fn [{[_ user] :ataraxy/result}]
     (if-let [new-user (user/create-user db user)]
       [::response/ok {:user (with-token new-user jwt-secret)}]
-      [::response/bad-request {:errors {:body "Failed create user!"}}])))
+      (error-message "Failed create user!"))))
 
 (defmethod ig/init-key ::login [_ {:keys [db jwt-secret]}]
   (fn [{[_kw {:keys [email password]}] :ataraxy/result}]
     (if-let [user (user/find-login db email password)]
       [::response/ok {:user (with-token user jwt-secret)}]
-      [::response/bad-request "Failed!"])))
+      (error-message "Failed to login!"))))
 
-(defmethod ig/init-key ::whoami
-  [_ opts]
+(defmethod ig/init-key ::whoami [_ {:keys [db jwt-secret]}]
   (fn [{id :identity}]
-    [::response/ok {:message (str "your user id: " (:user-id id))}]))
+    (if id
+      (if-let [user (user/by-id db (:user-id id))]
+        [::response/ok {:user (with-token user jwt-secret)}]
+        (error-message "No such user!"))
+      (error-message "You must login first!"))))
 
 (def profile-query
   [:user/id :user/username :user/bio :user/image

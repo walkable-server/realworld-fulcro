@@ -129,7 +129,8 @@
  :duct.router/ataraxy {:middleware {:jws-auth #ig/ref :duct.middleware.buddy/authentication}}
 
  :conduit.handler.user/whoami
- {}
+ {:db         #ig/ref :duct.database/sql
+  :jwt-secret #duct/env "JWT_SECRET"}
 
  :conduit.handler.user/by-username
  {:resolver #ig/ref :conduit.handler.walkable/resolver}
