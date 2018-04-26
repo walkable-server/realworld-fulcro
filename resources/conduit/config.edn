@@ -89,8 +89,8 @@
  {[:post "/api/users" {{:keys [user]} :body-params}]
   [:user/create user]
 
-  [:post "/api/users/login" {{:keys [username password]} :body-params}]
-  [:user/login username password]
+  [:post "/api/users/login" {{:keys [user]} :body-params}]
+  [:user/login user]
 
   [:get "/api/profiles/" username]
   ^:jws-auth [:user/by-username username]
