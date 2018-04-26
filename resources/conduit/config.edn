@@ -114,9 +114,6 @@
   [:delete "/api/articles/" slug "/comments/" id]
   ^:jws-auth [:article/destroy-comment ^int id]
 
-  [:get "/api/users"]
-  ^:jws-auth [:user/all-users]
-
   [:post "/api/articles" {article :body-params}]
   ^:jws-auth [:article/create article]
 
@@ -133,9 +130,6 @@
 
  :conduit.handler.user/whoami
  {}
-
- :conduit.handler.user/all-users
- {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.user/by-username
  {:resolver #ig/ref :conduit.handler.walkable/resolver}

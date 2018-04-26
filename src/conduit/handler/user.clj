@@ -27,23 +27,16 @@
   (fn [{id :identity}]
     [::response/ok {:message (str "your user id: " (:user-id id))}]))
 
+(def profile-query
+  [:user/id :user/username :user/bio :user/image
+   {:user/followed-by-me? [:agg/count]}
+   {:user/followed-by [:user/id :user/username]}])
+
 (defmethod ig/init-key ::by-username
   [_ {:keys [resolver]}]
   (fn [{[_kw username] :ataraxy/result
         id             :identity}]
     [::response/ok
      (resolver (:user-id id)
-       `[{(:users/all {:filters [:= :user/username ~username]})
-          [:user/id :user/email :user/username :user/bio :user/image
-           {:user/followed-by-me? [:agg/count]}
-           {:user/followed-by [:user/id :user/username]}]}])]))
-
-(defmethod ig/init-key ::all-users
-  [_ {:keys [resolver]}]
-  (fn [{id :identity}]
-    [::response/ok
-     (resolver (:user-id id)
-       '[{(:users/all {})
-          [:user/id :user/email :user/username :user/bio :user/image
-           {:user/followed-by-me? [:agg/count]}
-           {:user/followed-by [:user/id :user/username]}]}])]))
+       `[{(:user/by-username ~username)
+          ~profile-query}])]))
