@@ -57,14 +57,14 @@
            :article/by-id    :article/id}
 
   :joins {[:user/followed-by :user/followed-by-me?]
-          [:user/id :follow/followee_id :follow/follower_id :user/id]
+          [:user/id :follow/followee-id :follow/follower-id :user/id]
 
           :article/tags [:article/id :tag/article-id]
 
           :article/comments [:article/id :comment/article-id]
 
           [:article/liked-by :article/liked-by-count :article/liked-by-me?]
-          [:article/id :favorite/article_id :favorite/user_id :user/id]
+          [:article/id :favorite/article-id :favorite/user-id :user/id]
 
           :article/author [:article/author-id :user/id]
 
@@ -105,6 +105,9 @@
   [:delete "/api/profiles/" username "/follow"]
   ^:jws-auth [:user/unfollow username]
 
+  [:get "/api/articles/" slug]
+  ^:jws-auth [:article/by-slug slug]
+
   [:delete "/api/articles/" slug]
   ^:jws-auth [:article/destroy slug]
 
@@ -143,6 +146,9 @@
 
  :conduit.handler.article/destroy
  {:db #ig/ref :duct.database/sql}
+
+ :conduit.handler.article/by-slug
+ {:resolver #ig/ref :conduit.handler.walkable/resolver}
 
  :conduit.handler.user/create
  {:db         #ig/ref :duct.database/sql

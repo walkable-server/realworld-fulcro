@@ -6,7 +6,7 @@
    {:user/followed-by-me? [:agg/count]}
    {:user/followed-by [:user/id :user/username]}])
 
-(def articles-query
+(def article-query
   [:article/slug :article/title :article/description :article/body
    :article/created-at :article/updated-at
    {:article/liked-by-count [:agg/count]}

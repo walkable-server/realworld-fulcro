@@ -75,7 +75,7 @@
                                 {:article/author [:in :user/username username]})
                               (when (and liked-by (string? liked-by (seq liked-by)))
                                 {:article/liked-by [:in :user/username liked-by]}))})
-               common/articles-query}])
+               common/article-query}])
          common/with-articles-count
          common/clj->json)])))
 
@@ -86,3 +86,14 @@
 (defmethod ig/init-key ::feed
   [_ {:keys [resolver]}]
   (handle-articles :feed resolver))
+
+(defmethod ig/init-key ::by-slug
+  [_ {:keys [resolver]}]
+  (fn [{[_ slug] :ataraxy/result
+        id       :identity}]
+    (let [ident-key [:article/by-slug slug]
+          result (-> (resolver (:user-id id) [{ident-key [{:placeholder/article common/article-query}]}])
+                   (get ident-key))]
+      (if (seq result)
+        [::response/ok (common/clj->json result)]
+        [::response/not-found]))))
