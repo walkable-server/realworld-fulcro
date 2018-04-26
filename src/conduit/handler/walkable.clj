@@ -17,7 +17,7 @@
            (let [{n :agg/count} (reader env)]
              (not= 0 n))
 
-           :article/liked-by-count
+           (:article/liked-by-count :user/articles-count)
            (let [{n :agg/count} (reader env)]
              n)
            ;; default
@@ -28,7 +28,7 @@
     {::p/plugins
      [(p/env-plugin
         {::p/reader
-         [sqb/pull-entities p/map-reader]})
+         [sqb/pull-entities p/map-reader p/env-placeholder-reader]})
       post-processing]}))
 
 (def extra-conditions
@@ -50,4 +50,5 @@
 (defmethod ig/init-key ::resolver [_ env]
   (fn resolver
     ([current-user query]
-     (pathom-parser (assoc env :current-user current-user) query))))
+     (pathom-parser (assoc env :current-user current-user
+                      ::p/placeholder-prefixes #{"placeholder"}) query))))

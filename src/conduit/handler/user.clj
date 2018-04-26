@@ -3,42 +3,73 @@
             [buddy.sign.jwt :as jwt]
             [conduit.boundary.user :as user]
             [buddy.hashers :as hashers]
+            [conduit.common :as common]
             [ataraxy.response :as response]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key ::create [_ {:keys [db]}]
-  (fn [{[_ email username password] :ataraxy/result}]
-    (let [id (user/create-user db email username password)]
-      [::response/created (str "/users/" id)])))
+(defn with-token [user jwt-secret]
+  (->> (jwt/sign {:user-id (:id user)} jwt-secret)
+    (assoc user :token)))
 
-(defmethod ig/init-key ::login [_ {:keys [db secret]}]
-  (fn [{[_kw username password] :ataraxy/result}]
-    (if-let [user (user/find-user db username password)]
-      [::response/ok {:token (jwt/sign {:user-id (:id user)} secret)}]
-      [::response/bad-request "Failed!"])))
+(defn error-message [body]
+  [::response/bad-request {:errors {:body body}}])
 
-(defmethod ig/init-key ::whoami
-  [_ opts]
+(defmethod ig/init-key ::create [_ {:keys [db jwt-secret]}]
+  (fn [{[_ user] :ataraxy/result}]
+    (if-let [new-user (user/create-user db user)]
+      [::response/ok {:user (with-token new-user jwt-secret)}]
+      (error-message "Failed create user!"))))
+
+(defmethod ig/init-key ::login [_ {:keys [db jwt-secret]}]
+  (fn [{[_kw {:keys [email password]}] :ataraxy/result}]
+    (if-let [user (user/find-login db email password)]
+      [::response/ok {:user (with-token user jwt-secret)}]
+      (error-message "Failed to login!"))))
+
+(defmethod ig/init-key ::whoami [_ {:keys [db jwt-secret]}]
   (fn [{id :identity}]
-    [::response/ok {:message (str "your user id: " (:user-id id))}]))
+    (if id
+      (if-let [user (user/by-id db (:user-id id))]
+        [::response/ok {:user (with-token user jwt-secret)}]
+        (error-message "We don't recognize you!"))
+      (error-message "You must login first!"))))
+
+(defmethod ig/init-key ::follow [_ {:keys [db]}]
+  (fn [{[_kw username] :ataraxy/result
+        id :identity}]
+    (if id
+      (if-let [current-user (user/by-id db (:user-id id))]
+        (if-let [followee (user/by-username db username)]
+          (let [[follower-id followee-id] (map :id [current-user followee])]
+            (if (= follower-id followee-id)
+              (error-message "You can't follow yourself!")
+              (do (user/follow db follower-id followee-id)
+                  [::response/ok "Followed!"])))
+          (error-message "No such user!"))
+        (error-message "We don't recognize you!"))
+      (error-message "You must login first!"))))
+
+(defmethod ig/init-key ::unfollow [_ {:keys [db]}]
+  (fn [{[_kw username] :ataraxy/result
+        id :identity}]
+    (if id
+      (if-let [current-user (user/by-id db (:user-id id))]
+        (if-let [followee (user/by-username db username)]
+          (let [[follower-id followee-id] (map :id [current-user followee])]
+            (if (= follower-id followee-id)
+              (error-message "You can't unfollow yourself!")
+              (do (user/unfollow db follower-id followee-id)
+                  [::response/ok "Unfollowed!"])))
+          (error-message "No such user!"))
+        (error-message "We don't recognize you!"))
+      (error-message "You must login first!"))))
 
 (defmethod ig/init-key ::by-username
   [_ {:keys [resolver]}]
   (fn [{[_kw username] :ataraxy/result
         id             :identity}]
-    [::response/ok
-     (resolver (:user-id id)
-       `[{(:users/all {:filters [:= :user/username ~username]})
-          [:user/id :user/email :user/username :user/bio :user/image
-           {:user/followed-by-me? [:agg/count]}
-           {:user/followed-by [:user/id :user/username]}]}])]))
-
-(defmethod ig/init-key ::all-users
-  [_ {:keys [resolver]}]
-  (fn [{id :identity}]
-    [::response/ok
-     (resolver (:user-id id)
-       '[{(:users/all {})
-          [:user/id :user/email :user/username :user/bio :user/image
-           {:user/followed-by-me? [:agg/count]}
-           {:user/followed-by [:user/id :user/username]}]}])]))
+    (let [ident-key [:user/by-username username]]
+      [::response/ok
+       (-> (resolver (:user-id id) [{ident-key [{:placeholder/profile common/profile-query}]}])
+         (get ident-key)
+         (common/clj->json))])))
