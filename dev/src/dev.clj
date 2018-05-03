@@ -6,10 +6,17 @@
             [clojure.java.io :as io]
             [duct.core :as duct]
             [duct.core.repl :as duct-repl]
+            [duct.repl.figwheel :refer [cljs-repl]]
             [eftest.runner :as eftest]
             [integrant.core :as ig]
             [integrant.repl :refer [clear halt go init prep reset]]
             [integrant.repl.state :refer [config system]]))
+
+(derive ::devcards :duct/module)
+
+(defmethod ig/init-key ::devcards [_ {build-id :build-id :or {build-id 0}}]
+  {:req #{:duct.server/figwheel}
+   :fn  #(assoc-in % [:duct.server/figwheel :builds build-id :build-options :devcards] true)})
 
 (duct/load-hierarchy)
 
