@@ -9,8 +9,10 @@
                  [duct/middleware.buddy "0.1.0"]
                  [duct/module.ataraxy "0.2.0"]
                  [duct/module.sql "0.4.2"]
+                 [duct/module.cljs "0.3.2" :exclusions [org.clojure/clojurescript]]
                  [duct/handler.sql "0.3.1"]
                  [buddy/buddy-hashers "1.3.0"]
+                 [fulcrologic/fulcro "2.5.3"]
                  [walkable "1.0.0-SNAPSHOT"]
                  [org.clojure/core.async "0.4.474"]
                  [org.postgresql/postgresql "42.1.4"]]
@@ -21,11 +23,18 @@
   :profiles
   {:dev  [:project/dev :profiles/dev]
    :repl {:prep-tasks   ^:replace ["javac" "compile"]
-          :repl-options {:init-ns user}}
+          :repl-options {:init-ns user
+                         :timeout          120000
+                         :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
    :uberjar {:aot :all}
    :profiles/dev {}
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
-                  :dependencies   [[integrant/repl "0.2.0"]
+                  :dependencies   [ ;; cljs
+                                   [duct/server.figwheel "0.2.1" :exclusions [org.clojure/clojurescript]]
+                                   [devcards "0.2.4" :exclusions [org.clojure/clojurescript]]
+
+                                   [fulcrologic/fulcro-inspect "2.0.1" :exclusions [fulcrologic/fulcro-css]]
+                                   [integrant/repl "0.2.0"]
                                    [eftest "0.4.1"]
                                    [kerodon "0.9.0"]]}})
