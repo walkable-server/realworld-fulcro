@@ -5,8 +5,22 @@
  {:backend :jws
   :secret  #duct/env "JWT_SECRET"}
 
+ :duct.module/cljs {:main conduit.intro}
+
+ :duct.module.web/site {}
+
+ :duct.middleware.web/defaults {:security {:anti-forgery false}}
+ :duct.middleware.web/format   {:default-format "application/transit+json"}
+
+ :duct.router/ataraxy
+ {:middleware {:jws-auth      #ig/ref :duct.middleware.buddy/authentication
+               :wrap-format   #ig/ref :duct.middleware.web/format
+               :wrap-defaults #ig/ref :duct.middleware.web/defaults}}
+
+ :duct.module/ataraxy
+ {"/api" ^:jws-auth ^:wrap-defaults ^:wrap-format [:walkable/resolver]}
+
  :duct.module/logging {}
- :duct.module.web/api {}
  :duct.module/sql     {}
 
  :duct.migrator/ragtime
@@ -48,13 +62,12 @@
             :tag/tag
             :comment/id :comment/created-at :comment/updated-at :comment/body]
 
-  :idents {:user/by-id       :user/id
-           :user/by-username :user/username
-           :users/all        "user"
-           :articles/all     "article"
-           :articles/feed    "article"
-           :article/by-slug  :article/slug
-           :article/by-id    :article/id}
+  :idents {:user/by-id                    :user/id
+           :user/by-username              :user/username
+           [:users/all :user/whoami]      "user"
+           [:articles/all :articles/feed] "article"
+           :article/by-slug               :article/slug
+           :article/by-id                 :article/id}
 
   :joins {[:user/followed-by :user/followed-by-me?]
           [:user/id :follow/followee-id :follow/follower-id :user/id]
@@ -74,6 +87,7 @@
   :pseudo-columns {:agg/count [:count-*]}
   :cardinality    {:user/by-id             :one
                    :user/by-username       :one
+                   :user/whoami            :one
                    :article/by-id          :one
                    :article/by-slug        :one
                    :article/author         :one
@@ -84,109 +98,9 @@
  :conduit.handler.sql/run-query {}
 
  :conduit.handler.walkable/resolver
- #:walkable.sql-query-builder {:duct/logger #ig/ref :duct/logger
-                               :run-query   #ig/ref :conduit.handler.sql/run-query
-                               :sql-db      #ig/ref :duct.database.sql/hikaricp
-                               :sql-schema  #ig/ref :conduit.handler.walkable/compile-schema}
-
- :duct.module/ataraxy
- {[:post "/api/users" {{:keys [user]} :body-params}]
-  [:user/create user]
-
-  [:post "/api/users/login" {{:keys [user]} :body-params}]
-  [:user/login user]
-
-  [:get "/api/profiles/" username]
-  ^:jws-auth [:user/by-username username]
-
-  [:post "/api/profiles/" username "/follow"]
-  ^:jws-auth [:user/follow username]
-
-  [:delete "/api/profiles/" username "/follow"]
-  ^:jws-auth [:user/unfollow username]
-
-  [:get "/api/articles/" slug]
-  ^:jws-auth [:article/by-slug slug]
-
-  [:get "/api/articles/" slug "/comments"]
-  ^:jws-auth [:article/comments-by-slug slug]
-
-  [:delete "/api/articles/" slug]
-  ^:jws-auth [:article/destroy slug]
-
-  [:post "/api/articles/" slug "/favorite"]
-  ^:jws-auth [:article/like slug]
-
-  [:delete "/api/articles/" slug "/favorite"]
-  ^:jws-auth [:article/unlike slug]
-
-  [:post "/api/articles/" slug "/comments" {{comment-item :comment} :body-params}]
-  ^:jws-auth [:article/create-comment slug comment-item]
-
-  [:delete "/api/articles/" slug "/comments/" id]
-  ^:jws-auth [:article/destroy-comment ^int id]
-
-  [:post "/api/articles" {{:keys [article]} :body-params}]
-  ^:jws-auth [:article/create article]
-
-  [:get "/api/articles" {params :query-params}]
-  ^:jws-auth [:article/all-articles params]
-
-  [:get "/api/articles/feed" {params :query-params}]
-  ^:jws-auth [:article/feed params]
-
-  [:get "/api/user"]
-  ^:jws-auth [:user/whoami]}
-
- :duct.router/ataraxy {:middleware {:jws-auth #ig/ref :duct.middleware.buddy/authentication}}
-
- :conduit.handler.user/whoami
- {:db         #ig/ref :duct.database/sql
-  :jwt-secret #duct/env "JWT_SECRET"}
-
- :conduit.handler.user/by-username
- {:resolver #ig/ref :conduit.handler.walkable/resolver}
-
- :conduit.handler.article/destroy
- {:db #ig/ref :duct.database/sql}
-
- :conduit.handler.article/by-slug
- {:resolver #ig/ref :conduit.handler.walkable/resolver}
-
- :conduit.handler.article/comments-by-slug
- {:resolver #ig/ref :conduit.handler.walkable/resolver}
-
- :conduit.handler.user/create
- {:db         #ig/ref :duct.database/sql
-  :jwt-secret #duct/env "JWT_SECRET"}
-
- :conduit.handler.article/all-articles
- {:resolver #ig/ref :conduit.handler.walkable/resolver}
-
- :conduit.handler.article/feed
- {:resolver #ig/ref :conduit.handler.walkable/resolver}
-
- :conduit.handler.article/create
- {:db #ig/ref :duct.database/sql}
-
- :conduit.handler.article/like
- {:db #ig/ref :duct.database/sql}
-
- :conduit.handler.article/unlike
- {:db #ig/ref :duct.database/sql}
-
- :conduit.handler.user/follow
- {:db #ig/ref :duct.database/sql}
-
- :conduit.handler.user/unfollow
- {:db #ig/ref :duct.database/sql}
-
- :conduit.handler.article/create-comment
- {:db #ig/ref :duct.database/sql}
-
- :conduit.handler.article/destroy-comment
- {:db #ig/ref :duct.database/sql}
-
- :conduit.handler.user/login
- {:db         #ig/ref :duct.database/sql
-  :jwt-secret #duct/env "JWT_SECRET"}}
+ #:walkable.sql-query-builder {:com.wsscode.pathom.core/placeholder-prefixes #{"placeholder" "ph"}
+                               :duct/logger                                  #ig/ref :duct/logger
+                               :app/jwt-secret                               #duct/env "JWT_SECRET"
+                               :run-query                                    #ig/ref :conduit.handler.sql/run-query
+                               :sql-db                                       #ig/ref :duct.database/sql
+                               :sql-schema                                   #ig/ref :conduit.handler.walkable/compile-schema}}
