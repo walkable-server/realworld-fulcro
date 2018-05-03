@@ -1,6 +1,8 @@
 (ns conduit.handler.walkable
   (:require [walkable.sql-query-builder :as sqb]
             [integrant.core :as ig]
+            [conduit.handler.mutations :as mutations]
+            [fulcro.server :as server :refer [parser server-mutate defmutation]]
             [com.wsscode.pathom.core :as p]))
 
 (def post-processing
@@ -25,22 +27,27 @@
 
 (def pathom-parser
   (p/parser
-    {::p/plugins
+    {:mutate server-mutate
+     ::p/plugins
      [(p/env-plugin
         {::p/reader
          [sqb/pull-entities p/map-reader p/env-placeholder-reader]})
-      post-processing]}))
+      ;;post-processing
+      ]}))
 
 (def extra-conditions
   {:articles/feed
-   (fn [{:keys [current-user]}]
+   (fn [{:app/keys [current-user]}]
      {:article/author {:user/followed-by [:= current-user :user/id]}})
 
    :article/liked-by-me?
-   (fn [{:keys [current-user]}] [:= current-user :user/id])
+   (fn [{:app/keys [current-user]}] [:= current-user :user/id])
+
+   :user/whoami
+   (fn [{:app/keys [current-user]}] [:= current-user :user/id])
 
    :user/followed-by-me?
-   (fn [{:keys [current-user]}] [:= current-user :user/id])})
+   (fn [{:app/keys [current-user]}] [:= current-user :user/id])})
 
 (defmethod ig/init-key ::compile-schema [_ schema]
   (-> schema
@@ -49,7 +56,7 @@
     sqb/compile-schema))
 
 (defmethod ig/init-key ::resolver [_ env]
-  (fn resolver
-    ([current-user query]
-     (pathom-parser (assoc env :current-user current-user
-                      ::p/placeholder-prefixes #{"placeholder"}) query))))
+  (fn [{current-user :identity
+        query        :body-params}]
+    {:body (pathom-parser (assoc env :app/current-user (:user/id current-user))
+             query)}))
