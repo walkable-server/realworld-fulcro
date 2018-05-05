@@ -1,6 +1,9 @@
 (ns conduit.ui.components
   (:require
     [fulcro.client.primitives :as prim :refer [defsc]]
+    [fulcro.ui.form-state :as fs]
+    [conduit.handler.mutations :as mutations]
+    #?(:cljs [fulcro.client.mutations :as m :refer [defmutation]])
     #?(:cljs [fulcro.client.data-fetch :as df])
     #?(:cljs [fulcro.client.dom :as dom] :clj [fulcro.client.dom-server :as dom])))
 
@@ -117,3 +120,59 @@
           (mapv ui-article-preview like))))))
 
 (def ui-profile (prim/factory Profile))
+
+(declare ArticleEditor)
+
+#?(:cljs
+   (defmutation use-article-as-form [{:article/keys [id]}]
+     (action [{:keys [state]}]
+       (swap! state #(-> %
+                       (fs/add-form-config* ArticleEditor [:article/by-id id])
+                       (assoc-in [:root/article-editor :article-to-edit] [:article/by-id id]))))))
+
+(defsc ArticleEditor [this {:article/keys [id slug title description body] :as props}]
+  {:query       [:article/id :article/slug  :article/title :article/description :article/body
+                 fs/form-config-join]
+   :ident       [:article/by-id :article/id]
+   :form-fields #{:article/slug  :article/title
+                  :article/description :article/body}}
+  (dom/div :.editor-page
+    (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-10.offset-md-1.col-xs-12
+          (dom/form {}
+            (dom/fieldset {}
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Article Title",
+                   :type        "text"
+                   :value       title
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :article/title})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :article/title :event %))}))
+              (dom/fieldset :.form-group
+                (dom/input :.form-control
+                  {:placeholder "What's this article about?",
+                   :type        "text"
+                   :value       description}))
+              (dom/fieldset :.form-group
+                (dom/textarea :.form-control
+                  {:rows  "8", :placeholder "Write your article (in markdown)"
+                   :value body}))
+              (dom/fieldset :.form-group
+                (dom/input :.form-control
+                  {:placeholder "Enter tags",
+                   :type        "text"})
+                (dom/div :.tag-list))
+              (dom/button :.btn.btn-lg.pull-xs-right.btn-primary
+                {:type "button"
+                 :onClick
+                 #?(:clj  nil
+                    :cljs #(prim/transact! this `[(mutations/submit-article ~{:article/id id :diff (fs/dirty-fields props)})]))}
+                "Publish Article"))))))))
+
+(def ui-article-editor (prim/factory ArticleEditor))
