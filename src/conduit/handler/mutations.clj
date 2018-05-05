@@ -23,5 +23,6 @@
     (if current-user
       (article/update-article sql-db current-user id
         (-> (get article [:article/by-id id])
-          (rename-keys {:article/title :title})))
+          (rename-keys {:article/title :title :article/body :body
+                        :article/slug :slug :article/description :description})))
       {})))
