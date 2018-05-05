@@ -41,7 +41,7 @@
 
 (defsc ArticlePreview [this {:article/keys [slug title description] :keys [ph/article]}]
   {:ident [:article/by-id :article/id]
-   :query [:article/id :article/slug :article/title :article/description
+   :query [:article/id :article/slug :article/title :article/description :article/body
            {:ph/article (prim/get-query ArticlePreviewMeta)}]}
   (dom/div :.article-preview
     (ui-article-preview-meta article)
@@ -158,11 +158,25 @@
                 (dom/input :.form-control
                   {:placeholder "What's this article about?",
                    :type        "text"
-                   :value       description}))
+                   :value       description
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :article/description})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :article/description :event %))}))
               (dom/fieldset :.form-group
                 (dom/textarea :.form-control
                   {:rows  "8", :placeholder "Write your article (in markdown)"
-                   :value body}))
+                   :value body
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :article/body})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :article/body :event %))}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control
                   {:placeholder "Enter tags",
