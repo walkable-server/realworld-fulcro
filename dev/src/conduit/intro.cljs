@@ -9,12 +9,16 @@
             [fulcro.client.dom :as dom]))
 
 (defsc Me [this props]
-  {:query [{:user/whoami (prim/get-query comp/Profile)}]}
+  {:query [{:user/whoami (prim/get-query comp/Profile)}
+           {[:root/article-editor :article-to-edit] (prim/get-query comp/ArticleEditor)}]}
   (let [user (get props :user/whoami)]
     (dom/div {}
       (dom/div {:onClick #(prim/transact! this `[(mutations/login {:email "foobar@yep.com" :password "foobar"})])} "Login")
       (dom/div {:onClick #(df/load this :user/whoami comp/Profile)} "Update me")
-      (comp/ui-profile user))))
+      (comp/ui-profile user)
+      (dom/div {:onClick #(prim/transact! this `[(comp/use-article-as-form #:article{:id 2})])} "Edit")
+      (comp/ui-article-editor (get props [:root/article-editor :article-to-edit]))
+      )))
 
 (def token-store (atom "No token"))
 
