@@ -6,7 +6,7 @@
   (article-by-slug [db article])
   (create-article [db article])
   (destroy-article [db author-id article-slug])
-  (update-article [db article])
+  (update-article [db author-id id article])
   (like [db user-id article-slug])
   (unlike [db user-id article-slug]))
 
@@ -31,6 +31,10 @@
 
   (destroy-article [db author-id article-slug]
     (jdbc/delete! (:spec db) "\"article\"" ["author_id = ? AND slug = ?" author-id article-slug]))
+
+  (update-article [db author-id id article]
+    (jdbc/update! (:spec db) "\"article\"" (select-keys article [:slug :title :description :body])
+      ["author_id = ? AND id = ?" author-id id]))
 
   (like [db user-id article-slug]
     (when-let [article-id (article-by-slug db article-slug)]
