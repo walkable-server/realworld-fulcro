@@ -5,6 +5,7 @@
     [conduit.handler.mutations :as mutations]
     #?(:cljs [fulcro.client.mutations :as m :refer [defmutation]])
     #?(:cljs [fulcro.client.data-fetch :as df])
+    [fulcro.client.routing :as r]
     #?(:cljs [fulcro.client.dom :as dom] :clj [fulcro.client.dom-server :as dom])))
 
 (defsc Banner [this _]
@@ -67,28 +68,61 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc Feeds [this _]
+(defsc PersonalFeed [this {:keys [screen] articles :articles/feed}]
+  {:initial-state {:screen :screen.feed/personal}
+   :ident         (fn [] [screen :top])
+   :query         [:screen
+                   {[:articles/feed '_] (prim/get-query ArticlePreview)}]}
+  (dom/div
+    (if (seq articles)
+      (mapv ui-article-preview articles)
+      "You have no article")))
+
+(defsc GlobalFeed [this {:keys [screen] articles :articles/all}]
+  {:initial-state {:screen :screen.feed/global}
+   :ident         (fn [] [screen :top])
+   :query         [:screen
+                   {[:articles/all '_] (prim/get-query ArticlePreview)}]}
+  (dom/div
+    (if (seq articles)
+      (mapv ui-article-preview articles)
+      "No article")))
+
+(r/defrouter FeedsRouter :router/feeds
+  (fn [this props] [(:screen props) :top])
+  :screen.feed/personal PersonalFeed
+  :screen.feed/global   GlobalFeed)
+
+(def ui-feeds-router (prim/factory FeedsRouter))
+
+(defn select-feeds [this]
   (dom/div :.feed-toggle
     (dom/ul :.nav.nav-pills.outline-active
       (dom/li :.nav-item
-        (dom/a :.nav-link.disabled {:href ""} "Your Feed") )
+        (dom/div :.nav-link.disabled
+          {:onClick #(prim/transact! this `[(r/route-to {:handler :screen.feed/personal})])}
+          "Your Feed"))
       (dom/li :.nav-item
-        (dom/a :.nav-link.active {:href ""} "Global Feed")))))
+        (dom/div :.nav-link.active
+          {:onClick #(prim/transact! this `[(r/route-to {:handler :screen.feed/global})])}
+          "Global Feed")))))
 
-(def ui-feeds (prim/factory Feeds))
+(defsc Home [this {tags   :tags/all
+                   router :router/feeds}]
+  {:initial-state (fn [params] {:screen       :screen/home
+                                :screen-id    :top
+                                :router/feeds (prim/get-initial-state FeedsRouter {})})
 
-(defsc Home [this {articles :articles/all tags :tags/all}]
-  {:query [{:articles/all (prim/get-query ArticlePreview)}
-           {:tags/all (prim/get-query Tag)}]}
+   :query         [:screen :screen-id
+                   {:router/feeds (prim/get-query FeedsRouter)}
+                   {[:tags/all '_] (prim/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
-    (dom/div #?(:cljs {:onClick #(do (df/load this :tags/all Tag)
-                                     (df/load this :articles/all ArticlePreview))}) "update all")
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feeds)
-          (mapv ui-article-preview articles))
+          (select-feeds this)
+          (ui-feeds-router router))
         (ui-tags tags)))))
 
 (defsc Profile [this {:user/keys [id username photo bio like]}]
@@ -186,7 +220,7 @@
                 {:type "button"
                  :onClick
                  #?(:clj  nil
-                    :cljs #(prim/transact! this `[(mutations/submit-article ~{:article/id id :diff (fs/dirty-fields props)})]))}
+                    :cljs #(prim/transact! this `[(mutations/submit-article ~{:article/id id :diff (fs/dirty-fields props false)})]))}
                 "Publish Article"))))))))
 
 (def ui-article-editor (prim/factory ArticleEditor))
