@@ -25,13 +25,24 @@
            ;; default
            (reader env)))))})
 
+(def query-top-tags
+  "SELECT \"tag\" AS \"tag/tag\",
+   COUNT (*) AS \"tag/count\"
+   FROM \"tag\"
+   GROUP BY \"tag\"
+   ORDER BY \"tag/count\" DESC
+   LIMIT 20")
+
 (def pathom-parser
   (p/parser
     {:mutate server-mutate
      ::p/plugins
      [(p/env-plugin
         {::p/reader
-         [sqb/pull-entities p/map-reader p/env-placeholder-reader]})
+         [sqb/pull-entities p/map-reader p/env-placeholder-reader
+          {:tags/all (fn [{::sqb/keys [run-query sql-db]}]
+                       ;; todo: cache this!
+                       (into [] (run-query sql-db [query-top-tags])))}]})
       ;;post-processing
       ]}))
 
