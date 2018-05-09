@@ -8,6 +8,44 @@
     [fulcro.client.routing :as r]
     #?(:cljs [fulcro.client.dom :as dom] :clj [fulcro.client.dom-server :as dom])))
 
+(defsc NavBar [this _]
+  (dom/nav :.navbar.navbar-light
+    (dom/div :.container
+      (dom/div :.navbar-brand
+        "conduit")
+      (dom/ul :.nav.navbar-nav.pull-xs-right
+        (dom/li :.nav-item
+          (dom/div :.nav-link.active
+            {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/home})])}
+            "Home") )
+        (dom/li :.nav-item
+          (dom/a :.nav-link
+            {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/editor})])}
+            (dom/i :.ion-compose)
+            "New Post") )
+        (dom/li :.nav-item
+          (dom/div :.nav-link
+            {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/settings})])}
+            (dom/i :.ion-gear-a)
+            "Settings"))
+        (dom/li :.nav-item
+          (dom/div :.nav-link
+            {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/sign-up})])}
+            "Sign up"))))))
+
+(def ui-nav-bar (prim/factory NavBar))
+
+(defsc Footer [this _]
+  (dom/footer
+    (dom/div :.container
+      (dom/div :.logo-font "conduit")
+      (dom/span :.attribution
+        "An interactive learning project from "
+        (dom/a {:href "https://thinkster.io"} "Thinkster")
+        ". Code &amp; design licensed under MIT."))))
+
+(def ui-footer (prim/factory Footer))
+
 (defsc Banner [this _]
   (dom/div :.banner
     (dom/div :.container
