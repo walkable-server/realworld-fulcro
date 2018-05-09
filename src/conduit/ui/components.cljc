@@ -54,10 +54,10 @@
 (def ui-article-preview (prim/factory ArticlePreview {:keyfn :article/id}))
 
 (defsc Tag [this {:tag/keys [tag]}]
-  {:query [:tag/tag]}
+  {:query [:tag/tag :tag/count]}
   (dom/a  :.tag-pill.tag-default {:href (str "/tag/" tag)} tag))
 
-(def ui-tag (prim/factory Tag))
+(def ui-tag (prim/factory Tag {:keyfn :tag/tag}))
 
 (defsc Tags [this tags]
   (dom/div :.col-md-3
