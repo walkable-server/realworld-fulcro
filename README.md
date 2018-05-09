@@ -1,8 +1,16 @@
 # conduit
 
-A Clojure implementation of [RealWorld REST API Spec](https://github.com/gothinkster/realworld/tree/master/api) using Duct framework, Buddy, Walkable SQL library, JDBC and Postgresql.
+A Clojure implementation of [RealWorld
+app](https://github.com/gothinkster/realworld) using full-stack
+Fulcro. Backend uses Duct framework, Buddy, Walkable SQL library, JDBC
+and Postgresql.
 
-Please see [Duct guide](https://github.com/duct-framework/docs/blob/master/GUIDE.rst)
-and [Walkable readme](https://github.com/walkable-server/walkable) for documentation.
+Documentation:
+
+[Fulcro](http://book.fulcrologic.com/)
+
+[Duct guide](https://github.com/duct-framework/docs/blob/master/GUIDE.rst)
+
+[Walkable readme](https://github.com/walkable-server/walkable) for documentation.
 
 Progress is reported in project's github issues.
