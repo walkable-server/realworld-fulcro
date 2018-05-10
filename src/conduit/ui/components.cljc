@@ -77,8 +77,8 @@
 
 (def ui-banner (prim/factory Banner))
 
-(defsc UserPreview [this {:user/keys [username]}]
-  {:query [:user/id :user/username]
+(defsc UserPreview [this {:user/keys [username name]}]
+  {:query [:user/id :user/username :user/name]
    :ident [:user/by-id :user/id]})
 
 (defsc ArticlePreviewMeta [this {:article/keys [author created-at liked-by-count]}]
@@ -90,7 +90,7 @@
       (dom/img {:src (:user/image author)}))
     (dom/div :.info
       (dom/a :.author {:href (str "/users/" (:user/username author))}
-        (:user/username author))
+        (:user/name author))
       (dom/span :.date
         #?(:clj  created-at
            :cljs (when (instance? js/Date created-at)
@@ -186,9 +186,9 @@
           (ui-feeds-router router))
         (ui-tags tags)))))
 
-(defsc Profile [this {:user/keys [id username photo bio like]}]
+(defsc Profile [this {:user/keys [id name username image bio] liked-articles :user/like}]
   {:ident [:user/by-id :user/id]
-   :query [:user/id :user/username :user/photo :user/bio
+   :query [:user/id :user/name :user/username :user/image :user/bio
            {:user/like (prim/get-query ArticlePreview)}]}
   (dom/div :.profile-page
     ;;(dom/div {:onClick #(df/load this [:user/by-id 19] Profile)} "update this person")
@@ -196,11 +196,11 @@
       (dom/div :.container
         (dom/div :.row
           (dom/div :.col-xs-12.col-md-10.offset-md-1
-            (dom/img :.user-img {:src photo})
-            (dom/h4 {} username)
+            (dom/img :.user-img {:src image})
+            (dom/h4 {} name)
             (dom/p {} bio)
             (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
-              (dom/i :.ion-plus-round) (str "Follow " username))))))
+              (dom/i :.ion-plus-round) (str "Follow " name))))))
     (dom/div :.container
       (dom/div :.row
         (dom/div :.col-xs-12.col-md-10.offset-md-1
@@ -212,7 +212,7 @@
               (dom/li :.nav-item
                 (dom/a :.nav-link {:href ""}
                   "Favorited Articles"))))
-          (mapv ui-article-preview like))))))
+          (mapv ui-article-preview liked-articles))))))
 
 (def ui-profile (prim/factory Profile))
 
@@ -288,7 +288,7 @@
 
 (defsc Settings [this props]
   {:initial-state (fn [params] {})
-   :query         [:user/photo :user/name :user/bio :user/email]})
+   :query         [:user/image :user/name :user/bio :user/email]})
 
 #?(:cljs
    (defmutation login [credentials]
@@ -322,11 +322,11 @@
                        (fs/add-form-config* SettingsForm [:user/by-id id])
                        (assoc-in [:root/settings-form :settings] [:user/by-id id]))))))
 
-(defsc SettingsForm [this {:user/keys [id photo name bio email] :as props}]
-  {:query       [:user/id :user/photo :user/name :user/bio :user/email
+(defsc SettingsForm [this {:user/keys [id image name bio email] :as props}]
+  {:query       [:user/id :user/image :user/name :user/bio :user/email
                  fs/form-config-join]
    :ident [:user/by-id :user/id]
-   :form-fields #{:user/photo :user/name :user/bio :user/email}}
+   :form-fields #{:user/image :user/name :user/bio :user/email}}
   (dom/div :.settings-page
     (dom/div :.container.page
       (dom/div :.row
@@ -339,14 +339,14 @@
                 (dom/input :.form-control
                   {:placeholder "URL of profile picture",
                    :type        "text"
-                   :value       photo
+                   :value       image
                    :onBlur
                    #?(:clj  nil
                       :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :user/photo})]))
+                               `[(fs/mark-complete! {:field :user/image})]))
                    :onChange
                    #?(:clj nil
-                      :cljs #(m/set-string! this :user/photo :event %))}))
+                      :cljs #(m/set-string! this :user/image :event %))}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Your Name",
