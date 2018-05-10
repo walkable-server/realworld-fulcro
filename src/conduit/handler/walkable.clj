@@ -1,9 +1,29 @@
 (ns conduit.handler.walkable
   (:require [walkable.sql-query-builder :as sqb]
             [integrant.core :as ig]
+            [conduit.boundary.user :as user]
+            [buddy.sign.jwt :as jwt]
             [conduit.handler.mutations :as mutations]
             [fulcro.server :as server :refer [parser server-mutate defmutation]]
             [com.wsscode.pathom.core :as p]))
+
+(def pre-processing-login
+  {::p/wrap-read
+   (fn [reader]
+     (fn [env]
+       (if (and (= (-> env :ast :dispatch-key)
+                  :user/whoami)
+             (-> env :ast :params))
+         (let [{:keys [email password]}                 (-> env :ast :params)
+               {::sqb/keys [sql-db] :keys [jwt-secret]} env]
+           (if-let [user (user/find-login sql-db email password)]
+             (let [token (jwt/sign {:user-id (:id user)} jwt-secret)]
+               (-> env
+                 (assoc :app/current-user (:id user))
+                 reader
+                 (assoc :token token)))
+             {}))
+         (reader env))))})
 
 (def post-processing
   {::p/wrap-read
@@ -44,6 +64,7 @@
                        ;; todo: cache this!
                        (into [] (run-query sql-db [query-top-tags])))}]})
       ;;post-processing
+      pre-processing-login
       ]}))
 
 (def extra-conditions
