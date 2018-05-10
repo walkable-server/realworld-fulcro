@@ -40,14 +40,20 @@
         (when-not id
           (dom/li :.nav-item
             (dom/div :.nav-link
-              #?(:cljs {:onClick #(prim/transact! this `[(login {:email "foobar@yep.com" :password "foobar"})])})
+              #?(:cljs {:onClick #(prim/transact! this `[(login {:email "jake@jake.jake" :password "foobar"})])})
               (dom/i :.ion-gear-a)
               "Login")))
 
         (when-not id
           (dom/li :.nav-item
             (dom/div :.nav-link
-              #?(:cljs {:onClick #(prim/transact! this `[(sign-up {:email "foobar@yep.com" :password "foobar"})])})
+              #?(:cljs {:onClick #(prim/transact! this
+                                    `[(sign-up #:user{:username "jake",
+                                                      :name     "Jake Ekaj"
+                                                      :email    "jake@jake.jake"
+                                                      :password "foobar"
+                                                      :bio      "I work at statefarm",
+                                                      :image    "https://static.productionready.io/images/smiley-cyrus.jpg"})])})
               "Sign up")))))))
 
 (def ui-nav-bar (prim/factory NavBar))
