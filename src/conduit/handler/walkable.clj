@@ -1,11 +1,17 @@
 (ns conduit.handler.walkable
   (:require [walkable.sql-query-builder :as sqb]
             [integrant.core :as ig]
+            [clojure.set :refer [rename-keys]]
             [conduit.boundary.user :as user]
             [buddy.sign.jwt :as jwt]
             [conduit.handler.mutations :as mutations]
             [fulcro.server :as server :refer [parser server-mutate defmutation]]
             [com.wsscode.pathom.core :as p]))
+
+(def remove-user-namespace
+  (into {}
+    (for [k [:username :name :email :bio :image :password]]
+      [(keyword "user" (name k)) k])))
 
 (def pre-processing-login
   {::p/wrap-read
@@ -14,9 +20,16 @@
        (if (and (= (-> env :ast :dispatch-key)
                   :user/whoami)
              (-> env :ast :params))
-         (let [{:keys [email password]}                 (-> env :ast :params)
+         (let [params                                   (-> env :ast :params)
                {::sqb/keys [sql-db] :keys [jwt-secret]} env]
-           (if-let [user (user/find-login sql-db email password)]
+           (if-let [user (cond
+                           (:login params)
+                           (let [{:keys [email password]} (:login params)]
+                             (user/find-login sql-db email password))
+
+                           (:sign-up params)
+                           (let [new-user (:sign-up params)]
+                             (user/create-user sql-db (rename-keys new-user remove-user-namespace))))]
              (let [token (jwt/sign {:user-id (:id user)} jwt-secret)]
                (-> env
                  (assoc :app/current-user (:id user))
@@ -24,7 +37,7 @@
                  (assoc :token token)))
              {}))
          (reader env))))})
-
+#_
 (def post-processing
   {::p/wrap-read
    (fn [reader]
@@ -63,9 +76,7 @@
           {:tags/all (fn [{::sqb/keys [run-query sql-db]}]
                        ;; todo: cache this!
                        (into [] (run-query sql-db [query-top-tags])))}]})
-      ;;post-processing
-      pre-processing-login
-      ]}))
+      pre-processing-login]}))
 
 (def extra-conditions
   {:articles/feed
