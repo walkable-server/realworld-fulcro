@@ -8,6 +8,7 @@
   (by-username [db id])
   (create-user [db user])
   (find-login [db email password])
+  (update-user [db user-id user])
   (follow [db follower-id followee-id])
   (unfollow [db follower-id followee-id]))
 
@@ -16,9 +17,13 @@
   (create-user [{db :spec} {:keys [password] :as user}]
     (let [pw-hash (hashers/derive password)
           results (jdbc/insert! db "\"user\""
-                    (-> user (select-keys [:username :email :bio :image])
+                    (-> user (select-keys [:username :name :email :bio :image])
                       (assoc :password pw-hash)))]
       (-> results first (dissoc :password))))
+  (update-user [db user-id user]
+    (jdbc/update! (:spec db) "\"user\""
+      (-> user (select-keys [:username :name :email :bio :image]))
+      ["id = ?" user-id]))
   (by-id [{db :spec} id]
     (when-let [user (first (jdbc/find-by-keys db "\"user\"" {:id id}))]
       (dissoc user :password)))
