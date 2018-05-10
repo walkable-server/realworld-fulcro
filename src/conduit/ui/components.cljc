@@ -12,7 +12,7 @@
 
 #?(:cljs
    (defn go-to-settings [this {:user/keys [id]}]
-     (prim/transact! this `[(use-settings-as-form {:user/id id})
+     (prim/transact! this `[(use-settings-as-form {:user/id ~id})
                             (r/route-to {:handler :screen/settings})])))
 
 (defsc NavBar [this {:user/keys [id]}]
