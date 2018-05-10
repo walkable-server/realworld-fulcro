@@ -37,15 +37,18 @@
               #?(:cljs {:onClick #(go-to-settings this {:user/id id})})
               (dom/i :.ion-gear-a)
               "Settings")))
-        (dom/li :.nav-item
-          (dom/div :.nav-link
-            #?(:cljs {:onClick #(prim/transact! this `[(login {:email "foobar@yep.com" :password "foobar"})])})
-            (dom/i :.ion-gear-a)
-            "Login"))
-        (dom/li :.nav-item
-          (dom/div :.nav-link
-            #?(:cljs {:onClick #(prim/transact! this `[(sign-up {:email "foobar@nope.com" :password "foobar"})])})
-            "Sign up"))))))
+        (when-not id
+          (dom/li :.nav-item
+            (dom/div :.nav-link
+              #?(:cljs {:onClick #(prim/transact! this `[(login {:email "foobar@yep.com" :password "foobar"})])})
+              (dom/i :.ion-gear-a)
+              "Login")))
+
+        (when-not id
+          (dom/li :.nav-item
+            (dom/div :.nav-link
+              #?(:cljs {:onClick #(prim/transact! this `[(sign-up {:email "foobar@yep.com" :password "foobar"})])})
+              "Sign up")))))))
 
 (def ui-nav-bar (prim/factory NavBar))
 
