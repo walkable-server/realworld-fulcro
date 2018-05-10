@@ -11,15 +11,12 @@
 (declare SettingsForm)
 
 #?(:cljs
-   (defn go-to-settings [this]
-     (prim/transact! this `[(use-settings-as-form {:user/id 19})
+   (defn go-to-settings [this {:user/keys [id]}]
+     (prim/transact! this `[(use-settings-as-form {:user/id id})
                             (r/route-to {:handler :screen/settings})])))
 
-#?(:cljs
-   (defn log-in [this]
-     (prim/transact! this `[(mutations/login {:email "foobar@yep.com" :password "foobar"})])))
-
-(defsc NavBar [this _]
+(defsc NavBar [this {:user/keys [id]}]
+  {:query [:user/id]}
   (dom/nav :.navbar.navbar-light
     (dom/div :.container
       (dom/div :.navbar-brand
@@ -33,25 +30,21 @@
           (dom/a :.nav-link
             #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/editor})])})
             (dom/i :.ion-compose)
-            "New Post") )
+            "New Post"))
+        (when id
+          (dom/li :.nav-item
+            (dom/div :.nav-link
+              #?(:cljs {:onClick #(go-to-settings this {:user/id id})})
+              (dom/i :.ion-gear-a)
+              "Settings")))
         (dom/li :.nav-item
           (dom/div :.nav-link
-            #?(:cljs {:onClick #(go-to-settings this)})
-            (dom/i :.ion-gear-a)
-            "Settings"))
-        (dom/li :.nav-item
-          (dom/div :.nav-link
-            #?(:cljs {:onClick #(log-in this)})
+            #?(:cljs {:onClick #(prim/transact! this `[(login {:email "foobar@yep.com" :password "foobar"})])})
             (dom/i :.ion-gear-a)
             "Login"))
         (dom/li :.nav-item
           (dom/div :.nav-link
-            #?(:cljs {:onClick #(prim/transact! this `[(load-settings {})])})
-            (dom/i :.ion-gear-a)
-            "Load settings"))
-        (dom/li :.nav-item
-          (dom/div :.nav-link
-            #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/sign-up})])})
+            #?(:cljs {:onClick #(prim/transact! this `[(sign-up {:email "foobar@nope.com" :password "foobar"})])})
             "Sign up"))))))
 
 (def ui-nav-bar (prim/factory NavBar))
@@ -287,6 +280,24 @@
 (defsc Settings [this props]
   {:initial-state (fn [params] {})
    :query         [:user/photo :user/name :user/bio :user/email]})
+
+#?(:cljs
+   (defmutation login [credentials]
+     (action [{:keys [state] :as env}]
+       (df/load-action env :user/whoami SettingsForm
+         {:params {:login credentials}
+          :without #{:fulcro.ui.form-state/config}}))
+     (remote [env]
+       (df/remote-load env))))
+
+#?(:cljs
+   (defmutation sign-up [new-user]
+     (action [{:keys [state] :as env}]
+       (df/load-action env :user/whoami SettingsForm
+         {:params {:sign-up new-user}
+          :without #{:fulcro.ui.form-state/config}}))
+     (remote [env]
+       (df/remote-load env))))
 
 #?(:cljs
    (defmutation load-settings [_]
