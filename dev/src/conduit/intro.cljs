@@ -98,10 +98,11 @@
                                   :screen.profile/liked-articles {2 {:screen :screen.profile/liked-articles :user-id 2}}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query [{:router/top (prim/get-query TopRouter {})}
-           {[:root/article-editor :article-to-edit] (prim/get-query comp/ArticleEditor)}]}
-  (let [user (get props :user/whoami)]
+           {[:root/article-editor :article-to-edit] (prim/get-query comp/ArticleEditor)}
+           {:user/whoami (prim/get-query comp/NavBar)}]}
+  (let [current-user (get props :user/whoami)]
     (dom/div {}
-      (comp/ui-nav-bar)
+      (comp/ui-nav-bar current-user)
       (ui-top router)
       (comp/ui-footer))
     #_
