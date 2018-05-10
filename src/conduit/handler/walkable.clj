@@ -8,10 +8,15 @@
             [fulcro.server :as server :refer [parser server-mutate defmutation]]
             [com.wsscode.pathom.core :as p]))
 
-(def remove-user-namespace
-  (into {}
-    (for [k [:username :name :email :bio :image :password]]
-      [(keyword "user" (name k)) k])))
+(defn find-user-in-params [sql-db params]
+  (cond
+    (:login params)
+    (let [{:keys [email password]} (:login params)]
+      (user/find-login sql-db email password))
+
+    (:sign-up params)
+    (let [new-user (:sign-up params)]
+      (user/create-user sql-db (rename-keys new-user mutations/remove-user-namespace)))))
 
 (def pre-processing-login
   {::p/wrap-read
@@ -19,20 +24,13 @@
      (fn [env]
        (if (and (= (-> env :ast :dispatch-key)
                   :user/whoami)
-             (-> env :ast :params))
-         (let [params                                   (-> env :ast :params)
-               {::sqb/keys [sql-db] :keys [jwt-secret]} env]
-           (if-let [user (cond
-                           (:login params)
-                           (let [{:keys [email password]} (:login params)]
-                             (user/find-login sql-db email password))
-
-                           (:sign-up params)
-                           (let [new-user (:sign-up params)]
-                             (user/create-user sql-db (rename-keys new-user remove-user-namespace))))]
-             (let [token (jwt/sign {:user-id (:id user)} jwt-secret)]
+             (map? (-> env :ast :params)))
+         (let [params                                       (-> env :ast :params)
+               {::sqb/keys [sql-db] :app/keys [jwt-secret]} env]
+           (if-let [{user-id :id} (find-user-in-params sql-db params)]
+             (let [token   (jwt/sign {:user/id user-id} jwt-secret)]
                (-> env
-                 (assoc :app/current-user (:id user))
+                 (assoc :app/current-user user-id)
                  reader
                  (assoc :token token)))
              {}))
