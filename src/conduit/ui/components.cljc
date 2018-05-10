@@ -8,6 +8,17 @@
     [fulcro.client.routing :as r]
     #?(:cljs [fulcro.client.dom :as dom] :clj [fulcro.client.dom-server :as dom])))
 
+(declare SettingsForm)
+
+#?(:cljs
+   (defn go-to-settings [this]
+     (prim/transact! this `[(use-settings-as-form {:user/id 19})
+                            (r/route-to {:handler :screen/settings})])))
+
+#?(:cljs
+   (defn log-in [this]
+     (prim/transact! this `[(mutations/login {:email "foobar@yep.com" :password "foobar"})])))
+
 (defsc NavBar [this _]
   (dom/nav :.navbar.navbar-light
     (dom/div :.container
@@ -16,21 +27,31 @@
       (dom/ul :.nav.navbar-nav.pull-xs-right
         (dom/li :.nav-item
           (dom/div :.nav-link.active
-            {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/home})])}
+            #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/home})])})
             "Home") )
         (dom/li :.nav-item
           (dom/a :.nav-link
-            {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/editor})])}
+            #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/editor})])})
             (dom/i :.ion-compose)
             "New Post") )
         (dom/li :.nav-item
           (dom/div :.nav-link
-            {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/settings})])}
+            #?(:cljs {:onClick #(go-to-settings this)})
             (dom/i :.ion-gear-a)
             "Settings"))
         (dom/li :.nav-item
           (dom/div :.nav-link
-            {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/sign-up})])}
+            #?(:cljs {:onClick #(log-in this)})
+            (dom/i :.ion-gear-a)
+            "Login"))
+        (dom/li :.nav-item
+          (dom/div :.nav-link
+            #?(:cljs {:onClick #(prim/transact! this `[(load-settings {})])})
+            (dom/i :.ion-gear-a)
+            "Load settings"))
+        (dom/li :.nav-item
+          (dom/div :.nav-link
+            #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/sign-up})])})
             "Sign up"))))))
 
 (def ui-nav-bar (prim/factory NavBar))
@@ -262,3 +283,95 @@
                 "Publish Article"))))))))
 
 (def ui-article-editor (prim/factory ArticleEditor))
+
+(defsc Settings [this props]
+  {:initial-state (fn [params] {})
+   :query         [:user/photo :user/name :user/bio :user/email]})
+
+#?(:cljs
+   (defmutation load-settings [_]
+     (action [{:keys [state] :as env}]
+       (df/load-action env :user/whoami SettingsForm {:without #{:fulcro.ui.form-state/config}}))
+     (remote [env]
+       (df/remote-load env))))
+
+#?(:cljs
+   (defmutation use-settings-as-form [{:user/keys [id]}]
+     (action [{:keys [state] :as env}]
+       (swap! state #(-> %
+                       (fs/add-form-config* SettingsForm [:user/by-id id])
+                       (assoc-in [:root/settings-form :settings] [:user/by-id id]))))))
+
+(defsc SettingsForm [this {:user/keys [id photo name bio email] :as props}]
+  {:query       [:user/id :user/photo :user/name :user/bio :user/email
+                 fs/form-config-join]
+   :ident [:user/by-id :user/id]
+   :form-fields #{:user/photo :user/name :user/bio :user/email}}
+  (dom/div :.settings-page
+    (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-6.offset-md-3.col-xs-12
+          (dom/h1 :.text-xs-center
+            "Your Settings")
+          (dom/form {}
+            (dom/fieldset {}
+              (dom/fieldset :.form-group
+                (dom/input :.form-control
+                  {:placeholder "URL of profile picture",
+                   :type        "text"
+                   :value       photo
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :user/photo})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :user/photo :event %))}))
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Your Name",
+                   :type        "text"
+                   :value       name
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :user/name})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :user/name :event %))}))
+              (dom/fieldset :.form-group
+                (dom/textarea :.form-control.form-control-lg
+                  {:rows        "8",
+                   :placeholder "Short bio about you"
+                   :value       (or bio "")
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :user/bio})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :user/bio :event %))}))
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Email",
+                   :type        "text"
+                   :value       email
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :user/email})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :user/email :event %))}))
+              #_
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Password",
+                   :type        "password"}))
+              (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
+                {:onClick
+                 #?(:clj  nil
+                    :cljs #(prim/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))]))}
+                "Update Settings"))))))))
+
+(def ui-settings-form (prim/factory SettingsForm))
