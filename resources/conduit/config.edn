@@ -56,7 +56,7 @@
   :down [#duct/resource "migrations/drop-table-comment-2018-04-23.sql"]}
 
  :conduit.handler.walkable/compile-schema
- {:columns [:user/email :user/token :user/username :user/bio :user/image
+ {:columns [:user/email :user/name :user/username :user/bio :user/image
             :article/slug :article/title :article/description :article/body
             :article/created-at :article/updated-at
             :tag/tag
