@@ -42,10 +42,23 @@
     "Profile main"
     (ui-profile-router router)))
 
+(defsc SettingScreen [this {settings [:root/settings-form :settings] :as props}]
+  {:initial-state (fn [params] {:screen             :screen/settings
+                                :screen-id          :top
+
+                                [:root/settings-form :settings]
+                                (prim/get-initial-state comp/SettingsForm {})})
+   :query         [:screen :screen-id
+                   {[:root/settings-form :settings] (prim/get-query comp/SettingsForm)}]}
+  (comp/ui-settings-form settings))
+
 (r/defrouter TopRouter :router/top
   (fn [this props] [(:screen props) :top])
-  :screen/home    comp/Home
-  :screen/profile ProfileMain)
+  :screen/home     comp/Home
+  :screen/settings SettingScreen
+  :screen/editor   comp/Home
+  :screen/sign-up  comp/Home
+  :screen/profile  ProfileMain)
 
 (def ui-top (prim/factory TopRouter))
 
@@ -53,6 +66,13 @@
   (r/routing-tree
     (r/make-route :screen/home
       [(r/router-instruction :router/top [:screen/home :top])])
+    (r/make-route :screen/editor
+      [(r/router-instruction :router/top [:screen/editor :top])])
+    (r/make-route :screen/settings
+      [(r/router-instruction :router/top [:screen/settings :top])])
+    (r/make-route :screen/sign-up
+      [(r/router-instruction :router/top [:screen/sign-up :top])])
+
     (r/make-route :screen.feed/global
       [(r/router-instruction :router/top [:screen/home :top])
        (r/router-instruction :router/feeds [:screen.feed/global :top])])
@@ -72,21 +92,18 @@
 
 (defsc Root [this {router :router/top :as props}]
   {:initial-state (fn [params] (merge routing-tree
+                                 {:root/settings-form {:settings [:user/whoami '_]}
+                                  :user/whoami {:user/name "Guest" :user/email "non@exist.com"}}
                                  {:screen.profile/owned-articles {2 {:screen :screen.profile/owned-articles :user-id 2}}
                                   :screen.profile/liked-articles {2 {:screen :screen.profile/liked-articles :user-id 2}}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query [{:router/top (prim/get-query TopRouter {})}
-           {:user/whoami (prim/get-query comp/Profile)}
            {[:root/article-editor :article-to-edit] (prim/get-query comp/ArticleEditor)}]}
   (let [user (get props :user/whoami)]
     (dom/div {}
-      (dom/div {}
-        (dom/a {:onClick #(go-to-home this)} "Main")
-        (dom/a {:onClick #(prim/transact! this `[(r/route-to {:handler      :screen.profile/liked-articles
-                                                              :route-params {:user-id 2}})])} "Liked")
-        (dom/a {:onClick #(prim/transact! this `[(r/route-to {:handler      :screen.profile/owned-articles
-                                                              :route-params {:user-id 2}})])} "Owned"))
-      (ui-top router))
+      (comp/ui-nav-bar)
+      (ui-top router)
+      (comp/ui-footer))
     #_
     (dom/div {}
       (dom/div {:onClick #(prim/transact! this `[(mutations/login {:email "foobar@yep.com" :password "foobar"})])} "Login")
