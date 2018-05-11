@@ -4,7 +4,7 @@
 
 (defprotocol Article
   (article-by-slug [db article])
-  (create-article [db article])
+  (create-article [db author-id article])
   (destroy-article [db author-id article-slug])
   (update-article [db author-id id article])
   (like [db user-id article-slug])
@@ -19,14 +19,16 @@
   (article-by-slug [{db :spec} article-slug]
     (:id (first (jdbc/find-by-keys db "\"article\"" {:slug article-slug}))))
 
-  (create-article [{db :spec} article]
+  (create-article [{db :spec} author-id article]
     (let [tags           (:tags article)
-          article        (select-keys article [:author_id :title :slug :description :body])
+          article        (-> article (select-keys [:title :slug :description :body])
+                           (assoc :author_id author-id))
           results        (jdbc/insert! db "\"article\"" article)
-          new-article-id (-> results ffirst val)]
-      (when (and new-article-id (seq tags))
-        (jdbc/insert-multi! db "\"tag\""
-          (mapv (fn [tag] {:article_id new-article-id :tag tag}) tags))
+          new-article-id (-> results first :id)]
+      (when new-article-id
+        (when (seq tags)
+          (jdbc/insert-multi! db "\"tag\""
+            (mapv (fn [tag] {:article_id new-article-id :tag tag}) tags)))
         new-article-id)))
 
   (destroy-article [db author-id article-slug]
