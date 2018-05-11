@@ -5,6 +5,8 @@
             [walkable.sql-query-builder :as sqb]
             [conduit.util :as util]
             [duct.logger :refer [log]]
+            [fulcro.tempid :refer [tempid?]]
+            [fulcro.client.primitives :as prim]
             [fulcro.server :as server :refer [defmutation]]))
 
 (def remove-user-namespace
@@ -17,10 +19,13 @@
   (action [{:keys [duct/logger] ::sqb/keys [sql-db] :app/keys [current-user]}]
     ;;(log logger :info :article diff)
     (if current-user
-      (article/update-article sql-db current-user
-        (second (util/get-ident diff)) ;; article-id
-        (-> (util/get-item diff)
-          (rename-keys remove-article-namespace)))
+      (let [[_ article-id] (util/get-ident diff)
+            article        (-> (util/get-item diff)
+                             (rename-keys remove-article-namespace))]
+        (if (tempid? article-id)
+          (let [new-id (article/create-article sql-db current-user article)]
+            {::prim/tempids {article-id new-id}})
+          (article/update-article sql-db current-user article-id article)))
       {})))
 
 (defmutation submit-settings [diff]
