@@ -6,14 +6,6 @@
             [ataraxy.response :as response]
             [integrant.core :as ig]))
 
-(defmethod ig/init-key ::create [_ {:keys [db]}]
-  (fn [{[_ article] :ataraxy/result
-        id          :identity}]
-    (when id
-      (let [article-id (article/create-article db
-                         (assoc article :author_id (:user-id id)))]
-        [::response/created (str "/artiles/" article-id)]))))
-
 (defmethod ig/init-key ::destroy [_ {:keys [db]}]
   (fn [{[_ article-slug] :ataraxy/result
         id          :identity}]
