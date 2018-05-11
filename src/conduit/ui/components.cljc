@@ -26,11 +26,12 @@
           (dom/div :.nav-link.active
             #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/home})])})
             "Home") )
-        (dom/li :.nav-item
-          (dom/a :.nav-link
-            #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/editor})])})
-            (dom/i :.ion-compose)
-            "New Post"))
+        (when id
+          (dom/li :.nav-item
+            (dom/a :.nav-link
+              #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/editor})])})
+              (dom/i :.ion-compose)
+              "New Post")))
         (when id
           (dom/li :.nav-item
             (dom/div :.nav-link
