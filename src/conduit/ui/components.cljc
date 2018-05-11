@@ -3,6 +3,7 @@
     [fulcro.client.primitives :as prim :refer [defsc]]
     [fulcro.ui.form-state :as fs]
     [conduit.handler.mutations :as mutations]
+    [fulcro.tempid :refer [tempid?]]
     #?(:cljs [fulcro.client.mutations :as m :refer [defmutation]])
     #?(:cljs [fulcro.client.data-fetch :as df])
     [fulcro.client.routing :as r]
@@ -29,7 +30,9 @@
         (when id
           (dom/li :.nav-item
             (dom/a :.nav-link
-              #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/editor})])})
+              #?(:cljs {:onClick #(prim/transact! this `[(create-temp-article-if-not-found)
+                                                         (use-current-temp-article-as-form)
+                                                         (r/route-to {:handler :screen/editor})])})
               (dom/i :.ion-compose)
               "New Post")))
         (when id
@@ -220,6 +223,29 @@
 (declare ArticleEditor)
 
 #?(:cljs
+   (defmutation create-temp-article-if-not-found [_]
+     (action [{:keys [state]}]
+       (swap! state #(if (contains? (:root/article-editor %) :current-temp-article)
+                       %
+                       (let [tempid   (prim/tempid)
+                             new-item #:article {:id          tempid
+                                                 :title       ""
+                                                 :slug        ""
+                                                 :description ""
+                                                 :body        ""
+                                                 :tags        []}]
+                         (-> (assoc-in % [:article/by-id tempid] new-item)
+                           (assoc-in [:root/article-editor :current-temp-article] [:article/by-id tempid]))))))))
+
+#?(:cljs
+   (defmutation use-current-temp-article-as-form [_]
+     (action [{:keys [state]}]
+       (swap! state #(let [temp-ident (get-in % [:root/article-editor :current-temp-article])]
+                       (-> %
+                         (fs/add-form-config* ArticleEditor temp-ident)
+                         (assoc-in [:root/article-editor :article-to-edit] temp-ident)))))))
+
+#?(:cljs
    (defmutation use-article-as-form [{:article/keys [id]}]
      (action [{:keys [state]}]
        (swap! state #(-> %
@@ -263,6 +289,18 @@
                    #?(:clj nil
                       :cljs #(m/set-string! this :article/description :event %))}))
               (dom/fieldset :.form-group
+                (dom/input :.form-control
+                  {:placeholder "Slug",
+                   :type        "text"
+                   :value       slug
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :article/slug})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :article/slug :event %))}))
+              (dom/fieldset :.form-group
                 (dom/textarea :.form-control
                   {:rows  "8", :placeholder "Write your article (in markdown)"
                    :value body
@@ -282,8 +320,10 @@
                 {:type "button"
                  :onClick
                  #?(:clj  nil
-                    :cljs #(prim/transact! this `[(mutations/submit-article ~{:article/id id :diff (fs/dirty-fields props false)})]))}
-                "Publish Article"))))))))
+                    :cljs #(prim/transact! this `[(mutations/submit-article ~(fs/dirty-fields props false))]))}
+                (if (tempid? id)
+                  "Publish Article"
+                  "Update Article")))))))))
 
 (def ui-article-editor (prim/factory ArticleEditor))
 
