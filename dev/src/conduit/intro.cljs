@@ -52,11 +52,23 @@
                    {[:root/settings-form :settings] (prim/get-query comp/SettingsForm)}]}
   (comp/ui-settings-form settings))
 
+(defsc EditorScreen [this props]
+  {:initial-state (fn [params] {:screen             :screen/editor
+                                :screen-id          :top
+
+                                [:root/article-editor :article-to-edit]
+                                (prim/get-initial-state comp/ArticleEditor {})})
+   :query         [:screen :screen-id
+                   {[:root/article-editor :article-to-edit] (prim/get-query comp/ArticleEditor)}]}
+  (comp/ui-article-editor (get props [:root/article-editor :article-to-edit])))
+
+;; (dom/div {:onClick #(prim/transact! this `[(comp/use-article-as-form #:article{:id 2})])} "Edit")
+
 (r/defrouter TopRouter :router/top
   (fn [this props] [(:screen props) :top])
   :screen/home     comp/Home
   :screen/settings SettingScreen
-  :screen/editor   comp/Home
+  :screen/editor   EditorScreen
   :screen/sign-up  comp/Home
   :screen/profile  ProfileMain)
 
@@ -98,21 +110,12 @@
                                   :screen.profile/liked-articles {2 {:screen :screen.profile/liked-articles :user-id 2}}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query [{:router/top (prim/get-query TopRouter {})}
-           {[:root/article-editor :article-to-edit] (prim/get-query comp/ArticleEditor)}
            {:user/whoami (prim/get-query comp/NavBar)}]}
   (let [current-user (get props :user/whoami)]
     (dom/div {}
       (comp/ui-nav-bar current-user)
       (ui-top router)
-      (comp/ui-footer))
-    #_
-    (dom/div {}
-      (dom/div {:onClick #(prim/transact! this `[(mutations/login {:email "foobar@yep.com" :password "foobar"})])} "Login")
-      (dom/div {:onClick #(df/load this :user/whoami comp/Profile)} "Update me")
-      (comp/ui-profile user)
-      (dom/div {:onClick #(prim/transact! this `[(comp/use-article-as-form #:article{:id 2})])} "Edit")
-      (comp/ui-article-editor (get props [:root/article-editor :article-to-edit]))
-      )))
+      (comp/ui-footer))))
 
 (def token-store (atom "No token"))
 
