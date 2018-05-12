@@ -97,14 +97,11 @@
                    :user/followed-by-me?   :one
                    :article/liked-by-count :one}}
 
- :conduit.handler.sql/run-query {}
-
  :conduit.handler.transit-format/transit-json-format {}
 
  :conduit.handler.walkable/resolver
  #:walkable.sql-query-builder {:com.wsscode.pathom.core/placeholder-prefixes #{"placeholder" "ph"}
                                :duct/logger                                  #ig/ref :duct/logger
                                :app/jwt-secret                               #duct/env "JWT_SECRET"
-                               :run-query                                    #ig/ref :conduit.handler.sql/run-query
-                               :sql-db                                       #ig/ref :duct.database/sql
+                               :app/db                                       #ig/ref :duct.database/sql
                                :sql-schema                                   #ig/ref :conduit.handler.walkable/compile-schema}}
