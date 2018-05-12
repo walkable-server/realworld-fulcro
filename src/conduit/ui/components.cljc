@@ -165,7 +165,8 @@
     (dom/ul :.nav.nav-pills.outline-active
       (dom/li :.nav-item
         (dom/div :.nav-link.disabled
-          {:onClick #(prim/transact! this `[(r/route-to {:handler :screen.feed/personal})])}
+          {:onClick #(prim/transact! this `[(load-personal-feed)
+                                            (r/route-to {:handler :screen.feed/personal})])}
           "Your Feed"))
       (dom/li :.nav-item
         (dom/div :.nav-link.active
@@ -330,6 +331,13 @@
 (defsc Settings [this props]
   {:initial-state (fn [params] {})
    :query         [:user/image :user/name :user/bio :user/email]})
+
+#?(:cljs
+   (defmutation load-personal-feed [_]
+     (action [{:keys [state] :as env}]
+       (df/load-action env :articles/feed ArticlePreview))
+     (remote [env]
+       (df/remote-load env))))
 
 #?(:cljs
    (defmutation login [credentials]
