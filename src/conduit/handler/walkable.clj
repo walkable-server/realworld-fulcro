@@ -4,19 +4,20 @@
             [clojure.set :refer [rename-keys]]
             [conduit.boundary.user :as user]
             [buddy.sign.jwt :as jwt]
+            [clojure.java.jdbc :as jdbc]
             [conduit.handler.mutations :as mutations]
             [fulcro.server :as server :refer [parser server-mutate defmutation]]
             [com.wsscode.pathom.core :as p]))
 
-(defn find-user-in-params [sql-db params]
+(defn find-user-in-params [db params]
   (cond
     (:login params)
     (let [{:keys [email password]} (:login params)]
-      (user/find-login sql-db email password))
+      (user/find-login db email password))
 
     (:sign-up params)
     (let [new-user (:sign-up params)]
-      (user/create-user sql-db (rename-keys new-user mutations/remove-user-namespace)))))
+      (user/create-user db (rename-keys new-user mutations/remove-user-namespace)))))
 
 (def pre-processing-login
   {::p/wrap-read
@@ -26,35 +27,15 @@
                   :user/whoami)
              (map? (-> env :ast :params)))
          (let [params                                       (-> env :ast :params)
-               {::sqb/keys [sql-db] :app/keys [jwt-secret]} env]
-           (if-let [{user-id :id} (find-user-in-params sql-db params)]
-             (let [token   (jwt/sign {:user/id user-id} jwt-secret)]
+               {:app/keys [db jwt-secret]} env]
+           (if-let [{user-id :id} (find-user-in-params db params)]
+             (let [token (jwt/sign {:user/id user-id} jwt-secret)]
                (-> env
                  (assoc :app/current-user user-id)
                  reader
                  (assoc :token token)))
              {}))
          (reader env))))})
-#_
-(def post-processing
-  {::p/wrap-read
-   (fn [reader]
-     (fn [env]
-       (let [k (-> env :ast :dispatch-key)]
-         (case k
-           :article/tags
-           (let [tags (reader env)]
-             (mapv :tag/tag tags))
-
-           (:article/liked-by-me? :user/followed-by-me?)
-           (let [{n :agg/count} (reader env)]
-             (not= 0 n))
-
-           (:article/liked-by-count :user/articles-count)
-           (let [{n :agg/count} (reader env)]
-             n)
-           ;; default
-           (reader env)))))})
 
 (def query-top-tags
   "SELECT \"tag\" AS \"tag/tag\",
@@ -96,8 +77,12 @@
       :extra-conditions extra-conditions)
     sqb/compile-schema))
 
-(defmethod ig/init-key ::resolver [_ env]
+(defmethod ig/init-key ::resolver [_ {:app/keys [db] :as env}]
   (fn [{current-user :identity
         query        :body-params}]
-    {:body (pathom-parser (assoc env :app/current-user (:user/id current-user))
-             query)}))
+    (jdbc/with-db-connection [conn (:spec db)]
+      {:body (pathom-parser (merge env
+                              #::sqb{:sql-db           conn
+                                     :run-query        jdbc/query
+                                     :app/current-user (:user/id current-user)})
+               query)})))
