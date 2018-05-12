@@ -166,34 +166,44 @@
 
 (def ui-feeds-router (prim/factory FeedsRouter))
 
-(defn select-feeds [this]
-  (dom/div :.feed-toggle
-    (dom/ul :.nav.nav-pills.outline-active
-      (dom/li :.nav-item
-        (dom/div :.nav-link.disabled
-          {:onClick #(prim/transact! this `[(load-personal-feed)
-                                            (r/route-to {:handler :screen.feed/personal})])}
-          "Your Feed"))
-      (dom/li :.nav-item
-        (dom/div :.nav-link.active
-          {:onClick #(prim/transact! this `[(r/route-to {:handler :screen.feed/global})])}
-          "Global Feed")))))
+(defsc FeedSelector [this props]
+  {:initial-state (fn [params] {})
+   :query         [[r/routers-table '_]]}
+  (let [[current-screen _] (r/current-route props :router/feeds)]
+    (dom/div :.feed-toggle
+      (dom/ul :.nav.nav-pills.outline-active
+        (dom/li :.nav-item
+          (dom/div :.nav-link
+            {:className (if (= current-screen :screen.feed/personal) "active" "disabled")
+             :onClick #(prim/transact! this `[(load-personal-feed)
+                                              (r/route-to {:handler :screen.feed/personal})])}
+            "Your Feed"))
+        (dom/li :.nav-item
+          (dom/div :.nav-link
+            {:className (if (= current-screen :screen.feed/global) "active" "disabled")
+             :onClick #(prim/transact! this `[(r/route-to {:handler :screen.feed/global})])}
+            "Global Feed"))))))
 
-(defsc Home [this {tags   :tags/all
-                   router :router/feeds}]
-  {:initial-state (fn [params] {:screen       :screen/home
-                                :screen-id    :top
-                                :router/feeds (prim/get-initial-state FeedsRouter {})})
+(def ui-feed-selector (prim/factory FeedSelector))
 
-   :query         [:screen :screen-id
-                   {:router/feeds (prim/get-query FeedsRouter)}
-                   {[:tags/all '_] (prim/get-query Tag)}]}
+(defsc Home [this {tags          :tags/all
+                   router        :router/feeds
+                   feed-selector :feed-selector}]
+  {:initial-state (fn [params] {:screen        :screen/home
+                                :screen-id     :top
+                                :feed-selector (prim/get-initial-state FeedSelector)
+                                :router/feeds  (prim/get-initial-state FeedsRouter {})})
+
+   :query [:screen :screen-id
+           {:feed-selector (prim/get-query FeedSelector)}
+           {:router/feeds (prim/get-query FeedsRouter)}
+           {[:tags/all '_] (prim/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (select-feeds this)
+          (ui-feed-selector feed-selector)
           (ui-feeds-router router))
         (ui-tags tags)))))
 
