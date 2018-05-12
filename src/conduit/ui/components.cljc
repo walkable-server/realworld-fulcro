@@ -155,8 +155,8 @@
 
 (r/defrouter FeedsRouter :router/feeds
   (fn [this props] [(:screen props) :top])
-  :screen.feed/personal PersonalFeed
-  :screen.feed/global   GlobalFeed)
+  :screen.feed/global   GlobalFeed
+  :screen.feed/personal PersonalFeed)
 
 (def ui-feeds-router (prim/factory FeedsRouter))
 
@@ -436,3 +436,23 @@
                 "Update Settings"))))))))
 
 (def ui-settings-form (prim/factory SettingsForm))
+
+(defsc SettingScreen [this {settings [:root/settings-form :settings] :as props}]
+  {:initial-state (fn [params] {:screen             :screen/settings
+                                :screen-id          :top
+
+                                [:root/settings-form :settings]
+                                (prim/get-initial-state SettingsForm {})})
+   :query         [:screen :screen-id
+                   {[:root/settings-form :settings] (prim/get-query SettingsForm)}]}
+  (ui-settings-form settings))
+
+(defsc EditorScreen [this props]
+  {:initial-state (fn [params] {:screen             :screen/editor
+                                :screen-id          :top
+
+                                [:root/article-editor :article-to-edit]
+                                (prim/get-initial-state ArticleEditor {})})
+   :query         [:screen :screen-id
+                   {[:root/article-editor :article-to-edit] (prim/get-query ArticleEditor)}]}
+  (ui-article-editor (get props [:root/article-editor :article-to-edit])))

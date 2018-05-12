@@ -42,33 +42,13 @@
     "Profile main"
     (ui-profile-router router)))
 
-(defsc SettingScreen [this {settings [:root/settings-form :settings] :as props}]
-  {:initial-state (fn [params] {:screen             :screen/settings
-                                :screen-id          :top
-
-                                [:root/settings-form :settings]
-                                (prim/get-initial-state comp/SettingsForm {})})
-   :query         [:screen :screen-id
-                   {[:root/settings-form :settings] (prim/get-query comp/SettingsForm)}]}
-  (comp/ui-settings-form settings))
-
-(defsc EditorScreen [this props]
-  {:initial-state (fn [params] {:screen             :screen/editor
-                                :screen-id          :top
-
-                                [:root/article-editor :article-to-edit]
-                                (prim/get-initial-state comp/ArticleEditor {})})
-   :query         [:screen :screen-id
-                   {[:root/article-editor :article-to-edit] (prim/get-query comp/ArticleEditor)}]}
-  (comp/ui-article-editor (get props [:root/article-editor :article-to-edit])))
-
 ;; (dom/div {:onClick #(prim/transact! this `[(comp/use-article-as-form #:article{:id 2})])} "Edit")
 
 (r/defrouter TopRouter :router/top
   (fn [this props] [(:screen props) :top])
   :screen/home     comp/Home
-  :screen/settings SettingScreen
-  :screen/editor   EditorScreen
+  :screen/settings comp/SettingScreen
+  :screen/editor   comp/EditorScreen
   :screen/sign-up  comp/Home
   :screen/profile  ProfileMain)
 
