@@ -11,8 +11,8 @@
 
  :duct.middleware.web/defaults {:security {:anti-forgery false}}
  :duct.middleware.web/format   {:default-format "application/transit+json"
-                                :formats {"application/transit+json"
-                                          #ig/ref :conduit.handler.transit-format/transit-json-format}}
+                                :formats        {"application/transit+json"
+                                                 #ig/ref :conduit.handler.transit-format/transit-json-format}}
 
  :duct.router/ataraxy
  {:middleware {:jws-auth      #ig/ref :duct.middleware.buddy/authentication
