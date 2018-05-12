@@ -84,8 +84,11 @@
           :article/author [:article/author-id :user/id]
 
           :comment/author [:comment/author-id :user/id]}
-  :reversed-joins {:user/follows :user/followed-by
-                   :user/like    :article/liked-by}
+
+  :reversed-joins {:user/follows  :user/followed-by
+                   :user/like     :article/liked-by
+                   :user/articles :article/author}
+
   :pseudo-columns {:agg/count [:count-*]}
   :cardinality    {:user/by-id             :one
                    :user/by-username       :one
