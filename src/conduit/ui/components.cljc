@@ -249,6 +249,7 @@
                                                  :slug        ""
                                                  :description ""
                                                  :body        ""
+                                                 :author      (:user/whoami %)
                                                  :tags        []}]
                          (-> (assoc-in % [:article/by-id tempid] new-item)
                            (assoc-in [:root/article-editor :current-temp-article] [:article/by-id tempid]))))))))
