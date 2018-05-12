@@ -26,7 +26,7 @@
        (if (and (= (-> env :ast :dispatch-key)
                   :user/whoami)
              (map? (-> env :ast :params)))
-         (let [params                                       (-> env :ast :params)
+         (let [params                      (-> env :ast :params)
                {:app/keys [db jwt-secret]} env]
            (if-let [{user-id :id} (find-user-in-params db params)]
              (let [token (jwt/sign {:user/id user-id} jwt-secret)]
