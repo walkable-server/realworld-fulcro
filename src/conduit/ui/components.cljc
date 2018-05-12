@@ -243,15 +243,20 @@
      (action [{:keys [state]}]
        (swap! state #(if (contains? (:root/article-editor %) :current-temp-article)
                        %
-                       (let [tempid   (prim/tempid)
+                       (let [tempid            (prim/tempid)
+                             current-user      (:user/whoami %)
+                             [_ current-user-id] current-user
+
                              new-item #:article {:id          tempid
                                                  :title       ""
                                                  :slug        ""
                                                  :description ""
                                                  :body        ""
-                                                 :author      (:user/whoami %)
+                                                 :author      current-user
                                                  :tags        []}]
                          (-> (assoc-in % [:article/by-id tempid] new-item)
+                           (update-in [:user/by-id current-user-id :user/articles]
+                             (fnil conj []) [:article/by-id tempid])
                            (assoc-in [:root/article-editor :current-temp-article] [:article/by-id tempid]))))))))
 
 #?(:cljs
