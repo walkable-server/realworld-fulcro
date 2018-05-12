@@ -202,7 +202,6 @@
    :query [:user/id :user/name :user/username :user/image :user/bio
            {:user/like (prim/get-query ArticlePreview)}]}
   (dom/div :.profile-page
-    ;;(dom/div {:onClick #(df/load this [:user/by-id 19] Profile)} "update this person")
     (dom/div :.user-info
       (dom/div :.container
         (dom/div :.row
