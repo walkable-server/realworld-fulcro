@@ -16,49 +16,55 @@
      (prim/transact! this `[(use-settings-as-form {:user/id ~id})
                             (r/route-to {:handler :screen/settings})])))
 
-(defsc NavBar [this {:user/keys [id]}]
-  {:query [:user/id]}
-  (dom/nav :.navbar.navbar-light
-    (dom/div :.container
-      (dom/div :.navbar-brand
-        "conduit")
-      (dom/ul :.nav.navbar-nav.pull-xs-right
-        (dom/li :.nav-item
-          (dom/div :.nav-link.active
-            #?(:cljs {:onClick #(prim/transact! this `[(r/route-to {:handler :screen/home})])})
-            "Home") )
-        (when id
-          (dom/li :.nav-item
-            (dom/a :.nav-link
-              #?(:cljs {:onClick #(prim/transact! this `[(create-temp-article-if-not-found)
-                                                         (use-current-temp-article-as-form)
-                                                         (r/route-to {:handler :screen/editor})])})
-              (dom/i :.ion-compose)
-              "New Post")))
-        (when id
+(defsc NavBar [this {:user/keys [id] :as props}]
+  {:initial-state (fn [params] {})
+   :query         [:user/id
+                   [r/routers-table '_]]}
+  (let [[current-screen _] (r/current-route props :router/top)]
+    (dom/nav :.navbar.navbar-light
+      (dom/div :.container
+        (dom/div :.navbar-brand
+          "conduit")
+        (dom/ul :.nav.navbar-nav.pull-xs-right
           (dom/li :.nav-item
             (dom/div :.nav-link
-              #?(:cljs {:onClick #(go-to-settings this {:user/id id})})
-              (dom/i :.ion-gear-a)
-              "Settings")))
-        (when-not id
-          (dom/li :.nav-item
-            (dom/div :.nav-link
-              #?(:cljs {:onClick #(prim/transact! this `[(login {:email "jake@jake.jake" :password "foobar"})])})
-              (dom/i :.ion-gear-a)
-              "Login")))
+              #?(:cljs {:className (when (= current-screen :screen/home) "active")
+                        :onClick #(prim/transact! this `[(r/route-to {:handler :screen/home})])})
+              "Home") )
+          (when id
+            (dom/li :.nav-item
+              (dom/a :.nav-link
+                #?(:cljs {:className (when (= current-screen :screen/editor) "active")
+                          :onClick #(prim/transact! this `[(create-temp-article-if-not-found)
+                                                           (use-current-temp-article-as-form)
+                                                           (r/route-to {:handler :screen/editor})])})
+                (dom/i :.ion-compose)
+                "New Post")))
+          (when id
+            (dom/li :.nav-item
+              (dom/div :.nav-link
+                #?(:cljs {:className (when (= current-screen :screen/settings) "active")
+                          :onClick #(go-to-settings this {:user/id id})})
+                (dom/i :.ion-gear-a)
+                "Settings")))
+          (when-not id
+            (dom/li :.nav-item
+              (dom/div :.nav-link
+                #?(:cljs {:onClick #(prim/transact! this `[(login {:email "jake@jake.jake" :password "foobar"})])})
+                (dom/i :.ion-gear-a)
+                "Login")))
 
-        (when-not id
-          (dom/li :.nav-item
-            (dom/div :.nav-link
-              #?(:cljs {:onClick #(prim/transact! this
-                                    `[(sign-up #:user{:username "jake",
-                                                      :name     "Jake Ekaj"
-                                                      :email    "jake@jake.jake"
-                                                      :password "foobar"
-                                                      :bio      "I work at statefarm",
-                                                      :image    "https://static.productionready.io/images/smiley-cyrus.jpg"})])})
-              "Sign up")))))))
+          (when-not id
+            (dom/li :.nav-item
+              (dom/div :.nav-link
+                #?(:cljs {:onClick #(prim/transact! this
+                                      `[(sign-up #:user{:username "jake",
+                                                        :name     "Jake Ekaj"
+                                                        :email    "jake@jake.jake"
+                                                        :password "foobar"
+                                                        :bio      "I work at statefarm",
+                                                        :image    "https://static.productionready.io/images/smiley-cyrus.jpg"})])})
+                "Sign up"))))))))
 
 (def ui-nav-bar (prim/factory NavBar))
 
