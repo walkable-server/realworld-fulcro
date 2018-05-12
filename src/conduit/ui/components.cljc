@@ -191,7 +191,7 @@
                    feed-selector :feed-selector}]
   {:initial-state (fn [params] {:screen        :screen/home
                                 :screen-id     :top
-                                :feed-selector (prim/get-initial-state FeedSelector)
+                                :feed-selector (prim/get-initial-state FeedSelector {})
                                 :router/feeds  (prim/get-initial-state FeedsRouter {})})
 
    :query [:screen :screen-id
