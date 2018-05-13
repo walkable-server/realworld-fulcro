@@ -37,7 +37,8 @@
                 #?(:cljs {:className (when (= current-screen :screen/editor) "active")
                           :onClick #(prim/transact! this `[(create-temp-article-if-not-found)
                                                            (use-current-temp-article-as-form)
-                                                           (r/route-to {:handler :screen/editor})])})
+                                                           (r/route-to {:handler :screen/editor
+                                                                        :route-params  {:screen-id :current-temp-article}})])})
                 (dom/i :.ion-compose)
                 "New Post")))
           (when id
@@ -243,8 +244,8 @@
      (action [{:keys [state]}]
        (swap! state #(if (contains? (:root/article-editor %) :current-temp-article)
                        %
-                       (let [tempid            (prim/tempid)
-                             current-user      (:user/whoami %)
+                       (let [tempid              (prim/tempid)
+                             current-user        (:user/whoami %)
                              [_ current-user-id] current-user
 
                              new-item #:article {:id          tempid
@@ -262,20 +263,26 @@
 #?(:cljs
    (defmutation use-current-temp-article-as-form [_]
      (action [{:keys [state]}]
-       (swap! state #(let [temp-ident (get-in % [:root/article-editor :current-temp-article])]
+       (swap! state #(let [temp-ident (get-in % [:root/article-editor :current-temp-article])
+                           [_ tempid] temp-ident]
                        (-> %
                          (fs/add-form-config* ArticleEditor temp-ident)
-                         (assoc-in [:root/article-editor :article-to-edit] temp-ident)))))))
+                         (assoc-in [:screen/editor :current-temp-article]
+                           {:screen    :screen/editor
+                            :screen-id :current-temp-article
+                            :article   temp-ident})))))))
 
 #?(:cljs
    (defmutation use-article-as-form [{:article/keys [id]}]
      (action [{:keys [state]}]
        (swap! state #(-> %
                        (fs/add-form-config* ArticleEditor [:article/by-id id])
+                       ;; fix me: see use-current-temp-article-as-form
                        (assoc-in [:root/article-editor :article-to-edit] [:article/by-id id]))))))
 
 (defsc ArticleEditor [this {:article/keys [id slug title description body] :as props}]
-  {:query       [:article/id :article/slug  :article/title :article/description :article/body
+  {:initial-state (fn [{:article/keys [id]}] #:article{:id id})
+   :query       [:article/id :article/slug  :article/title :article/description :article/body
                  fs/form-config-join]
    :ident       [:article/by-id :article/id]
    :form-fields #{:article/slug  :article/title
@@ -476,12 +483,11 @@
                    {[:root/settings-form :settings] (prim/get-query SettingsForm)}]}
   (ui-settings-form settings))
 
-(defsc EditorScreen [this props]
-  {:initial-state (fn [params] {:screen             :screen/editor
-                                :screen-id          :top
-
-                                [:root/article-editor :article-to-edit]
-                                (prim/get-initial-state ArticleEditor {})})
-   :query         [:screen :screen-id
-                   {[:root/article-editor :article-to-edit] (prim/get-query ArticleEditor)}]}
-  (ui-article-editor (get props [:root/article-editor :article-to-edit])))
+(defsc EditorScreen [this {:keys [screen screen-id article]}]
+  {:ident         (fn [] [screen screen-id])
+   :initial-state (fn [params] {:screen    :screen/editor
+                                :screen-id :current-temp-article
+                                :article   (prim/get-initial-state ArticleEditor {})})
+   :query         (fn [] [:screen :screen-id
+                          {:article (prim/get-query ArticleEditor)}])}
+  (ui-article-editor article))
