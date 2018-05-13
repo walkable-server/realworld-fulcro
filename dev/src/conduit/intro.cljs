@@ -45,7 +45,8 @@
 ;; (dom/div {:onClick #(prim/transact! this `[(comp/use-article-as-form #:article{:id 2})])} "Edit")
 
 (r/defrouter TopRouter :router/top
-  (fn [this props] [(:screen props) :top])
+  ;;(fn [this props] [(:screen props) :top])
+  [:screen :screen-id]
   :screen/home     comp/Home
   :screen/settings comp/SettingScreen
   :screen/editor   comp/EditorScreen
@@ -58,8 +59,10 @@
   (r/routing-tree
     (r/make-route :screen/home
       [(r/router-instruction :router/top [:screen/home :top])])
+
     (r/make-route :screen/editor
-      [(r/router-instruction :router/top [:screen/editor :top])])
+      [(r/router-instruction :router/top [:screen/editor :param/screen-id])])
+
     (r/make-route :screen/settings
       [(r/router-instruction :router/top [:screen/settings :top])])
     (r/make-route :screen/sign-up
