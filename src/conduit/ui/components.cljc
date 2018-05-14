@@ -26,6 +26,13 @@
                       :route-params {:screen-id :current-temp-article}})
          :article-to-edit])))
 
+#?(:cljs
+   (defn edit-article [component {:article/keys [id] :as article}]
+     (prim/transact! component
+       `[(use-article-as-form ~article)
+         (r/route-to {:handler      :screen/editor
+                      :route-params {:screen-id ~id}})
+         :article-to-edit])))
 
 (defsc NavBar [this {:user/keys [id] :as props}]
   {:initial-state (fn [params] {})
