@@ -163,20 +163,32 @@
    :ident         (fn [] [screen :top])
    :query         [:screen
                    {[:articles/feed '_] (prim/get-query ArticlePreview)}]}
-  (dom/div
-    (if (seq articles)
-      (mapv ui-article-preview articles)
-      "You have no article")))
+  (let [edit-article   (fn [{:article/keys [id] :as article}]
+                         #?(:cljs (edit-article this article)))
+        delete-article (fn [{:article/keys [id] :as article}]
+                         (prim/transact! this `[(mutations/delete-article ~article)]))]
+    (dom/div
+      (if (seq articles)
+        (map (fn [a] (ui-article-preview (prim/computed a {:on-delete delete-article
+                                                           :on-edit   edit-article})))
+          articles)
+        "You have no article"))))
 
 (defsc GlobalFeed [this {:keys [screen] articles :articles/all}]
   {:initial-state {:screen :screen.feed/global}
    :ident         (fn [] [screen :top])
    :query         [:screen
                    {[:articles/all '_] (prim/get-query ArticlePreview)}]}
-  (dom/div
-    (if (seq articles)
-      (mapv ui-article-preview articles)
-      "No article")))
+  (let [edit-article   (fn [{:article/keys [id] :as article}]
+                         #?(:cljs (edit-article this article)))
+        delete-article   (fn [{:article/keys [id] :as article}]
+                           (prim/transact! this `[(mutations/delete-article ~article)]))]
+    (dom/div
+      (if (seq articles)
+        (map (fn [a] (ui-article-preview (prim/computed a {:on-delete delete-article
+                                                           :on-edit   edit-article})))
+          articles)
+        "No article"))))
 
 (r/defrouter FeedsRouter :router/feeds
   (fn [this props] [(:screen props) :top])
