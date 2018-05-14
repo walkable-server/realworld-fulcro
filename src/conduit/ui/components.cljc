@@ -17,6 +17,15 @@
        `[(use-settings-as-form {:user/id ~id})
          (r/route-to {:handler :screen/settings})])))
 
+#?(:cljs
+   (defn go-to-new-article [component]
+     (prim/transact! component
+       `[(create-temp-article-if-not-found)
+         (use-current-temp-article-as-form)
+         (r/route-to {:handler      :screen/editor
+                      :route-params {:screen-id :current-temp-article}})
+         :article-to-edit])))
+
 
 (defsc NavBar [this {:user/keys [id] :as props}]
   {:initial-state (fn [params] {})
