@@ -12,9 +12,11 @@
 (declare SettingsForm)
 
 #?(:cljs
-   (defn go-to-settings [this {:user/keys [id]}]
-     (prim/transact! this `[(use-settings-as-form {:user/id ~id})
-                            (r/route-to {:handler :screen/settings})])))
+   (defn go-to-settings [component {:user/keys [id]}]
+     (prim/transact! component
+       `[(use-settings-as-form {:user/id ~id})
+         (r/route-to {:handler :screen/settings})])))
+
 
 (defsc NavBar [this {:user/keys [id] :as props}]
   {:initial-state (fn [params] {})
