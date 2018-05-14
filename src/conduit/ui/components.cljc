@@ -269,46 +269,50 @@
 
 (declare ArticleEditor)
 
+(defn create-temp-article-if-not-found
+  [tempid-fn state]
+  (if (tempid? (get-in state [:screen/editor :current-temp-article :article-to-edit 1]))
+    state
+    (let [tempid              (tempid-fn)
+          current-user        (:user/whoami state)
+          [_ current-user-id] current-user
+
+          new-item #:article {:id          tempid
+                              :title       ""
+                              :slug        ""
+                              :description ""
+                              :body        ""
+                              :author      current-user
+                              :tags        []}]
+      (-> (assoc-in state [:article/by-id tempid] new-item)
+        (update-in [:user/by-id current-user-id :user/articles]
+          (fnil conj []) [:article/by-id tempid])
+        (assoc-in [:screen/editor :current-temp-article]
+          {:screen          :screen/editor
+           :screen-id       :current-temp-article
+           :article-to-edit [:article/by-id tempid]})))))
+
 #?(:cljs
    (defmutation create-temp-article-if-not-found [_]
      (action [{:keys [state]}]
-       (swap! state #(if (contains? (:root/article-editor %) :current-temp-article)
-                       %
-                       (let [tempid              (prim/tempid)
-                             current-user        (:user/whoami %)
-                             [_ current-user-id] current-user
-
-                             new-item #:article {:id          tempid
-                                                 :title       ""
-                                                 :slug        ""
-                                                 :description ""
-                                                 :body        ""
-                                                 :author      current-user
-                                                 :tags        []}]
-                         (-> (assoc-in % [:article/by-id tempid] new-item)
-                           (update-in [:user/by-id current-user-id :user/articles]
-                             (fnil conj []) [:article/by-id tempid])
-                           (assoc-in [:root/article-editor :current-temp-article] [:article/by-id tempid]))))))))
+       (swap! state #(create-temp-article-if-not-found prim/tempid %)))))
 
 #?(:cljs
    (defmutation use-current-temp-article-as-form [_]
      (action [{:keys [state]}]
-       (swap! state #(let [temp-ident (get-in % [:root/article-editor :current-temp-article])
-                           [_ tempid] temp-ident]
-                       (-> %
-                         (fs/add-form-config* ArticleEditor temp-ident)
-                         (assoc-in [:screen/editor :current-temp-article]
-                           {:screen    :screen/editor
-                            :screen-id :current-temp-article
-                            :article   temp-ident})))))))
+       (swap! state #(let [temp-ident (get-in % [:screen/editor :current-temp-article :article])]
+                       (fs/add-form-config* % ArticleEditor temp-ident))))))
 
 #?(:cljs
    (defmutation use-article-as-form [{:article/keys [id]}]
      (action [{:keys [state]}]
        (swap! state #(-> %
                        (fs/add-form-config* ArticleEditor [:article/by-id id])
-                       ;; fix me: see use-current-temp-article-as-form
-                       (assoc-in [:root/article-editor :article-to-edit] [:article/by-id id]))))))
+                       (assoc-in [:screen/editor id]
+                         {:screen          :screen/editor
+                          :screen-id       id
+                          :article-to-edit [:article/by-id id]}))))
+     (refresh [env] [:screen])))
 
 (defsc ArticleEditor [this {:article/keys [id slug title description body] :as props}]
   {:initial-state (fn [{:article/keys [id]}] #:article{:id id})
