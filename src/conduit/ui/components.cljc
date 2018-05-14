@@ -46,43 +46,47 @@
         (dom/ul :.nav.navbar-nav.pull-xs-right
           (dom/li :.nav-item
             (dom/div :.nav-link
-              #?(:cljs {:className (when (= current-screen :screen/home) "active")
-                        :onClick #(prim/transact! this `[(r/route-to {:handler :screen/home})])})
+              {:className (when (= current-screen :screen/home) "active")
+               :onClick   #?(:cljs #(prim/transact! this `[(r/route-to {:handler :screen/home})])
+                             :clj nil)}
               "Home") )
           (when id
             (dom/li :.nav-item
               (dom/a :.nav-link
-                #?(:cljs {:className (when (= current-screen :screen/editor) "active")
-                          :onClick #(prim/transact! this `[(create-temp-article-if-not-found)
-                                                           (use-current-temp-article-as-form)
-                                                           (r/route-to {:handler :screen/editor
-                                                                        :route-params  {:screen-id :current-temp-article}})])})
+                {:className (when (= current-screen :screen/editor) "active")
+                 :onClick   #?(:cljs #(go-to-new-article this)
+                               :clj nil)}
                 (dom/i :.ion-compose)
                 "New Post")))
           (when id
             (dom/li :.nav-item
               (dom/div :.nav-link
-                #?(:cljs {:className (when (= current-screen :screen/settings) "active")
-                          :onClick #(go-to-settings this {:user/id id})})
+                {:className (when (= current-screen :screen/settings) "active")
+                 :onClick   #?(:cljs #(go-to-settings this {:user/id id})
+                               :clj nil)}
                 (dom/i :.ion-gear-a)
                 "Settings")))
           (when-not id
             (dom/li :.nav-item
               (dom/div :.nav-link
-                #?(:cljs {:onClick #(prim/transact! this `[(login {:email "jake@jake.jake" :password "foobar"})])})
+                {:className (when (= current-screen :screen/login) "active")
+                 :onClick   #?(:cljs #(prim/transact! this `[(login {:email "jake@jake.jake" :password "foobar"})])
+                               :clj nil)}
                 (dom/i :.ion-gear-a)
                 "Login")))
 
           (when-not id
             (dom/li :.nav-item
               (dom/div :.nav-link
-                #?(:cljs {:onClick #(prim/transact! this
-                                      `[(sign-up #:user{:username "jake",
-                                                        :name     "Jake Ekaj"
-                                                        :email    "jake@jake.jake"
-                                                        :password "foobar"
-                                                        :bio      "I work at statefarm",
-                                                        :image    "https://static.productionready.io/images/smiley-cyrus.jpg"})])})
+                {:className (when (= current-screen :screen/sign-up) "active")
+                 :onClick   #?(:cljs #(prim/transact! this
+                                        `[(sign-up #:user{:username "jake",
+                                                          :name     "Jake Ekaj"
+                                                          :email    "jake@jake.jake"
+                                                          :password "foobar"
+                                                          :bio      "I work at statefarm",
+                                                          :image    "https://static.productionready.io/images/smiley-cyrus.jpg"})])
+                               :clj nil)}
                 "Sign up"))))))))
 
 (def ui-nav-bar (prim/factory NavBar))
