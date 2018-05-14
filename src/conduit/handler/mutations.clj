@@ -1,7 +1,7 @@
 (ns conduit.handler.mutations
   (:require [conduit.boundary.user :as user]
-            [clojure.set :refer [rename-keys]]
             [conduit.boundary.article :as article]
+            [clojure.set :refer [rename-keys]]
             [walkable.sql-query-builder :as sqb]
             [conduit.util :as util]
             [duct.logger :refer [log]]
@@ -34,4 +34,11 @@
     (if current-user
       (user/update-user db current-user
         (-> (util/get-item diff) (rename-keys remove-user-namespace)))
+      {})))
+
+(defmutation delete-article [{:article/keys [id]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (log logger :info :delete id)
+    (if current-user
+      (article/destroy-article db current-user id)
       {})))
