@@ -5,7 +5,7 @@
 (defprotocol Article
   (article-by-slug [db article])
   (create-article [db author-id article])
-  (destroy-article [db author-id article-slug])
+  (destroy-article [db author-id article-id])
   (update-article [db author-id id article])
   (like [db user-id article-slug])
   (unlike [db user-id article-slug]))
@@ -31,8 +31,8 @@
             (mapv (fn [tag] {:article_id new-article-id :tag tag}) tags)))
         new-article-id)))
 
-  (destroy-article [db author-id article-slug]
-    (jdbc/delete! (:spec db) "\"article\"" ["author_id = ? AND slug = ?" author-id article-slug]))
+  (destroy-article [db author-id article-id]
+    (jdbc/delete! (:spec db) "\"article\"" ["author_id = ? AND id = ?" author-id article-id]))
 
   (update-article [db author-id id article]
     (jdbc/update! (:spec db) "\"article\"" (select-keys article [:slug :title :description :body])
