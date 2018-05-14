@@ -123,15 +123,22 @@
 
 (def ui-article-preview-meta (prim/factory ArticlePreviewMeta {:keyfn :article/id}))
 
-(defsc ArticlePreview [this {:article/keys [slug title description] :keys [ph/article]}]
+(defsc ArticlePreview [this {:article/keys [id author-id slug title description] :keys [ph/article]}
+                       {:keys [on-delete on-edit]}]
   {:ident [:article/by-id :article/id]
-   :query [:article/id :article/slug :article/title :article/description :article/body
+   :query [:article/id :article/author-id :article/slug :article/title :article/description :article/body
            {:ph/article (prim/get-query ArticlePreviewMeta)}]}
   (dom/div :.article-preview
     (ui-article-preview-meta article)
-    (dom/a :.preview-link {:href (str "/articles/" slug)}
+    (dom/div :.preview-link
       (dom/h1 {} title)
       (dom/p {} description)
+      (dom/p {:onClick #?(:cljs #(on-edit {:article/id id})
+                          :clj nil)}
+        "Edit me")
+      (dom/p {:onClick #?(:cljs #(on-delete {:article/id id})
+                          :clj nil)}
+        "Delete me")
       (dom/span {} "Read more..."))))
 
 (def ui-article-preview (prim/factory ArticlePreview {:keyfn :article/id}))
