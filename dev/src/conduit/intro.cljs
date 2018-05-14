@@ -76,11 +76,11 @@
        (r/router-instruction :router/feeds [:screen.feed/personal :top])])
 
     (r/make-route :screen.profile/owned-articles
-      [(r/router-instruction :router/top [:screen/profile :top])
-       (r/router-instruction :router/profile [:screen.profile/owned-articles :param/user-id])])
+      [(r/router-instruction :router/top [:screen/profile :param/user-id])
+       (r/router-instruction :router/profile [:screen.profile/owned-articles :top])])
     (r/make-route :screen.profile/liked-articles
-      [(r/router-instruction :router/top [:screen/profile :top])
-       (r/router-instruction :router/profile [:screen.profile/liked-articles :param/user-id])])))
+      [(r/router-instruction :router/top [:screen/profile :param/user-id])
+       (r/router-instruction :router/profile [:screen.profile/liked-articles :top])])))
 
 (defn go-to-home [this]
   (prim/transact! this `[(r/route-to {:handler :screen/home})]))
