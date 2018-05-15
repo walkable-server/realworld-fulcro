@@ -13,13 +13,12 @@
 ;; (dom/div {:onClick #(prim/transact! this `[(comp/use-article-as-form #:article{:id 2})])} "Edit")
 
 (r/defrouter TopRouter :router/top
-  ;;(fn [this props] [(:screen props) :top])
   [:screen :screen-id]
   :screen/home     comp/Home
   :screen/settings comp/SettingScreen
   :screen/editor   comp/EditorScreen
   :screen/sign-up  comp/Home
-  :screen/profile  ProfileMain)
+  :screen/profile  comp/ProfileScreen)
 
 (def ui-top (prim/factory TopRouter))
 
@@ -44,11 +43,11 @@
        (r/router-instruction :router/feeds [:screen.feed/personal :top])])
 
     (r/make-route :screen.profile/owned-articles
-      [(r/router-instruction :router/top [:screen/profile :param/user-id])
-       (r/router-instruction :router/profile [:screen.profile/owned-articles :top])])
+      [(r/router-instruction :router/top [:screen/profile :param/screen-id])
+       (r/router-instruction :router/profile [:screen.profile/owned-articles :param/screen-id])])
     (r/make-route :screen.profile/liked-articles
-      [(r/router-instruction :router/top [:screen/profile :param/user-id])
-       (r/router-instruction :router/profile [:screen.profile/liked-articles :top])])))
+      [(r/router-instruction :router/top [:screen/profile :param/screen-id])
+       (r/router-instruction :router/profile [:screen.profile/liked-articles :param/screen-id])])))
 
 (defn go-to-home [this]
   (prim/transact! this `[(r/route-to {:handler :screen/home})]))
@@ -56,12 +55,15 @@
 (defsc Root [this {router :router/top :as props}]
   {:initial-state (fn [params] (merge routing-tree
                                  {:root/settings-form {:settings [:user/whoami '_]}
-                                  :user/whoami {:user/name "Guest" :user/email "non@exist.com"}}
-                                 {:screen.profile/owned-articles {2 {:screen :screen.profile/owned-articles :user-id 2}}
-                                  :screen.profile/liked-articles {2 {:screen :screen.profile/liked-articles :user-id 2}}}
+                                  :user/whoami        [:user/by-id :guest]
+                                  :user/by-id         {:guest {:user/id       :guest
+                                                               :user/name     "Guest"
+                                                               :user/email    "non@exist.com"
+                                                               :user/like     []
+                                                               :user/articles []}}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
-   :query [{:router/top (prim/get-query TopRouter {})}
-           {:user/whoami (prim/get-query comp/NavBar)}]}
+   :query         [{:router/top (prim/get-query TopRouter {})}
+                   {:user/whoami (prim/get-query comp/NavBar)}]}
   (let [current-user (get props :user/whoami)]
     (dom/div {}
       (comp/ui-nav-bar current-user)
