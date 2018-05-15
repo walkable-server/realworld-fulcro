@@ -34,6 +34,15 @@
                       :route-params {:screen-id ~id}})
          :article-to-edit])))
 
+#?(:cljs
+   (defn view-profile [component {:user/keys [id] :as profile}]
+     (prim/transact! component
+       `[(load-profile-to-screen ~profile)
+         (load-owned-articles-to-screen ~profile)
+         (r/route-to {:handler      :screen.profile/owned-articles
+                      :route-params {:screen-id ~id}})
+         :profile-to-view])))
+
 (defsc NavBar [this {:user/keys [id] :as props}]
   {:initial-state (fn [params] {})
    :query         [:user/id
@@ -122,7 +131,9 @@
     (dom/a {:href (str "/users/" (:user/username author))}
       (dom/img {:src (:user/image author)}))
     (dom/div :.info
-      (dom/a :.author {:href (str "/users/" (:user/username author))}
+      (dom/div :.author
+        {:onClick #?(:cljs #(view-profile this author)
+                     :clj nil)}
         (:user/name author))
       (dom/span :.date
         #?(:clj  created-at
