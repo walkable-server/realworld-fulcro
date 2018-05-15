@@ -180,37 +180,32 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc PersonalFeed [this {:keys [screen] articles :articles/feed}]
-  {:initial-state {:screen :screen.feed/personal}
-   :ident         (fn [] [screen :top])
-   :query         [:screen
-                   {[:articles/feed '_] (prim/get-query ArticlePreview)}]}
+(defn article-list
+  [component articles msg-when-empty]
   (let [edit-article   (fn [{:article/keys [id] :as article}]
-                         #?(:cljs (edit-article this article)))
+                         #?(:cljs (edit-article component article)))
         delete-article (fn [{:article/keys [id] :as article}]
-                         (prim/transact! this `[(mutations/delete-article ~article)]))]
+                         (prim/transact! component `[(mutations/delete-article ~article)]))]
     (dom/div
       (if (seq articles)
         (map (fn [a] (ui-article-preview (prim/computed a {:on-delete delete-article
                                                            :on-edit   edit-article})))
           articles)
-        "You have no article"))))
+        msg-when-empty))))
+
+(defsc PersonalFeed [this {:keys [screen] articles :articles/feed}]
+  {:initial-state {:screen :screen.feed/personal}
+   :ident         (fn [] [screen :top])
+   :query         [:screen
+                   {[:articles/feed '_] (prim/get-query ArticlePreview)}]}
+  (article-list this articles "You have no article!"))
 
 (defsc GlobalFeed [this {:keys [screen] articles :articles/all}]
   {:initial-state {:screen :screen.feed/global}
    :ident         (fn [] [screen :top])
    :query         [:screen
                    {[:articles/all '_] (prim/get-query ArticlePreview)}]}
-  (let [edit-article   (fn [{:article/keys [id] :as article}]
-                         #?(:cljs (edit-article this article)))
-        delete-article   (fn [{:article/keys [id] :as article}]
-                           (prim/transact! this `[(mutations/delete-article ~article)]))]
-    (dom/div
-      (if (seq articles)
-        (map (fn [a] (ui-article-preview (prim/computed a {:on-delete delete-article
-                                                           :on-edit   edit-article})))
-          articles)
-        "No article"))))
+  (article-list this articles "No article!"))
 
 (r/defrouter FeedsRouter :router/feeds
   (fn [this props] [(:screen props) :top])
