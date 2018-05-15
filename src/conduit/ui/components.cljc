@@ -596,8 +596,8 @@
                    {[:root/settings-form :settings] (prim/get-query SettingsForm)}]}
   (ui-settings-form settings))
 
-(defsc EditorScreen [this {:keys [screen screen-id article-to-edit]}]
-  {:ident         (fn [] [screen screen-id])
+(defsc EditorScreen [this {:keys [screen article-to-edit] article-id :screen-id}]
+  {:ident         (fn [] [screen article-id])
    :initial-state (fn [params] {:screen          :screen/editor
                                 :screen-id       :current-temp-article
                                 :article-to-edit {}})
