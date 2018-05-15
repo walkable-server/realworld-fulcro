@@ -10,38 +10,6 @@
             [conduit.ui.components :as comp]
             [fulcro.client.dom :as dom]))
 
-(defsc OwnedArticles [this {screen :screen user-id :user-id}]
-  {:initial-state (fn [params]
-                    {:screen  :screen.profile/owned-articles
-                     :user-id 3})
-   :ident (fn [] [screen user-id])
-   :query [:screen :user-id]}
-  (dom/div {} (str "Owned articles for user #" user-id)))
-
-(defsc LikedArticles [this {screen :screen user-id :user-id}]
-  {:initial-state (fn [params]
-                    {:screen  :screen.profile/liked-articles
-                     :user-id 3})
-   :ident (fn [] [screen user-id])
-   :query [:screen :user-id]}
-  (dom/div {} (str "Liked articles by user #" user-id)))
-
-(r/defrouter ProfileRouter :router/profile
-  [:screen :user-id]
-  :screen.profile/owned-articles OwnedArticles
-  :screen.profile/liked-articles LikedArticles)
-
-(def ui-profile-router (prim/factory ProfileRouter))
-
-(defsc ProfileMain [this {router :router/profile}]
-  {:initial-state (fn [params] {:screen         :screen/profile
-                                :screen-id      :top
-                                :router/profile (prim/get-initial-state ProfileRouter {})})
-   :query         [:screen :screen-id {:router/profile (prim/get-query ProfileRouter)}]}
-  (dom/div {}
-    "Profile main"
-    (ui-profile-router router)))
-
 ;; (dom/div {:onClick #(prim/transact! this `[(comp/use-article-as-form #:article{:id 2})])} "Edit")
 
 (r/defrouter TopRouter :router/top
