@@ -464,11 +464,46 @@
        (df/remote-load env))))
 
 #?(:cljs
-   (defmutation load-settings [_]
+   (defmutation load-profile-to-screen [{:user/keys [id]}]
      (action [{:keys [state] :as env}]
-       (df/load-action env :user/whoami SettingsForm {:without #{:fulcro.ui.form-state/config}}))
+       (df/load-action env [:user/by-id id] Profile {:without #{:router/profile}})
+       (swap! state
+         #(-> %
+            (assoc-in [:screen/profile id]
+              {:screen          :screen/profile
+               :screen-id       id
+               :profile-to-view [:user/by-id id]}))))
      (remote [env]
-       (df/remote-load env))))
+       (df/remote-load env))
+     (refresh [env] [:screen :profile-to-view])))
+
+#?(:cljs
+   (defmutation load-liked-articles-to-screen [{:user/keys [id]}]
+     (action [{:keys [state] :as env}]
+       (df/load-action env [:user/by-id id] LikedArticles)
+       (swap! state
+         #(-> %
+            (assoc-in [:screen.profile/liked-articles id]
+              {:screen          :screen.profile/liked-articles
+               :screen-id       id
+               :profile-to-view [:user/by-id id]}))))
+     (remote [env]
+       (df/remote-load env))
+     (refresh [env] [:profile-to-view])))
+
+#?(:cljs
+   (defmutation load-owned-articles-to-screen [{:user/keys [id]}]
+     (action [{:keys [state] :as env}]
+       (df/load-action env [:user/by-id id] OwnedArticles)
+       (swap! state
+         #(-> %
+            (assoc-in [:screen.profile/owned-articles id]
+              {:screen          :screen.profile/owned-articles
+               :screen-id       id
+               :profile-to-view [:user/by-id id]}))))
+     (remote [env]
+       (df/remote-load env))
+     (refresh [env] [:profile-to-view])))
 
 #?(:cljs
    (defmutation use-settings-as-form [{:user/keys [id]}]
