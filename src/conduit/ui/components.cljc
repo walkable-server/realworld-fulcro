@@ -255,32 +255,59 @@
           (ui-feeds-router router))
         (ui-tags tags)))))
 
-(defsc Profile [this {:user/keys [id name username image bio] liked-articles :user/like}]
-  {:ident [:user/by-id :user/id]
-   :query [:user/id :user/name :user/username :user/image :user/bio
-           {:user/like (prim/get-query ArticlePreview)}]}
-  (dom/div :.profile-page
-    (dom/div :.user-info
-      (dom/div :.container
-        (dom/div :.row
-          (dom/div :.col-xs-12.col-md-10.offset-md-1
-            (dom/img :.user-img {:src image})
-            (dom/h4 {} name)
-            (dom/p {} bio)
-            (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
-              (dom/i :.ion-plus-round) (str "Follow " name))))))
+(defsc LikedArticles [this {:user/keys [id] articles :user/like}]
+  {:ident         [:user/by-id :user/id]
+   :query         [:user/id {:user/like (prim/get-query ArticlePreview)}]}
+  (article-list this articles "This user liked no article!"))
+
+(def ui-liked-articles (prim/factory LikedArticles))
+
+(defsc LikedArticlesScreen
+  [this {:keys [screen profile-to-view] user-id :screen-id}]
+  {:initial-state (fn [params]
+                    {:screen          :screen.profile/liked-articles
+                     :screen-id       :guest
+                     :profile-to-view [:user/by-id :guest]})
+   :ident         (fn [] [screen user-id])
+   :query         [:screen :screen-id {:profile-to-view (prim/get-query LikedArticles)}]}
+  (ui-liked-articles profile-to-view))
+
+(defsc OwnedArticles [this {:user/keys [id articles]}]
+  {:ident         [:user/by-id :user/id]
+   :query         [:user/id {:user/articles (prim/get-query ArticlePreview)}]}
+  (article-list this articles "This user has no article!"))
+
+(def ui-owned-articles (prim/factory OwnedArticles))
+
+(defsc OwnedArticlesScreen
+  [this {:keys [screen profile-to-view] user-id :screen-id}]
+  {:initial-state (fn [params]
+                    {:screen          :screen.profile/owned-articles
+                     :screen-id       :guest
+                     :profile-to-view [:user/by-id :guest]})
+   :ident         (fn [] [screen user-id])
+   :query         [:screen :screen-id {:profile-to-view (prim/get-query OwnedArticles)}]}
+  (ui-owned-articles profile-to-view))
+
+(r/defrouter ProfileRouter :router/profile
+  [:screen :screen-id]
+  :screen.profile/owned-articles OwnedArticlesScreen
+  :screen.profile/liked-articles LikedArticlesScreen)
+
+(def ui-profile-router (prim/factory ProfileRouter))
+
+(defsc Profile [this {:user/keys [id name username image bio]}]
+  {:ident         [:user/by-id :user/id]
+   :query         [:user/id :user/name :user/username :user/image :user/bio]}
+  (dom/div :.user-info
     (dom/div :.container
       (dom/div :.row
         (dom/div :.col-xs-12.col-md-10.offset-md-1
-          (dom/div :.articles-toggle
-            (dom/ul :.nav.nav-pills.outline-active
-              (dom/li :.nav-item
-                (dom/a :.nav-link.active {:href ""}
-                  "My Articles"))
-              (dom/li :.nav-item
-                (dom/a :.nav-link {:href ""}
-                  "Favorited Articles"))))
-          (mapv ui-article-preview liked-articles))))))
+          (dom/img :.user-img {:src image})
+          (dom/h4 {} name)
+          (dom/p {} bio)
+          (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
+            (dom/i :.ion-plus-round) (str "Follow " name)))))))
 
 (def ui-profile (prim/factory Profile))
 
