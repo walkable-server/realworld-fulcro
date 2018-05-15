@@ -604,3 +604,41 @@
    :query         (fn [] [:screen :screen-id
                           {:article-to-edit (prim/get-query ArticleEditor)}])}
   (ui-article-editor article-to-edit))
+
+(defsc ProfileScreen [this {:keys   [screen profile-to-view]
+                            user-id :screen-id
+                            router  [r/routers-table :router/profile]}]
+  {:ident         (fn [] [screen user-id])
+   :initial-state (fn [params] {:screen          :screen/profile
+                                :screen-id       :guest
+                                :profile-to-view [:user/by-id :guest]
+                                :router/profile  {}})
+   :query         (fn [] [:screen :screen-id
+                          {[r/routers-table :router/profile] (prim/get-query ProfileRouter)}
+                          {:profile-to-view (prim/get-query Profile)}])}
+  (dom/div :.profile-page
+    (ui-profile profile-to-view)
+    (dom/div :.container
+      (dom/div :.row
+        (dom/div :.col-xs-12.col-md-10.offset-md-1
+          (dom/div :.articles-toggle
+            (dom/ul :.nav.nav-pills.outline-active
+              (dom/li :.nav-item
+                (dom/div :.nav-link.active
+                  {:onClick #?(:cljs #(prim/transact! this
+                                        `[(load-owned-articles-to-screen {:user/id ~user-id})
+                                          (r/route-to {:handler      :screen.profile/owned-articles
+                                                       :route-params {:screen-id ~user-id}})
+                                          :profile-to-view])
+                               :clj nil)}
+                  "My Articles"))
+              (dom/li :.nav-item
+                (dom/div :.nav-link
+                  {:onClick #?(:cljs #(prim/transact! this
+                                        `[(load-liked-articles-to-screen {:user/id ~user-id})
+                                          (r/route-to {:handler      :screen.profile/liked-articles
+                                                       :route-params {:screen-id ~user-id}})
+                                          :profile-to-view])
+                               :clj nil)}
+                  "Favorited Articles"))))
+          (ui-profile-router router))))))
