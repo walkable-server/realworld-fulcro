@@ -38,7 +38,18 @@
 
 (defmutation delete-article [{:article/keys [id]}]
   (action [{:keys [duct/logger] :app/keys [db current-user]}]
-    (log logger :info :delete id)
     (if current-user
       (article/destroy-article db current-user id)
+      {})))
+
+(defmutation follow [{:user/keys [id]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (if (and current-user (not= current-user id))
+      (user/follow db current-user id)
+      {})))
+
+(defmutation unfollow [{:user/keys [id]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (if current-user
+      (user/unfollow db current-user id)
       {})))
