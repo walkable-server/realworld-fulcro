@@ -136,8 +136,12 @@
 
 (def ui-banner (prim/factory Banner))
 
-(defsc UserPreview [this {:user/keys [username name]}]
+(defsc UserTinyPreview [this props]
   {:query [:user/id :user/username :user/name]
+   :ident [:user/by-id :user/id]})
+
+(defsc UserPreview [this props]
+  {:query [:user/id :user/image :user/username :user/name :user/followed-by-me :user/followed-by-count]
    :ident [:user/by-id :user/id]})
 
 #?(:cljs
