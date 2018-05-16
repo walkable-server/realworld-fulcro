@@ -7,8 +7,8 @@
   (create-article [db author-id article])
   (destroy-article [db author-id article-id])
   (update-article [db author-id id article])
-  (like [db user-id article-slug])
-  (unlike [db user-id article-slug]))
+  (like [db user-id article-id])
+  (unlike [db user-id article-id]))
 
 (defprotocol Comment
   (create-comment [db article-slug comment])
@@ -38,19 +38,16 @@
     (jdbc/update! (:spec db) "\"article\"" (select-keys article [:slug :title :description :body])
       ["author_id = ? AND id = ?" author-id id]))
 
-  (like [db user-id article-slug]
-    (when-let [article-id (article-by-slug db article-slug)]
-      (jdbc/execute! (:spec db)
-        [(str "INSERT INTO \"favorite\" (user_id, article_id)"
-           " SELECT ?, ?"
-           " WHERE NOT EXISTS (SELECT * FROM \"favorite\""
-           " WHERE user_id = ? AND article_id = ?)")
-         user-id article-id user-id article-id])))
+  (like [db user-id article-id]
+    (jdbc/execute! (:spec db)
+      [(str "INSERT INTO \"favorite\" (user_id, article_id)"
+         " SELECT ?, ?"
+         " WHERE NOT EXISTS (SELECT * FROM \"favorite\""
+         " WHERE user_id = ? AND article_id = ?)")
+       user-id article-id user-id article-id]))
 
-  (unlike [db user-id article-slug]
-    (when-let [article-id (article-by-slug db article-slug)]
-      (jdbc/delete! (:spec db) "\"favorite\"" ["user_id = ? AND article_id = ?" user-id article-id])))
-
+  (unlike [db user-id article-id]
+    (jdbc/delete! (:spec db) "\"favorite\"" ["user_id = ? AND article_id = ?" user-id article-id]))
   )
 
 (extend-protocol Comment
