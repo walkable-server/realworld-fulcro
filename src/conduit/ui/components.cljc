@@ -133,7 +133,7 @@
    :ident [:user/by-id :user/id]})
 
 (defsc ArticlePreviewMeta [this {:article/keys [author created-at liked-by-count]}]
-  {:query [:article/id :article/created-at {:article/liked-by-count [:agg/count]}
+  {:query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
            {:article/author (prim/get-query UserPreview)}]
    :ident [:article/by-id :article/id]}
   (dom/div :.article-meta
@@ -150,7 +150,7 @@
                    (.toDateString created-at)))))
     (dom/button :.btn.btn-outline-primary.btn-sm.pull-xs-right
       (dom/i :.ion-heart)
-      (:agg/count liked-by-count))))
+      liked-by-count)))
 
 (def ui-article-preview-meta (prim/factory ArticlePreviewMeta {:keyfn :article/id}))
 
@@ -305,9 +305,9 @@
 
 (def ui-profile-router (prim/factory ProfileRouter))
 
-(defsc Profile [this {:user/keys [id name username image bio]}]
+(defsc Profile [this {:user/keys [id name username image bio followed-by-me]}]
   {:ident         [:user/by-id :user/id]
-   :query         [:user/id :user/name :user/username :user/image :user/bio]}
+   :query         [:user/id :user/name :user/username :user/image :user/bio :user/followed-by-me]}
   (dom/div :.user-info
     (dom/div :.container
       (dom/div :.row
@@ -316,7 +316,12 @@
           (dom/h4 {} name)
           (dom/p {} bio)
           (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
-            (dom/i :.ion-plus-round) (str "Follow " name)))))))
+            {:onClick #?(:cljs #(if followed-by-me
+                                  (prim/transact! this `[(unfollow {:user/id ~id})])
+                                  (prim/transact! this `[(follow {:user/id ~id})]))
+                         :clj nil)}
+            (dom/i :.ion-plus-round)
+            (str (if followed-by-me "Unfollow " "Follow ") name)))))))
 
 (def ui-profile (prim/factory Profile))
 
