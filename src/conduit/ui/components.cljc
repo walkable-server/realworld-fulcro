@@ -463,7 +463,7 @@
    (defmutation login [credentials]
      (action [{:keys [state] :as env}]
        (df/load-action env :user/whoami SettingsForm
-         {:params {:login credentials}
+         {:params  {:login credentials}
           :without #{:fulcro.ui.form-state/config}}))
      (remote [env]
        (df/remote-load env))))
@@ -472,7 +472,7 @@
    (defmutation sign-up [new-user]
      (action [{:keys [state] :as env}]
        (df/load-action env :user/whoami SettingsForm
-         {:params {:sign-up new-user}
+         {:params  {:sign-up new-user}
           :without #{:fulcro.ui.form-state/config}}))
      (remote [env]
        (df/remote-load env))))
