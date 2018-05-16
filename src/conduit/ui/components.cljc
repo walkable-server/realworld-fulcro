@@ -241,6 +241,29 @@
 
 (def ui-article-meta (prim/factory ArticleMeta {:keyfn :article/id}))
 
+(defsc Comment [this {:comment/keys [author body created-at]}]
+  {:ident [:comment/by-id :comment/id]
+   :query [:comment/id :comment/created-at
+           {:comment/author (prim/get-query UserTinyPreview)}]}
+  (dom/div :.card
+    (dom/div :.card-block
+      (dom/p :.card-text
+        body))
+    (dom/div :.card-footer
+      (dom/div :.comment-author #_{:onClick #?(:cljs identity :clj nil)}
+        (dom/img :.comment-author-img
+          {:src (:user/image author)}))
+      (dom/a :.comment-author #_{:onClick #?(:cljs identity :clj nil)}
+        (:user/name author))
+      (dom/span :.date-posted
+        #?(:clj  created-at
+           :cljs (js-date->string created-at)))
+      (dom/span :.mod-options
+        (dom/i :.ion-edit #_{:onClick #?(:cljs identity :clj nil)} " ")
+        (dom/i :.ion-trash-a #_{:onClick #?(:cljs identity :clj nil)} " ")))))
+
+(def ui-comment (prim/factory Comment {:keyfn :comment/id}))
+
 (defsc Tag [this {:tag/keys [tag]}]
   {:query [:tag/tag :tag/count]}
   (dom/a  :.tag-pill.tag-default {:href (str "/tag/" tag)} tag))
