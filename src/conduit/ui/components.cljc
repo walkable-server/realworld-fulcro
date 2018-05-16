@@ -43,11 +43,20 @@
                       :route-params {:screen-id ~id}})
          :profile-to-view])))
 
-(defsc NavBar [this {:user/keys [id] :as props}]
+(declare ArticlePreview)
+
+#?(:cljs
+   (defn do-login [component]
+     (prim/transact! component `[(login {:email "jake@jake.jake" :password "foobar"})])
+     (df/load component :articles/all ArticlePreview)
+     (df/load component :articles/feed ArticlePreview)))
+
+(defsc NavBar [this {current-user-id :user/id :as props}]
   {:initial-state (fn [params] {})
    :query         [:user/id
                    [r/routers-table '_]]}
-  (let [[current-screen _] (r/current-route props :router/top)]
+  (let [[current-screen _] (r/current-route props :router/top)
+        logged-in? (number? current-user-id)]
     (dom/nav :.navbar.navbar-light
       (dom/div :.container
         (dom/div :.navbar-brand
@@ -59,7 +68,7 @@
                :onClick   #?(:cljs #(prim/transact! this `[(r/route-to {:handler :screen/home})])
                              :clj nil)}
               "Home") )
-          (when id
+          (when logged-in?
             (dom/li :.nav-item
               (dom/a :.nav-link
                 {:className (when (= current-screen :screen/editor) "active")
@@ -67,24 +76,24 @@
                                :clj nil)}
                 (dom/i :.ion-compose)
                 "New Post")))
-          (when id
+          (when logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/settings) "active")
-                 :onClick   #?(:cljs #(go-to-settings this {:user/id id})
+                 :onClick   #?(:cljs #(go-to-settings this {:user/id current-user-id})
                                :clj nil)}
                 (dom/i :.ion-gear-a)
                 "Settings")))
-          (when-not id
+          (when-not logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/login) "active")
-                 :onClick   #?(:cljs #(prim/transact! this `[(login {:email "jake@jake.jake" :password "foobar"})])
+                 :onClick   #?(:cljs #(do-login this)
                                :clj nil)}
                 (dom/i :.ion-gear-a)
                 "Login")))
 
-          (when-not id
+          (when-not logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/sign-up) "active")
