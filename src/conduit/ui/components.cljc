@@ -799,3 +799,12 @@
                                :clj nil)}
                   "Favorited Articles"))))
           (ui-profile-router router))))))
+
+(defsc ArticleScreen [this {:keys [screen article-to-view] article-id :screen-id}]
+  {:ident         (fn [] [screen article-id])
+   :initial-state (fn [params] {:screen          :screen/editor
+                                :screen-id       :none
+                                :article-to-view {}})
+   :query         (fn [] [:screen :screen-id
+                          {:article-to-view (prim/get-query Article)}])}
+  (ui-article article-to-view))
