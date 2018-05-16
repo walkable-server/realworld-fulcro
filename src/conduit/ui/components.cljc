@@ -132,6 +132,11 @@
   {:query [:user/id :user/username :user/name]
    :ident [:user/by-id :user/id]})
 
+#?(:cljs
+   (defn js-date->string [date]
+     (when (instance? js/Date date)
+       (.toDateString date))))
+
 (defsc ArticlePreviewMeta [this {:article/keys [author created-at liked-by-count]}]
   {:query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
            {:article/author (prim/get-query UserPreview)}]
@@ -146,8 +151,7 @@
         (:user/name author))
       (dom/span :.date
         #?(:clj  created-at
-           :cljs (when (instance? js/Date created-at)
-                   (.toDateString created-at)))))
+           :cljs (js-date->string created-at))))
     (dom/button :.btn.btn-outline-primary.btn-sm.pull-xs-right
       (dom/i :.ion-heart)
       liked-by-count)))
