@@ -358,7 +358,7 @@
 #?(:cljs
    (defmutation use-current-temp-article-as-form [_]
      (action [{:keys [state]}]
-       (swap! state #(let [temp-ident (get-in % [:screen/editor :current-temp-article :article])]
+       (swap! state #(let [temp-ident (get-in % [:screen/editor :current-temp-article :article-to-edit])]
                        (fs/add-form-config* % ArticleEditor temp-ident))))))
 
 #?(:cljs
