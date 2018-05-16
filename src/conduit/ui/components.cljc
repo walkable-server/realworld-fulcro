@@ -621,6 +621,20 @@
      (refresh [env] [:screen :profile-to-view])))
 
 #?(:cljs
+   (defmutation load-article-to-screen [{:article/keys [id]}]
+     (action [{:keys [state] :as env}]
+       (df/load-action env [:article/by-id id] Article)
+       (swap! state
+         #(-> %
+            (assoc-in [:screen/article id]
+              {:screen          :screen/article
+               :screen-id       id
+               :article-to-view [:article/by-id id]}))))
+     (remote [env]
+       (df/remote-load env))
+     (refresh [env] [:screen :article-to-view])))
+
+#?(:cljs
    (defmutation load-liked-articles-to-screen [{:user/keys [id]}]
      (action [{:keys [state] :as env}]
        (df/load-action env [:user/by-id id] LikedArticles)
