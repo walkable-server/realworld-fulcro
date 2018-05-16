@@ -43,6 +43,14 @@
                       :route-params {:screen-id ~id}})
          :profile-to-view])))
 
+#?(:cljs
+   (defn go-to-article [component {:article/keys [id] :as article}]
+     (prim/transact! component
+       `[(load-article-to-screen ~article)
+         (r/route-to {:handler      :screen/article
+                      :route-params {:screen-id ~id}})
+         :article-to-view])))
+
 (declare ArticlePreview)
 
 #?(:cljs
