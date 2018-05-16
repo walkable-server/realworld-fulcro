@@ -23,3 +23,13 @@
                     (update :articles/all remove-ref-by-id id)
                     (update :articles/feed remove-ref-by-id id))))
   (remote [env] true))
+
+(defmutation follow [{:user/keys [id]}]
+  (action [{:keys [state]}]
+    (swap! state #(assoc-in % [:user/by-id id :user/followed-by-me] true)))
+  (remote [env] true))
+
+(defmutation unfollow [{:user/keys [id]}]
+  (action [{:keys [state]}]
+    (swap! state #(assoc-in % [:user/by-id id :user/followed-by-me] false)))
+  (remote [env] true))
