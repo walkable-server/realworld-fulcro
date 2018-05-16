@@ -53,3 +53,15 @@
     (if current-user
       (user/unfollow db current-user id)
       {})))
+
+(defmutation like [{:article/keys [id]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (if current-user
+      (article/like db current-user id)
+      {})))
+
+(defmutation unlike [{:article/keys [id]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (if current-user
+      (article/unlike db current-user id)
+      {})))

@@ -24,6 +24,7 @@
                     (update :articles/feed remove-ref-by-id id))))
   (remote [env] true))
 
+;; todo: increase/decrease counts by 1
 (defmutation follow [{:user/keys [id]}]
   (action [{:keys [state]}]
     (swap! state #(assoc-in % [:user/by-id id :user/followed-by-me] true)))
@@ -32,4 +33,14 @@
 (defmutation unfollow [{:user/keys [id]}]
   (action [{:keys [state]}]
     (swap! state #(assoc-in % [:user/by-id id :user/followed-by-me] false)))
+  (remote [env] true))
+
+(defmutation like [{:article/keys [id]}]
+  (action [{:keys [state]}]
+    (swap! state #(assoc-in % [:article/by-id id :article/liked-by-me] true)))
+  (remote [env] true))
+
+(defmutation unlike [{:article/keys [id]}]
+  (action [{:keys [state]}]
+    (swap! state #(assoc-in % [:article/by-id id :article/liked-by-me] false)))
   (remote [env] true))
