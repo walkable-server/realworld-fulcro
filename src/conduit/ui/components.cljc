@@ -264,6 +264,19 @@
 
 (def ui-comment (prim/factory Comment {:keyfn :comment/id}))
 
+(defsc CommentForm [this {:comment/keys [body author]}]
+  {:query [:comment/body {:comment/author [:user/image]}]}
+  (dom/form :.card.comment-form
+    (dom/div :.card-block
+      (dom/textarea :.form-control
+        {:placeholder "Write a comment...", :rows "3"}))
+    (dom/div :.card-footer
+      (dom/img :.comment-author-img
+        {:src (:user/image author)})
+      (dom/button :.btn.btn-sm.btn-primary
+        "Post Comment"))))
+
+(def ui-comment-form (prim/factory CommentForm))
 (defsc Tag [this {:tag/keys [tag]}]
   {:query [:tag/tag :tag/count]}
   (dom/a  :.tag-pill.tag-default {:href (str "/tag/" tag)} tag))
