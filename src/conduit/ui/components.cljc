@@ -277,6 +277,32 @@
         "Post Comment"))))
 
 (def ui-comment-form (prim/factory CommentForm))
+
+(defsc Article [this {:article/keys [id author-id slug title description body image comments]
+                      :keys [ph/article]}]
+  {:ident [:article/by-id :article/id]
+   :query [:article/id :article/author-id :article/slug :article/title :article/description
+           :article/body :article/image
+           {:article/comments (prim/get-query Comment)}
+           {:ph/article (prim/get-query ArticleMeta)}]}
+  (dom/div :.article-page
+    (dom/div :.banner
+      (dom/div :.container
+        (dom/h1 title)
+        (ui-article-meta article)))
+    (dom/div :.container.page
+      (dom/div :.row.article-content
+        (dom/div :.col-md-12
+          body))
+      (dom/hr {})
+      (dom/div :.article-actions (ui-article-meta article))
+      (dom/div :.row
+        (dom/div :.col-xs-12.col-md-8.offset-md-2
+          (ui-comment-form)
+          (map ui-comment comments))))))
+
+(def ui-article (prim/factory Article {:keyfn :article/id}))
+
 (defsc Tag [this {:tag/keys [tag]}]
   {:query [:tag/tag :tag/count]}
   (dom/a  :.tag-pill.tag-default {:href (str "/tag/" tag)} tag))
