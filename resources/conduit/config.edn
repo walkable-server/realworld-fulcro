@@ -71,7 +71,7 @@
            :article/by-slug               :article/slug
            :article/by-id                 :article/id}
 
-  :joins {[:user/followed-by :user/followed-by-me]
+  :joins {[:user/followed-by :user/followed-by-me :user/followed-by-count]
           [:user/id :follow/followee-id :follow/follower-id :user/id]
 
           :article/tags [:article/id :tag/article-id]
@@ -85,7 +85,8 @@
 
           :comment/author [:comment/author-id :user/id]}
 
-  :aggregate-joins {:article/liked-by-count [:count-*]
+  :aggregate-joins {[:article/liked-by-count :user/followed-by-count]
+                    [:count-*]
 
                     [:user/followed-by-me :article/liked-by-me]
                     [:< 0 [:count-*]]}
