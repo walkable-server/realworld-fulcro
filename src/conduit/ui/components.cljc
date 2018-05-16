@@ -317,8 +317,8 @@
           (dom/p {} bio)
           (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
             {:onClick #?(:cljs #(if followed-by-me
-                                  (prim/transact! this `[(unfollow {:user/id ~id})])
-                                  (prim/transact! this `[(follow {:user/id ~id})]))
+                                  (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
+                                  (prim/transact! this `[(mutations/follow {:user/id ~id})]))
                          :clj nil)}
             (dom/i :.ion-plus-round)
             (str (if followed-by-me "Unfollow " "Follow ") name)))))))
