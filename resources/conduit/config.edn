@@ -71,34 +71,35 @@
            :article/by-slug               :article/slug
            :article/by-id                 :article/id}
 
-  :joins {[:user/followed-by :user/followed-by-me?]
+  :joins {[:user/followed-by :user/followed-by-me]
           [:user/id :follow/followee-id :follow/follower-id :user/id]
 
           :article/tags [:article/id :tag/article-id]
 
           :article/comments [:article/id :comment/article-id]
 
-          [:article/liked-by :article/liked-by-count :article/liked-by-me?]
+          [:article/liked-by :article/liked-by-count :article/liked-by-me]
           [:article/id :favorite/article-id :favorite/user-id :user/id]
 
           :article/author [:article/author-id :user/id]
 
           :comment/author [:comment/author-id :user/id]}
 
+  :aggregate-joins {:article/liked-by-count [:count-*]
+
+                    [:user/followed-by-me :article/liked-by-me]
+                    [:< 0 [:count-*]]}
+
   :reversed-joins {:user/follows  :user/followed-by
                    :user/like     :article/liked-by
                    :user/articles :article/author}
 
-  :pseudo-columns {:agg/count [:count-*]}
   :cardinality    {:user/by-id             :one
                    :user/by-username       :one
                    :user/whoami            :one
                    :article/by-id          :one
                    :article/by-slug        :one
-                   :article/author         :one
-                   :article/liked-by-me?   :one
-                   :user/followed-by-me?   :one
-                   :article/liked-by-count :one}}
+                   :article/author         :one}}
 
  :conduit.handler.transit-format/transit-json-format {}
 
