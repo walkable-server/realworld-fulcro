@@ -18,6 +18,7 @@
   :screen/settings comp/SettingScreen
   :screen/editor   comp/EditorScreen
   :screen/sign-up  comp/Home
+  :screen/article  comp/ArticleScreen
   :screen/profile  comp/ProfileScreen)
 
 (def ui-top (prim/factory TopRouter))
@@ -29,6 +30,9 @@
 
     (r/make-route :screen/editor
       [(r/router-instruction :router/top [:screen/editor :param/screen-id])])
+
+    (r/make-route :screen/article
+      [(r/router-instruction :router/top [:screen/article :param/screen-id])])
 
     (r/make-route :screen/settings
       [(r/router-instruction :router/top [:screen/settings :top])])
