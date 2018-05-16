@@ -88,7 +88,6 @@
    :fulcro       {:started-callback
                   (fn [app]
                     (df/load app :articles/all comp/ArticlePreview)
-                    (df/load app :articles/feed comp/ArticlePreview)
                     (df/load app :tags/all comp/Tag))
                   :networking {:remote (net/fulcro-http-remote
                                          {:url "/api"
