@@ -178,7 +178,9 @@
   (dom/div :.article-preview
     (ui-article-preview-meta article)
     (dom/div :.preview-link
-      (dom/h1 {} title)
+      (dom/h1 {:onClick #?(:cljs #(go-to-article this {:article/id id})
+                           :clj nil)}
+        title)
       (dom/p {} description)
       (dom/p {:onClick #?(:cljs #(on-edit {:article/id id})
                           :clj nil)}
