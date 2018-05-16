@@ -35,7 +35,7 @@
          :article-to-edit])))
 
 #?(:cljs
-   (defn view-profile [component {:user/keys [id] :as profile}]
+   (defn go-to-profile [component {:user/keys [id] :as profile}]
      (prim/transact! component
        `[(load-profile-to-screen ~profile)
          (load-owned-articles-to-screen ~profile)
@@ -146,7 +146,7 @@
       (dom/img {:src (:user/image author)}))
     (dom/div :.info
       (dom/div :.author
-        {:onClick #?(:cljs #(view-profile this author)
+        {:onClick #?(:cljs #(go-to-profile this author)
                      :clj nil)}
         (:user/name author))
       (dom/span :.date
