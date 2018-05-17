@@ -34,7 +34,7 @@
                                    [duct/server.figwheel "0.2.1" :exclusions [org.clojure/clojurescript]]
                                    [devcards "0.2.4" :exclusions [org.clojure/clojurescript]]
 
-                                   [fulcrologic/fulcro-inspect "2.0.1" :exclusions [fulcrologic/fulcro-css]]
+                                   [fulcrologic/fulcro-inspect "2.1.0" :exclusions [fulcrologic/fulcro-css]]
                                    [integrant/repl "0.2.0"]
                                    [eftest "0.4.1"]
                                    [kerodon "0.9.0"]]}})
