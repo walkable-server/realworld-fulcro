@@ -77,8 +77,8 @@
 (def token-store (atom "No token"))
 
 (defn wrap-remember-token [res]
-  (when-let [new-token (or (-> (:body res) (get :user/whoami) :token))]
     ;;(println (str "found token: " new-token))
+  (when-let [new-token (-> (:body res) (get :user/whoami) :token)]
     (reset! token-store (str "Token " new-token)))
   res)
 
