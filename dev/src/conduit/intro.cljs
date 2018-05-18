@@ -14,7 +14,7 @@
   (fn [this props]
     (let [screen-name   (:screen props)
           screen-id-key (case screen-name
-                          :screen/editor
+                          (:screen/editor :screen/article)
                           :article-id
 
                           :screen-id)
@@ -38,7 +38,7 @@
       [(r/router-instruction :router/top [:screen/editor :param/article-id])])
 
     (r/make-route :screen/article
-      [(r/router-instruction :router/top [:screen/article :param/screen-id])])
+      [(r/router-instruction :router/top [:screen/article :param/article-id])])
 
     (r/make-route :screen/settings
       [(r/router-instruction :router/top [:screen/settings :top])])
