@@ -23,7 +23,7 @@
        `[(create-temp-article-if-not-found)
          (use-current-temp-article-as-form)
          (r/route-to {:handler      :screen/editor
-                      :route-params {:screen-id :current-temp-article}})
+                      :route-params {:article-id :current-temp-article}})
          :article-to-edit])))
 
 #?(:cljs
@@ -31,7 +31,7 @@
      (prim/transact! component
        `[(use-article-as-form ~article)
          (r/route-to {:handler      :screen/editor
-                      :route-params {:screen-id ~id}})
+                      :route-params {:article-id ~id}})
          :article-to-edit])))
 
 #?(:cljs
@@ -500,7 +500,7 @@
           (fnil conj []) [:article/by-id tempid])
         (assoc-in [:screen/editor :current-temp-article]
           {:screen          :screen/editor
-           :screen-id       :current-temp-article
+           :article-id      :current-temp-article
            :article-to-edit [:article/by-id tempid]})))))
 
 #?(:cljs
@@ -545,7 +545,7 @@
                        (fs/add-form-config* ArticleEditor [:article/by-id id])
                        (assoc-in [:screen/editor id]
                          {:screen          :screen/editor
-                          :screen-id       id
+                          :article-id      id
                           :article-to-edit [:article/by-id id]}))))
      (refresh [env] [:screen])))
 
@@ -800,12 +800,12 @@
                    {[:root/settings-form :user] (prim/get-query SettingsForm)}]}
   (ui-settings-form user))
 
-(defsc EditorScreen [this {:keys [screen article-to-edit] article-id :screen-id}]
+(defsc EditorScreen [this {:keys [screen article-to-edit article-id]}]
   {:ident         (fn [] [screen article-id])
    :initial-state (fn [params] {:screen          :screen/editor
-                                :screen-id       :current-temp-article
+                                :article-id      :current-temp-article
                                 :article-to-edit (prim/get-initial-state ArticleEditor #:article{:id :none})})
-   :query         (fn [] [:screen :screen-id
+   :query         (fn [] [:screen :article-id
                           {:article-to-edit (prim/get-query ArticleEditor)}])}
   (ui-article-editor article-to-edit))
 
@@ -847,13 +847,13 @@
                   "Favorited Articles"))))
           (ui-profile-router router))))))
 
-(defsc ArticleScreen [this {:keys [screen article-to-view new-comment] article-id :screen-id}]
+(defsc ArticleScreen [this {:keys [screen article-id article-to-view new-comment]}]
   {:ident         (fn [] [screen article-id])
    :initial-state (fn [params] {:screen          :screen/article
-                                :screen-id       :none
+                                :article-id      :none
                                 :article-to-view (prim/get-initial-state Article #:article{:id :none})
                                 :new-comment     (prim/get-initial-state CommentForm #:comment{:id :none})})
-   :query         (fn [] [:screen :screen-id
+   :query         (fn [] [:screen :article-id
                           {:article-to-view (prim/get-query Article)}
                           {:new-comment (prim/get-query CommentForm)}])}
   (ui-article (prim/computed article-to-view {:new-comment new-comment})))
