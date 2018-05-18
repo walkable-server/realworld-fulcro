@@ -431,7 +431,7 @@
   {:initial-state (fn [params]
                     {:screen          :screen.profile/liked-articles
                      :screen-id       :guest
-                     :profile-to-view [:user/by-id :guest]})
+                     :profile-to-view (prim/get-initial-state LikedArticles #:user{:id :guest})})
    :ident         (fn [] [screen user-id])
    :query         [:screen :screen-id {:profile-to-view (prim/get-query LikedArticles)}]}
   (ui-liked-articles profile-to-view))
@@ -448,7 +448,7 @@
   {:initial-state (fn [params]
                     {:screen          :screen.profile/owned-articles
                      :screen-id       :guest
-                     :profile-to-view [:user/by-id :guest]})
+                     :profile-to-view (prim/get-initial-state OwnedArticles #:user {:id :guest})})
    :ident         (fn [] [screen user-id])
    :query         [:screen :screen-id {:profile-to-view (prim/get-query OwnedArticles)}]}
   (ui-owned-articles profile-to-view))
@@ -801,7 +801,7 @@
                                 :screen-id          :top
 
                                 [:root/settings-form :settings]
-                                (prim/get-initial-state SettingsForm {})})
+                                (prim/get-initial-state SettingsForm #:user{:id :guest})})
    :query         [:screen :screen-id
                    {[:root/settings-form :settings] (prim/get-query SettingsForm)}]}
   (ui-settings-form settings))
@@ -810,7 +810,7 @@
   {:ident         (fn [] [screen article-id])
    :initial-state (fn [params] {:screen          :screen/editor
                                 :screen-id       :current-temp-article
-                                :article-to-edit {}})
+                                :article-to-edit (prim/get-initial-state ArticleEditor #:article{:id :none})})
    :query         (fn [] [:screen :screen-id
                           {:article-to-edit (prim/get-query ArticleEditor)}])}
   (ui-article-editor article-to-edit))
@@ -821,7 +821,7 @@
   {:ident         (fn [] [screen user-id])
    :initial-state (fn [params] {:screen          :screen/profile
                                 :screen-id       :guest
-                                :profile-to-view [:user/by-id :guest]
+                                :profile-to-view (prim/get-initial-state Profile #:user{:id :guest})
                                 :router/profile  {}})
    :query         (fn [] [:screen :screen-id
                           {[r/routers-table :router/profile] (prim/get-query ProfileRouter)}
