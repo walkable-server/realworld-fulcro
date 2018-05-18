@@ -15,6 +15,9 @@
 (def remove-article-namespace
   (util/remove-namespace "article" [:title :body :slug :description]))
 
+(def remove-comment-namespace
+  (util/remove-namespace "comment" [:body]))
+
 (defmutation submit-article [diff]
   (action [{:keys [duct/logger] :app/keys [db current-user]}]
     ;;(log logger :info :article diff)
@@ -26,6 +29,18 @@
           (let [new-id (article/create-article db current-user article)]
             {::prim/tempids {article-id new-id}})
           (article/update-article db current-user article-id article)))
+      {})))
+
+(defmutation submit-comment [{:keys [article-id diff]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (if current-user
+      (let [[_ comment-id] (util/get-ident diff)
+            comment-item   (-> (util/get-item diff)
+                             (rename-keys remove-comment-namespace))]
+        (if (tempid? comment-id)
+          (let [new-id (article/create-comment db current-user article-id comment-item)]
+            {::prim/tempids {comment-id new-id}})
+          (article/update-comment db current-user comment-id comment-item)))
       {})))
 
 (defmutation submit-settings [diff]
