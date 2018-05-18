@@ -307,9 +307,11 @@
         {:src (:user/image author)})
       (dom/button :.btn.btn-sm.btn-primary
         {:onClick #?(:clj  nil
-                     :cljs #(prim/transact! this `[(mutations/submit-comment
-                                                     {:article-id ~article-id
-                                                      :diff       ~(fs/dirty-fields props false)})]))}
+                     :cljs #(do (prim/transact! this `[(mutations/submit-comment
+                                                         {:article-id ~article-id
+                                                          :diff       ~(fs/dirty-fields props false)})])
+                                (when (tempid? id)
+                                  (prim/transact! this `[(set-article-comment-blank {:article/id ~article-id})]))))}
         (if (number? id)
           "Update Comment"
           "Post Comment")))))
