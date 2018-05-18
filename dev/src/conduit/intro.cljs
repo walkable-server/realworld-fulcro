@@ -67,14 +67,19 @@
 
 (defsc Root [this {router :router/top :as props}]
   {:initial-state (fn [params] (merge routing-tree
-                                 {:article/by-id {:none #:article {:id :none :body "" :author [:user/by-id :guest]}}
-                                  :comment/by-id {:none #:comment{:id :none :body "" :author [:user/by-id :guest]}}
-                                  :user/whoami        [:user/by-id :guest]
-                                  :user/by-id         {:guest {:user/id       :guest
-                                                               :user/name     "Guest"
-                                                               :user/email    "non@exist"
-                                                               :user/like     []
-                                                               :user/articles []}}}
+                                 {:article/by-id {:none #:article {:id          :none
+                                                                   :body        ""
+                                                                   :title       ""
+                                                                   :slug        ""
+                                                                   :description ""
+                                                                   :author      [:user/by-id :guest]}}
+                                  :comment/by-id {:none #:comment {:id :none :body "" :author [:user/by-id :guest]}}
+                                  :user/whoami   [:user/by-id :guest]
+                                  :user/by-id    {:guest {:user/id       :guest
+                                                          :user/name     "Guest"
+                                                          :user/email    "non@exist"
+                                                          :user/like     []
+                                                          :user/articles []}}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query         [{:router/top (prim/get-query TopRouter)}
                    {:user/whoami (prim/get-query comp/NavBar)}]}
