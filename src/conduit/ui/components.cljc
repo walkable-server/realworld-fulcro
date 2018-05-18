@@ -568,12 +568,12 @@
      (refresh [env] [:screen])))
 
 (defsc ArticleEditor [this {:article/keys [id slug title description body] :as props}]
-  {:initial-state (fn [{:article/keys [id]}] #:article{:id id})
-   :query       [:article/id :article/slug  :article/title :article/description :article/body
-                 fs/form-config-join]
-   :ident       [:article/by-id :article/id]
-   :form-fields #{:article/slug  :article/title
-                  :article/description :article/body}}
+  {:initial-state (fn [{:article/keys [id]}] #:article{:id :none :body "" :title "" :description "" :slug ""})
+   :query         [:article/id :article/slug  :article/title :article/description :article/body
+                   fs/form-config-join]
+   :ident         [:article/by-id :article/id]
+   :form-fields   #{:article/slug  :article/title
+                    :article/description :article/body}}
   (dom/div :.editor-page
     (dom/div :.container.page
       (dom/div :.row
