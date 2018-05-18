@@ -40,7 +40,7 @@
        `[(load-profile-to-screen ~profile)
          (load-owned-articles-to-screen ~profile)
          (r/route-to {:handler      :screen.profile/owned-articles
-                      :route-params {:screen-id ~id}})
+                      :route-params {:user-id ~id}})
          :profile-to-view])))
 
 #?(:cljs
@@ -425,13 +425,13 @@
 (def ui-liked-articles (prim/factory LikedArticles))
 
 (defsc LikedArticlesScreen
-  [this {:keys [screen profile-to-view] user-id :screen-id}]
+  [this {:keys [screen profile-to-view user-id]}]
   {:initial-state (fn [params]
                     {:screen          :screen.profile/liked-articles
-                     :screen-id       :guest
+                     :user-id         :guest
                      :profile-to-view (prim/get-initial-state LikedArticles #:user{:id :guest})})
    :ident         (fn [] [screen user-id])
-   :query         [:screen :screen-id {:profile-to-view (prim/get-query LikedArticles)}]}
+   :query         [:screen :user-id {:profile-to-view (prim/get-query LikedArticles)}]}
   (ui-liked-articles profile-to-view))
 
 (defsc OwnedArticles [this {:user/keys [id articles]}]
@@ -442,17 +442,17 @@
 (def ui-owned-articles (prim/factory OwnedArticles))
 
 (defsc OwnedArticlesScreen
-  [this {:keys [screen profile-to-view] user-id :screen-id}]
+  [this {:keys [screen profile-to-view user-id]}]
   {:initial-state (fn [params]
                     {:screen          :screen.profile/owned-articles
-                     :screen-id       :guest
+                     :user-id         :guest
                      :profile-to-view (prim/get-initial-state OwnedArticles #:user {:id :guest})})
    :ident         (fn [] [screen user-id])
-   :query         [:screen :screen-id {:profile-to-view (prim/get-query OwnedArticles)}]}
+   :query         [:screen :user-id {:profile-to-view (prim/get-query OwnedArticles)}]}
   (ui-owned-articles profile-to-view))
 
 (r/defrouter ProfileRouter :router/profile
-  [:screen :screen-id]
+  [:screen :user-id]
   :screen.profile/owned-articles OwnedArticlesScreen
   :screen.profile/liked-articles LikedArticlesScreen)
 
@@ -661,7 +661,7 @@
          #(-> %
             (assoc-in [:screen/profile id]
               {:screen          :screen/profile
-               :screen-id       id
+               :user-id         id
                :profile-to-view [:user/by-id id]}))))
      (remote [env]
        (df/remote-load env))
@@ -692,7 +692,7 @@
          #(-> %
             (assoc-in [:screen.profile/liked-articles id]
               {:screen          :screen.profile/liked-articles
-               :screen-id       id
+               :user-id         id
                :profile-to-view [:user/by-id id]}))))
      (remote [env]
        (df/remote-load env))
@@ -706,7 +706,7 @@
          #(-> %
             (assoc-in [:screen.profile/owned-articles id]
               {:screen          :screen.profile/owned-articles
-               :screen-id       id
+               :user-id         id
                :profile-to-view [:user/by-id id]}))))
      (remote [env]
        (df/remote-load env))
@@ -809,15 +809,14 @@
                           {:article-to-edit (prim/get-query ArticleEditor)}])}
   (ui-article-editor article-to-edit))
 
-(defsc ProfileScreen [this {:keys   [screen profile-to-view]
-                            user-id :screen-id
-                            router  [r/routers-table :router/profile]}]
+(defsc ProfileScreen [this {:keys  [screen profile-to-view user-id]
+                            router [r/routers-table :router/profile]}]
   {:ident         (fn [] [screen user-id])
    :initial-state (fn [params] {:screen          :screen/profile
-                                :screen-id       :guest
+                                :user-id         :guest
                                 :profile-to-view (prim/get-initial-state Profile #:user{:id :guest})
                                 :router/profile  {}})
-   :query         (fn [] [:screen :screen-id
+   :query         (fn [] [:screen :user-id
                           {[r/routers-table :router/profile] (prim/get-query ProfileRouter)}
                           {:profile-to-view (prim/get-query Profile)}])}
   (dom/div :.profile-page
@@ -832,7 +831,7 @@
                   {:onClick #?(:cljs #(prim/transact! this
                                         `[(load-owned-articles-to-screen {:user/id ~user-id})
                                           (r/route-to {:handler      :screen.profile/owned-articles
-                                                       :route-params {:screen-id ~user-id}})
+                                                       :route-params {:user-id ~user-id}})
                                           :profile-to-view])
                                :clj nil)}
                   "My Articles"))
@@ -841,7 +840,7 @@
                   {:onClick #?(:cljs #(prim/transact! this
                                         `[(load-liked-articles-to-screen {:user/id ~user-id})
                                           (r/route-to {:handler      :screen.profile/liked-articles
-                                                       :route-params {:screen-id ~user-id}})
+                                                       :route-params {:user-id ~user-id}})
                                           :profile-to-view])
                                :clj nil)}
                   "Favorited Articles"))))
