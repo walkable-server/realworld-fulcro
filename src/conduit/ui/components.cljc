@@ -584,6 +584,7 @@
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Article Title",
                    :type        "text"
+                   :name        "title"
                    :value       title
                    :onBlur
                    #?(:clj  nil
@@ -596,6 +597,7 @@
                 (dom/input :.form-control
                   {:placeholder "What's this article about?",
                    :type        "text"
+                   :name        "description"
                    :value       description
                    :onBlur
                    #?(:clj  nil
@@ -608,6 +610,7 @@
                 (dom/input :.form-control
                   {:placeholder "Slug",
                    :type        "text"
+                   :name        "slug"
                    :value       slug
                    :onBlur
                    #?(:clj  nil
@@ -619,6 +622,7 @@
               (dom/fieldset :.form-group
                 (dom/textarea :.form-control
                   {:rows  "8", :placeholder "Write your article (in markdown)"
+                   :name  "body"
                    :value body
                    :onBlur
                    #?(:clj  nil
@@ -627,9 +631,11 @@
                    :onChange
                    #?(:clj nil
                       :cljs #(m/set-string! this :article/body :event %))}))
+              #_
               (dom/fieldset :.form-group
                 (dom/input :.form-control
-                  {:placeholder "Enter tags",
+                  {:placeholder "Enter tags"
+                   :name        "tag"
                    :type        "text"})
                 (dom/div :.tag-list))
               (dom/button :.btn.btn-lg.pull-xs-right.btn-primary
