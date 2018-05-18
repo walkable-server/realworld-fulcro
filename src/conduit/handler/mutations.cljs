@@ -8,6 +8,16 @@
     (swap! state fs/entity->pristine* (util/get-ident diff)))
   (remote [env] true))
 
+(defmutation submit-comment [{:keys [article-id diff]}]
+  (action [{:keys [state]}]
+    (swap! state #(let [ident (util/get-ident diff)]
+                    (-> %
+                      (fs/entity->pristine* ident)
+                      (update-in [:article/by-id article-id :article/comments]
+                        (fnil conj []) ident)))))
+  (refresh [env] [:article/comments])
+  (remote [env] true))
+
 (defmutation submit-settings [diff]
   (action [{:keys [state]}]
     (swap! state fs/entity->pristine* (util/get-ident diff)))
