@@ -11,7 +11,8 @@
   (unlike [db user-id article-id]))
 
 (defprotocol Comment
-  (create-comment [db article-slug comment])
+  (create-comment [db author-id article-id comment])
+  (update-comment [db author-id comment-id comment])
   (destroy-comment [db author-id comment-id]))
 
 (extend-protocol Article
@@ -52,11 +53,15 @@
 
 (extend-protocol Comment
   duct.database.sql.Boundary
-  (create-comment [db article-slug comment-item]
-    (when-let [article-id  (article-by-slug db article-slug)]
-      (let [comment-item (-> comment-item
-                      (select-keys [:author_id :body])
-                      (assoc :article_id article-id))]
-        (jdbc/insert! (:spec db) "\"comment\"" comment-item))))
+  (create-comment [db author-id article-id comment-item]
+    (let [comment-item (-> comment-item
+                         (select-keys [:body])
+                         (assoc :author_id author-id)
+                         (assoc :article_id article-id))
+          results (jdbc/insert! (:spec db) "\"comment\"" comment-item)]
+      (-> results first :id)))
+  (update-comment [db author-id comment-id comment-item]
+    (jdbc/update! (:spec db) "\"article\"" (select-keys comment-item [:body])
+      ["author_id = ? AND id = ?" author-id comment-id]))
   (destroy-comment [{db :spec} author-id comment-id]
     (jdbc/delete! db "\"comment\"" ["author_id = ? AND id = ?" author-id comment-id])))
