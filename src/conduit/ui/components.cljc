@@ -290,7 +290,7 @@
   (dom/form :.card.comment-form
     (dom/div :.card-block
       (dom/textarea :.form-control
-        {:placeholder (if (= id :none) "Placeholder" "Write a comment...")
+        {:placeholder "Write a comment..."
          :rows        "3"
          :ref         "comment_field"
          :value       body
