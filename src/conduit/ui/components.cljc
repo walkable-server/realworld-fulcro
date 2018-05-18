@@ -60,8 +60,7 @@
      (df/load component :articles/feed ArticlePreview)))
 
 (defsc NavBar [this {current-user-id :user/id :as props}]
-  {:initial-state (fn [params] {})
-   :query         [:user/id
+  {:query         [:user/id
                    [r/routers-table '_]]}
   (let [[current-screen _] (r/current-route props :router/top)
         logged-in? (number? current-user-id)]
@@ -379,8 +378,7 @@
 (def ui-feeds-router (prim/factory FeedsRouter))
 
 (defsc FeedSelector [this props]
-  {:initial-state (fn [params] {})
-   :query         [[r/routers-table '_]]}
+  {:query         [[r/routers-table '_]]}
   (let [[current-screen _] (r/current-route props :router/feeds)]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
@@ -628,8 +626,7 @@
 (def ui-article-editor (prim/factory ArticleEditor))
 
 (defsc Settings [this props]
-  {:initial-state (fn [params] {})
-   :query         [:user/image :user/name :user/bio :user/email]})
+  {:query         [:user/image :user/name :user/bio :user/email]})
 
 #?(:cljs
    (defmutation load-personal-feed [_]
