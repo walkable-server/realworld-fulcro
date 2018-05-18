@@ -510,6 +510,30 @@
      (action [{:keys [state]}]
        (swap! state #(create-temp-article-if-not-found prim/tempid %)))))
 
+(defn create-temp-comment-if-not-found
+  [tempid-fn {:article/keys [id]} state]
+  (if (tempid? (get-in state [:screen/article id :new-comment 1]))
+    state
+    (let [tempid              (tempid-fn)
+          current-user        (:user/whoami state)
+          [_ current-user-id] current-user
+
+          new-item #:comment {:id     tempid
+                              :body   ""
+                              :author current-user}]
+      (-> (assoc-in state [:comment/by-id tempid] new-item)
+        #_(update-in [:article/by-id current-user-id :user/articles]
+          (fnil conj []) [:article/by-id tempid])
+        (assoc-in [:screen/article id :new-comment]
+          [:comment/by-id tempid])
+        (fs/add-form-config* CommentForm [:comment/by-id tempid])))))
+
+#?(:cljs
+   (defmutation create-temp-comment-if-not-found [article]
+     (action [{:keys [state]}]
+       (swap! state #(create-temp-comment-if-not-found prim/tempid article %)))
+     (refresh [env] [:new-comment])))
+
 #?(:cljs
    (defmutation use-current-temp-article-as-form [_]
      (action [{:keys [state]}]
