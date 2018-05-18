@@ -48,7 +48,7 @@
      (prim/transact! component
        `[(load-article-to-screen ~article)
          (r/route-to {:handler      :screen/article
-                      :route-params {:screen-id ~id}})
+                      :route-params {:article-id ~id}})
          :article-to-view])))
 
 (declare ArticlePreview)
@@ -677,7 +677,7 @@
             (update-in [:screen/article id]
               (fn [x] (or x
                         {:screen          :screen/article
-                         :screen-id       id
+                         :article-id      id
                          :article-to-view [:article/by-id id]
                          :new-comment     [:comment/by-id :none]}))))))
      (remote [env]
