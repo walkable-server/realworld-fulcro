@@ -264,19 +264,41 @@
 
 (def ui-comment (prim/factory Comment {:keyfn :comment/id}))
 
-(defsc CommentForm [this {:comment/keys [body author]}]
-  {:query [:comment/body {:comment/author [:user/image]}]}
+(defn focus-field [component ref-name]
+  (let [input-field        (dom/node component ref-name)
+        input-field-length (.. input-field -value -length)]
+    (.focus input-field)
+    (.setSelectionRange input-field input-field-length input-field-length)))
+
+(defsc CommentForm [this {:comment/keys [id body author]} {:keys [on-focus]}]
+  {:query       [:comment/id :comment/body {:comment/author (prim/get-query UserTinyPreview)}
+                 fs/form-config-join]
+   :ident       [:comment/by-id :comment/id]
+   :componentDidMount #(when (tempid? (:comment/id (prim/props this)))
+                         (focus-field this "comment_field"))
+   :form-fields #{:comment/body}}
   (dom/form :.card.comment-form
     (dom/div :.card-block
       (dom/textarea :.form-control
-        {:placeholder "Write a comment...", :rows "3"}))
+        {:placeholder (if (= id :none) "Placeholder" "Write a comment...")
+         :rows "3"
+         :ref         "comment_field"
+         :value       body
+         :onFocus     on-focus
+         :onBlur
+         #?(:clj  nil
+            :cljs #(prim/transact! this
+                     `[(fs/mark-complete! {:field :comment/body})]))
+         :onChange
+         #?(:clj nil
+            :cljs #(m/set-string! this :comment/body :event %))}))
     (dom/div :.card-footer
       (dom/img :.comment-author-img
         {:src (:user/image author)})
       (dom/button :.btn.btn-sm.btn-primary
         "Post Comment"))))
 
-(def ui-comment-form (prim/factory CommentForm))
+(def ui-comment-form (prim/factory CommentForm {:keyfn :comment/id}))
 
 (defsc Article [this {:article/keys [id author-id slug title description body image comments]
                       :keys [ph/article]}]
