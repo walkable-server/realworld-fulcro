@@ -277,18 +277,21 @@
     (.focus input-field)
     (.setSelectionRange input-field input-field-length input-field-length)))
 
-(defsc CommentForm [this {:comment/keys [id body author]} {:keys [on-focus]}]
-  {:query       [:comment/id :comment/body {:comment/author (prim/get-query UserTinyPreview)}
-                 fs/form-config-join]
-   :ident       [:comment/by-id :comment/id]
+(defsc CommentForm [this {:comment/keys [id body author] :as props} {:keys [article-id on-focus]}]
+  {:query             [:comment/id :comment/body {:comment/author (prim/get-query UserTinyPreview)}
+                       fs/form-config-join]
+   :initial-state     (fn [params] #:comment{:id     :none
+                                             :body   ""
+                                             :author (prim/get-initial-state UserTinyPreview #:user {:id :guest})})
+   :ident             [:comment/by-id :comment/id]
    :componentDidMount #(when (tempid? (:comment/id (prim/props this)))
                          (focus-field this "comment_field"))
-   :form-fields #{:comment/body}}
+   :form-fields       #{:comment/body}}
   (dom/form :.card.comment-form
     (dom/div :.card-block
       (dom/textarea :.form-control
         {:placeholder (if (= id :none) "Placeholder" "Write a comment...")
-         :rows "3"
+         :rows        "3"
          :ref         "comment_field"
          :value       body
          :onFocus     on-focus
@@ -303,7 +306,13 @@
       (dom/img :.comment-author-img
         {:src (:user/image author)})
       (dom/button :.btn.btn-sm.btn-primary
-        "Post Comment"))))
+        {:onClick #?(:clj  nil
+                     :cljs #(prim/transact! this `[(mutations/submit-comment
+                                                     {:article-id ~article-id
+                                                      :diff       ~(fs/dirty-fields props false)})]))}
+        (if (number? id)
+          "Update Comment"
+          "Post Comment")))))
 
 (def ui-comment-form (prim/factory CommentForm {:keyfn :comment/id}))
 
@@ -332,8 +341,8 @@
         (dom/div :.article-actions (ui-article-meta article))
         (dom/div :.row
           (dom/div :.col-xs-12.col-md-8.offset-md-2
-            (ui-comment-form (prim/computed new-comment {:on-focus on-focus-comment}))
-            (map ui-comment comments)))))))
+            (ui-comment-form (prim/computed new-comment {:on-focus on-focus-comment :article-id id}))
+            (mapv ui-comment comments)))))))
 
 (def ui-article (prim/factory Article {:keyfn :article/id}))
 
