@@ -676,10 +676,13 @@
        (df/load-action env [:article/by-id id] Article)
        (swap! state
          #(-> %
-            (assoc-in [:screen/article id]
-              {:screen          :screen/article
-               :screen-id       id
-               :article-to-view [:article/by-id id]}))))
+            (fs/add-form-config* CommentForm [:comment/by-id :none])
+            (update-in [:screen/article id]
+              (fn [x] (or x
+                        {:screen          :screen/article
+                         :screen-id       id
+                         :article-to-view [:article/by-id id]
+                         :new-comment     [:comment/by-id :none]}))))))
      (remote [env]
        (df/remote-load env))
      (refresh [env] [:screen :article-to-view])))
