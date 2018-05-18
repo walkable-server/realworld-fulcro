@@ -709,6 +709,14 @@
      (refresh [env] [:screen :article-to-view])))
 
 #?(:cljs
+   (defmutation set-article-comment-blank [{:article/keys [id]}]
+     (action [{:keys [state] :as env}]
+       (swap! state
+         #(assoc-in % [:screen/article id :new-comment]
+            [:comment/by-id :none])))
+     (refresh [env] [:article-to-view])))
+
+#?(:cljs
    (defmutation load-liked-articles-to-screen [{:user/keys [id]}]
      (action [{:keys [state] :as env}]
        (df/load-action env [:user/by-id id] LikedArticles)
