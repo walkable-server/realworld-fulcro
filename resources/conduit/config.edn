@@ -65,10 +65,8 @@
             :comment/id :comment/created-at :comment/updated-at :comment/body]
 
   :idents {:user/by-id                    :user/id
-           :user/by-username              :user/username
            [:users/all :user/whoami]      "user"
            [:articles/all :articles/feed] "article"
-           :article/by-slug               :article/slug
            :article/by-id                 :article/id}
 
   :joins {[:user/followed-by :user/followed-by-me :user/followed-by-count]
@@ -96,11 +94,10 @@
                    :user/articles :article/author}
 
   :cardinality    {:user/by-id             :one
-                   :user/by-username       :one
                    :user/whoami            :one
                    :article/by-id          :one
-                   :article/by-slug        :one
-                   :article/author         :one}}
+                   :article/author         :one
+                   :comment/author         :one}}
 
  :conduit.handler.transit-format/transit-json-format {}
 
