@@ -58,18 +58,19 @@
 
 (defsc Root [this {router :router/top :as props}]
   {:initial-state (fn [params] (merge routing-tree
-                                 {:root/settings-form {:settings [:user/whoami '_]}
+                                 {:article/by-id {:none #:article {:id :none :body "" :author [:user/by-id :guest]}}
+                                  :comment/by-id {:none #:comment{:id :none :body "" :author [:user/by-id :guest]}}
                                   :user/whoami        [:user/by-id :guest]
                                   :user/by-id         {:guest {:user/id       :guest
                                                                :user/name     "Guest"
-                                                               :user/email    "non@exist.com"
+                                                               :user/email    "non@exist"
                                                                :user/like     []
                                                                :user/articles []}}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
-   :query         [{:router/top (prim/get-query TopRouter {})}
+   :query         [{:router/top (prim/get-query TopRouter)}
                    {:user/whoami (prim/get-query comp/NavBar)}]}
   (let [current-user (get props :user/whoami)]
-    (dom/div {}
+    (dom/div
       (comp/ui-nav-bar current-user)
       (ui-top router)
       (comp/ui-footer))))
