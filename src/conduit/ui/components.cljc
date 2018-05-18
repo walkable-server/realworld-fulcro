@@ -137,10 +137,12 @@
 
 (defsc UserTinyPreview [this props]
   {:query [:user/id :user/username :user/name]
+   :initial-state (fn [params] #:user{:id :guest})
    :ident [:user/by-id :user/id]})
 
 (defsc UserPreview [this props]
   {:query [:user/id :user/image :user/username :user/name :user/followed-by-me :user/followed-by-count]
+   :initial-state (fn [params] #:user{:id :guest})
    :ident [:user/by-id :user/id]})
 
 #?(:cljs
@@ -240,10 +242,14 @@
 
 (def ui-article-meta (prim/factory ArticleMeta {:keyfn :article/id}))
 
-(defsc Comment [this {:comment/keys [author body created-at]}]
-  {:ident [:comment/by-id :comment/id]
-   :query [:comment/id :comment/created-at
-           {:comment/author (prim/get-query UserTinyPreview)}]}
+(defsc Comment [this {:comment/keys [id author body created-at]}]
+  {:ident         [:comment/by-id :comment/id]
+   :initial-state (fn [params]
+                    #:comment{:id     :none
+                              :body   ""
+                              :author (prim/get-initial-state UserTinyPreview #:user{:id :guest})})
+   :query         [:comment/id :comment/created-at :comment/body
+                   {:comment/author (prim/get-query UserTinyPreview)}]}
   (dom/div :.card
     (dom/div :.card-block
       (dom/p :.card-text
@@ -303,6 +309,7 @@
                       :keys         [ph/article]}
                 {:keys [new-comment]}]
   {:ident [:article/by-id :article/id]
+   :initial-state (fn [params] #:article{:id :none :comments (prim/get-initial-state Comment {})})
    :query [:article/id :article/author-id :article/slug :article/title :article/description
            :article/body :article/image
            {:article/comments (prim/get-query Comment)}
