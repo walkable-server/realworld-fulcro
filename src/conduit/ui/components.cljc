@@ -826,11 +826,13 @@
                   "Favorited Articles"))))
           (ui-profile-router router))))))
 
-(defsc ArticleScreen [this {:keys [screen article-to-view] article-id :screen-id}]
+(defsc ArticleScreen [this {:keys [screen article-to-view new-comment] article-id :screen-id}]
   {:ident         (fn [] [screen article-id])
-   :initial-state (fn [params] {:screen          :screen/editor
+   :initial-state (fn [params] {:screen          :screen/article
                                 :screen-id       :none
-                                :article-to-view {}})
+                                :article-to-view (prim/get-initial-state Article #:article{:id :none})
+                                :new-comment     (prim/get-initial-state CommentForm #:comment{:id :none})})
    :query         (fn [] [:screen :screen-id
-                          {:article-to-view (prim/get-query Article)}])}
-  (ui-article article-to-view))
+                          {:article-to-view (prim/get-query Article)}
+                          {:new-comment (prim/get-query CommentForm)}])}
+  (ui-article (prim/computed article-to-view {:new-comment new-comment})))
