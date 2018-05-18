@@ -717,7 +717,7 @@
      (action [{:keys [state] :as env}]
        (swap! state #(-> %
                        (fs/add-form-config* SettingsForm [:user/by-id id])
-                       (assoc-in [:root/settings-form :settings] [:user/by-id id]))))))
+                       (assoc-in [:root/settings-form :user] [:user/by-id id]))))))
 
 (defsc SettingsForm [this {:user/keys [id image name bio email] :as props}]
   {:query       [:user/id :user/image :user/name :user/bio :user/email
@@ -793,15 +793,12 @@
 
 (def ui-settings-form (prim/factory SettingsForm))
 
-(defsc SettingScreen [this {settings [:root/settings-form :settings] :as props}]
+(defsc SettingScreen [this {user [:root/settings-form :user]}]
   {:initial-state (fn [params] {:screen             :screen/settings
-                                :screen-id          :top
-
-                                [:root/settings-form :settings]
-                                (prim/get-initial-state SettingsForm #:user{:id :guest})})
+                                :screen-id          :top})
    :query         [:screen :screen-id
-                   {[:root/settings-form :settings] (prim/get-query SettingsForm)}]}
-  (ui-settings-form settings))
+                   {[:root/settings-form :user] (prim/get-query SettingsForm)}]}
+  (ui-settings-form user))
 
 (defsc EditorScreen [this {:keys [screen article-to-edit] article-id :screen-id}]
   {:ident         (fn [] [screen article-id])
