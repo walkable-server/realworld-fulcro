@@ -255,10 +255,12 @@
       (dom/p :.card-text
         body))
     (dom/div :.card-footer
-      (dom/div :.comment-author #_{:onClick #?(:cljs identity :clj nil)}
+      (dom/div :.comment-author {:onClick #?(:cljs #(go-to-profile this author)
+                                             :clj nil)}
         (dom/img :.comment-author-img
           {:src (:user/image author)}))
-      (dom/a :.comment-author #_{:onClick #?(:cljs identity :clj nil)}
+      (dom/div :.comment-author {:onClick #?(:cljs #(go-to-profile this author)
+                                             :clj nil)}
         (:user/name author))
       (dom/span :.date-posted
         #?(:clj  created-at
