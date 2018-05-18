@@ -10,10 +10,16 @@
             [conduit.ui.components :as comp]
             [fulcro.client.dom :as dom]))
 
-;; (dom/div {:onClick #(prim/transact! this `[(comp/use-article-as-form #:article{:id 2})])} "Edit")
-
 (r/defrouter TopRouter :router/top
-  [:screen :screen-id]
+  (fn [this props]
+    (let [screen-name   (:screen props)
+          screen-id-key (case screen-name
+                          :screen/editor
+                          :article-id
+
+                          :screen-id)
+          screen-id (get props screen-id-key)]
+      [screen-name screen-id]))
   :screen/home     comp/Home
   :screen/settings comp/SettingScreen
   :screen/editor   comp/EditorScreen
@@ -29,7 +35,7 @@
       [(r/router-instruction :router/top [:screen/home :top])])
 
     (r/make-route :screen/editor
-      [(r/router-instruction :router/top [:screen/editor :param/screen-id])])
+      [(r/router-instruction :router/top [:screen/editor :param/article-id])])
 
     (r/make-route :screen/article
       [(r/router-instruction :router/top [:screen/article :param/screen-id])])
