@@ -131,7 +131,7 @@
   (dom/div :.banner
     (dom/div :.container
       (dom/h1 :.logo-font "conduit")
-      (dom/p {} "A place to show off your tech stack."))))
+      (dom/p "A place to show off your tech stack."))))
 
 (def ui-banner (prim/factory Banner))
 
@@ -180,14 +180,14 @@
       (dom/h1 {:onClick #?(:cljs #(go-to-article this {:article/id id})
                            :clj nil)}
         title)
-      (dom/p {} description)
+      (dom/p description)
       (dom/p {:onClick #?(:cljs #(on-edit {:article/id id})
                           :clj nil)}
         "Edit me")
       (dom/p {:onClick #?(:cljs #(on-delete {:article/id id})
                           :clj nil)}
         "Delete me")
-      (dom/span {} "Read more..."))))
+      (dom/span "Read more..."))))
 
 (def ui-article-preview (prim/factory ArticlePreview {:keyfn :article/id}))
 
@@ -337,7 +337,7 @@
 (defsc Tags [this tags]
   (dom/div :.col-md-3
     (dom/div :.sidebar
-      (dom/p {} "Popular Tags")
+      (dom/p "Popular Tags")
       (dom/div :.tag-list
         (mapv ui-tag tags)))))
 
@@ -466,8 +466,8 @@
       (dom/div :.row
         (dom/div :.col-xs-12.col-md-10.offset-md-1
           (dom/img :.user-img {:src image})
-          (dom/h4 {} name)
-          (dom/p {} bio)
+          (dom/h4 name)
+          (dom/p bio)
           (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
             {:onClick #?(:cljs #(if followed-by-me
                                   (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
@@ -560,8 +560,8 @@
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-10.offset-md-1.col-xs-12
-          (dom/form {}
-            (dom/fieldset {}
+          (dom/form
+            (dom/fieldset
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Article Title",
@@ -730,8 +730,8 @@
         (dom/div :.col-md-6.offset-md-3.col-xs-12
           (dom/h1 :.text-xs-center
             "Your Settings")
-          (dom/form {}
-            (dom/fieldset {}
+          (dom/form
+            (dom/fieldset
               (dom/fieldset :.form-group
                 (dom/input :.form-control
                   {:placeholder "URL of profile picture",
