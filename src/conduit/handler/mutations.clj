@@ -57,6 +57,12 @@
       (article/destroy-article db current-user id)
       {})))
 
+(defmutation delete-comment [{:comment/keys [id]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (if current-user
+      (article/destroy-comment db current-user id)
+      {})))
+
 (defmutation follow [{:user/keys [id]}]
   (action [{:keys [duct/logger] :app/keys [db current-user]}]
     (if (and current-user (not= current-user id))

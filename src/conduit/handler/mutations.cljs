@@ -32,7 +32,15 @@
     (swap! state #(-> % (update :article/by-id dissoc id)
                     (update :articles/all remove-ref-by-id id)
                     (update :articles/feed remove-ref-by-id id))))
-  (remote [env] true))
+  (remote [env] true)
+  (refresh [env] [:articles/all :articles/feed]))
+
+(defmutation delete-comment [{comment-id :comment/id article-id :article/id}]
+  (action [{:keys [state]}]
+    (swap! state #(-> % (update :comment/by-id dissoc comment-id)
+                    (update-in [:article/by-id article-id :article/comments] remove-ref-by-id comment-id))))
+  (remote [env] true)
+  (refresh [env] [:article/comments]))
 
 ;; todo: increase/decrease counts by 1
 (defmutation follow [{:user/keys [id]}]
