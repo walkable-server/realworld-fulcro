@@ -242,7 +242,8 @@
 
 (def ui-article-meta (prim/factory ArticleMeta {:keyfn :article/id}))
 
-(defsc Comment [this {:comment/keys [id author body created-at]}]
+(defsc Comment [this {:comment/keys [id author body created-at]}
+                {:keys [delete-comment]}]
   {:ident         [:comment/by-id :comment/id]
    :initial-state (fn [params]
                     #:comment{:id     :none
@@ -267,7 +268,7 @@
            :cljs (js-date->string created-at)))
       (dom/span :.mod-options
         (dom/i :.ion-edit #_{:onClick #?(:cljs identity :clj nil)} " ")
-        (dom/i :.ion-trash-a #_{:onClick #?(:cljs identity :clj nil)} " ")))))
+        (dom/i :.ion-trash-a {:onClick #?(:cljs #(delete-comment id) :clj nil)} " ")))))
 
 (def ui-comment (prim/factory Comment {:keyfn :comment/id}))
 
@@ -321,15 +322,18 @@
 (defsc Article [this {:article/keys [id author-id slug title description body image comments]
                       :keys         [ph/article]}
                 {:keys [new-comment]}]
-  {:ident [:article/by-id :article/id]
+  {:ident         [:article/by-id :article/id]
    :initial-state (fn [params] #:article{:id :none :comments (prim/get-initial-state Comment {})})
-   :query [:article/id :article/author-id :article/slug :article/title :article/description
-           :article/body :article/image
-           {:article/comments (prim/get-query Comment)}
-           {:ph/article (prim/get-query ArticleMeta)}]}
+   :query         [:article/id :article/author-id :article/slug :article/title :article/description
+                   :article/body :article/image
+                   {:article/comments (prim/get-query Comment)}
+                   {:ph/article (prim/get-query ArticleMeta)}]}
   (let [on-focus-comment #?(:clj  nil
                             :cljs #(prim/transact! this
-                                     `[(create-temp-comment-if-not-found {:article/id ~id})]))]
+                                     `[(create-temp-comment-if-not-found {:article/id ~id})]))
+        delete-comment   #?(:clj  nil
+                            :cljs #(prim/transact! this
+                                     `[(mutations/delete-comment {:article/id ~id :comment/id ~%})]))]
     (dom/div :.article-page
       (dom/div :.banner
         (dom/div :.container
@@ -344,7 +348,8 @@
         (dom/div :.row
           (dom/div :.col-xs-12.col-md-8.offset-md-2
             (ui-comment-form (prim/computed new-comment {:on-focus on-focus-comment :article-id id}))
-            (mapv ui-comment comments)))))))
+            (mapv #(ui-comment (prim/computed % {:delete-comment delete-comment}))
+              comments)))))))
 
 (def ui-article (prim/factory Article {:keyfn :article/id}))
 
