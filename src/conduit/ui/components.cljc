@@ -243,7 +243,7 @@
 (def ui-article-meta (prim/factory ArticleMeta {:keyfn :article/id}))
 
 (defsc Comment [this {:comment/keys [id author body created-at]}
-                {:keys [delete-comment]}]
+                {:keys [delete-comment editing-comment-id set-editing-comment-id]}]
   {:ident         [:comment/by-id :comment/id]
    :initial-state (fn [params]
                     #:comment{:id     :none
@@ -251,24 +251,26 @@
                               :author (prim/get-initial-state UserTinyPreview #:user{:id :guest})})
    :query         [:comment/id :comment/created-at :comment/body
                    {:comment/author (prim/get-query UserTinyPreview)}]}
-  (dom/div :.card
-    (dom/div :.card-block
-      (dom/p :.card-text
-        body))
-    (dom/div :.card-footer
-      (dom/div :.comment-author {:onClick #?(:cljs #(go-to-profile this author)
-                                             :clj nil)}
-        (dom/img :.comment-author-img
-          {:src (:user/image author)}))
-      (dom/div :.comment-author {:onClick #?(:cljs #(go-to-profile this author)
-                                             :clj nil)}
-        (:user/name author))
-      (dom/span :.date-posted
-        #?(:clj  created-at
-           :cljs (js-date->string created-at)))
-      (dom/span :.mod-options
-        (dom/i :.ion-edit #_{:onClick #?(:cljs identity :clj nil)} " ")
-        (dom/i :.ion-trash-a {:onClick #?(:cljs #(delete-comment id) :clj nil)} " ")))))
+  (if (= editing-comment-id id)
+    (dom/div "Todo: edit form goes here")
+    (dom/div :.card
+      (dom/div :.card-block
+        (dom/p :.card-text
+          body))
+      (dom/div :.card-footer
+        (dom/div :.comment-author {:onClick #?(:cljs #(go-to-profile this author)
+                                               :clj nil)}
+          (dom/img :.comment-author-img
+            {:src (:user/image author)}))
+        (dom/div :.comment-author {:onClick #?(:cljs #(go-to-profile this author)
+                                               :clj nil)}
+          (:user/name author))
+        (dom/span :.date-posted
+          #?(:clj  created-at
+             :cljs (js-date->string created-at)))
+        (dom/span :.mod-options
+          (dom/i :.ion-edit {:onClick #?(:cljs #(set-editing-comment-id id) :clj nil)} " ")
+          (dom/i :.ion-trash-a {:onClick #?(:cljs #(delete-comment id) :clj nil)} " "))))))
 
 (def ui-comment (prim/factory Comment {:keyfn :comment/id}))
 
@@ -333,10 +335,16 @@
                                      `[(create-temp-comment-if-not-found {:article/id ~id})]))
         delete-comment   #?(:clj  nil
                             :cljs #(prim/transact! this
-                                     `[(mutations/delete-comment {:article/id ~id :comment/id ~%})]))]
+                                     `[(mutations/delete-comment {:article/id ~id :comment/id ~%})]))
+
+        editing-comment-id     (prim/get-state this :editing-comment-id)
+        set-editing-comment-id #(prim/set-state! this {:editing-comment-id %})]
     (dom/div :.article-page
       (dom/div :.banner
         (dom/div :.container
+          ;;(dom/div (pr-str []))
+          (dom/div {:onClick #?(:cljs #(prim/set-state! this {:foo "yup"})
+                                :clj nil)} "change me")
           (dom/h1 title)
           (ui-article-meta article)))
       (dom/div :.container.page
@@ -348,7 +356,9 @@
         (dom/div :.row
           (dom/div :.col-xs-12.col-md-8.offset-md-2
             (ui-comment-form (prim/computed new-comment {:on-focus on-focus-comment :article-id id}))
-            (mapv #(ui-comment (prim/computed % {:delete-comment delete-comment}))
+            (mapv #(ui-comment (prim/computed % {:delete-comment         delete-comment
+                                                 :editing-comment-id     editing-comment-id
+                                                 :set-editing-comment-id set-editing-comment-id}))
               comments)))))))
 
 (def ui-article (prim/factory Article {:keyfn :article/id}))
