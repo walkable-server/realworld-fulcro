@@ -906,66 +906,63 @@
                           {:new-comment (prim/get-query CommentForm)}])}
   (ui-article (prim/computed article-to-view {:new-comment new-comment})))
 
-(defsc SignUpForm [this {:user/keys [name password email] :as props}]
-  {:query         [:user/name :user/email :user/password fs/form-config-join]
-   :initial-state (fn [params] #:user{:name "" :email "" :password ""})
+(defsc SignUpForm [this {:user/keys [name email] :as props}]
+  {:query         [:user/name :user/email fs/form-config-join]
+   :initial-state (fn [params] #:user{:name "" :email ""})
    :ident         (fn [] [:root/sign-up-form :new-user])
-   :form-fields   #{:user/name :user/email :user/password}}
-  (dom/div :.auth-page
-    (dom/div :.container.page
-      (dom/div :.row
-        (dom/div :.col-md-6.offset-md-3.col-xs-12
-          (dom/h1 :.text-xs-center
-            "Sign up")
-          (dom/div :.text-xs-center
-            {:href    "javascript:void(0)"
-             :onClick #?(:clj nil
-                         :cljs #(go-to-login this))}
-            "Have an account?")
-          #_
-          (dom/ul :.error-messages
-            (dom/li "That email is already taken") )
-          (dom/form
-            (dom/fieldset :.form-group
-              (dom/input :.form-control.form-control-lg
-                {:placeholder "Your Name"
-                 :type        "text"
-                 :value       name
-                 :onBlur
-                 #?(:clj  nil
-                    :cljs #(prim/transact! this
-                             `[(fs/mark-complete! {:field :user/name})]))
-                 :onChange
-                 #?(:clj nil
-                    :cljs #(m/set-string! this :user/name :event %))}))
-            (dom/fieldset :.form-group
-              (dom/input :.form-control.form-control-lg
-                {:placeholder "Email"
-                 :type        "text"
-                 :value       email
-                 :onBlur
-                 #?(:clj  nil
-                    :cljs #(prim/transact! this
-                             `[(fs/mark-complete! {:field :user/email})]))
-                 :onChange
-                 #?(:clj nil
-                    :cljs #(m/set-string! this :user/email :event %))}))
-            (dom/fieldset :.form-group
-              (dom/input :.form-control.form-control-lg
-                {:placeholder "Password"
-                 :type        "password"
-                 :value       password
-                 :onBlur
-                 #?(:clj  nil
-                    :cljs #(prim/transact! this
-                             `[(fs/mark-complete! {:field :user/password})]))
-                 :onChange
-                 #?(:clj nil
-                    :cljs #(m/set-string! this :user/password :event %))}) )
-            (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-              {:onClick #?(:clj nil
-                           :cljs #(prim/transact! this `[(sign-up ~props)]))}
-              "Sign up")))))))
+   :form-fields   #{:user/name :user/email}}
+  (let [{:user/keys [password] :as state} (prim/get-state this)]
+    (dom/div :.auth-page
+      (dom/div :.container.page
+        (dom/div :.row
+          (dom/div :.col-md-6.offset-md-3.col-xs-12
+            (dom/h1 :.text-xs-center
+              "Sign up")
+            (dom/div :.text-xs-center
+              {:href    "javascript:void(0)"
+               :onClick #?(:clj nil
+                           :cljs #(go-to-login this))}
+              "Have an account?")
+            #_
+            (dom/ul :.error-messages
+              (dom/li "That email is already taken") )
+            (dom/form
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Your Name"
+                   :type        "text"
+                   :value       name
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :user/name})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :user/name :event %))}))
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Email"
+                   :type        "text"
+                   :value       email
+                   :onBlur
+                   #?(:clj  nil
+                      :cljs #(prim/transact! this
+                               `[(fs/mark-complete! {:field :user/email})]))
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(m/set-string! this :user/email :event %))}))
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Password"
+                   :type        "password"
+                   :value       (or password "")
+                   :onChange
+                   #?(:clj nil
+                      :cljs #(prim/set-state! this {:user/password (.. % -target -value)}))}) )
+              (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
+                {:onClick #?(:clj nil
+                             :cljs #(prim/transact! this `[(sign-up ~(merge props state))]))}
+                "Sign up"))))))))
 
 (def ui-sign-up-form (prim/factory SignUpForm))
 
@@ -979,7 +976,7 @@
 (defsc SignUpScreen [this {user :new-user}]
   {:initial-state (fn [params] {:screen    :screen/sign-up
                                 :screen-id :top
-                                :new-user  #:user{:name "" :email "" :password ""}})
+                                :new-user  #:user{:name "" :email ""}})
    :query         [:screen :screen-id
                    {:new-user (prim/get-query SignUpForm)}]}
   (ui-sign-up-form user))
