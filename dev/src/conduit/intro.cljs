@@ -26,6 +26,7 @@
   :screen/home     comp/Home
   :screen/settings comp/SettingScreen
   :screen/editor   comp/EditorScreen
+  :screen/log-in    comp/LogInScreen
   :screen/sign-up  comp/SignUpScreen
   :screen/article  comp/ArticleScreen
   :screen/profile  comp/ProfileScreen)
@@ -47,6 +48,8 @@
       [(r/router-instruction :router/top [:screen/settings :top])])
     (r/make-route :screen/sign-up
       [(r/router-instruction :router/top [:screen/sign-up :top])])
+    (r/make-route :screen/log-in
+      [(r/router-instruction :router/top [:screen/log-in :top])])
 
     (r/make-route :screen.feed/global
       [(r/router-instruction :router/top [:screen/home :top])
