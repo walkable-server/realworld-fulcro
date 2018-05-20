@@ -26,7 +26,7 @@
   :screen/home     comp/Home
   :screen/settings comp/SettingScreen
   :screen/editor   comp/EditorScreen
-  :screen/sign-up  comp/Home
+  :screen/sign-up  comp/SignUpScreen
   :screen/article  comp/ArticleScreen
   :screen/profile  comp/ProfileScreen)
 
