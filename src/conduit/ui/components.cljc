@@ -12,6 +12,12 @@
 (declare SettingsForm)
 
 #?(:cljs
+   (defn go-to-sign-up [component]
+     (prim/transact! component
+       `[(load-sign-up-form)
+         (r/route-to {:handler :screen/sign-up})])))
+
+#?(:cljs
    (defn go-to-settings [component {:user/keys [id]}]
      (prim/transact! component
        `[(use-settings-as-form {:user/id ~id})
@@ -104,13 +110,7 @@
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/sign-up) "active")
-                 :onClick   #?(:cljs #(prim/transact! this
-                                        `[(sign-up #:user{:username "jake",
-                                                          :name     "Jake Ekaj"
-                                                          :email    "jake@jake.jake"
-                                                          :password "foobar"
-                                                          :bio      "I work at statefarm",
-                                                          :image    "https://static.productionready.io/images/smiley-cyrus.jpg"})])
+                 :onClick   #?(:cljs #(go-to-sign-up this)
                                :clj nil)}
                 "Sign up"))))))))
 
@@ -905,3 +905,81 @@
                           {:article-to-view (prim/get-query Article)}
                           {:new-comment (prim/get-query CommentForm)}])}
   (ui-article (prim/computed article-to-view {:new-comment new-comment})))
+
+(defsc SignUpForm [this {:user/keys [name password email] :as props}]
+  {:query         [:user/name :user/email :user/password fs/form-config-join]
+   :initial-state (fn [params] #:user{:name "" :email "" :password ""})
+   :ident         (fn [] [:root/sign-up-form :new-user])
+   :form-fields   #{:user/name :user/email :user/password}}
+  (dom/div :.auth-page
+    (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-6.offset-md-3.col-xs-12
+          (dom/h1 :.text-xs-center
+            "Sign up")
+          (dom/div :.text-xs-center
+            {:href    "javascript:void(0)"
+             :onClick #?(:clj nil
+                         :cljs #(prim/transact! this `[(go-to-login)]))}
+            "Have an account?")
+          #_
+          (dom/ul :.error-messages
+            (dom/li "That email is already taken") )
+          (dom/form
+            (dom/fieldset :.form-group
+              (dom/input :.form-control.form-control-lg
+                {:placeholder "Your Name"
+                 :type        "text"
+                 :value       name
+                 :onBlur
+                 #?(:clj  nil
+                    :cljs #(prim/transact! this
+                             `[(fs/mark-complete! {:field :user/name})]))
+                 :onChange
+                 #?(:clj nil
+                    :cljs #(m/set-string! this :user/name :event %))}))
+            (dom/fieldset :.form-group
+              (dom/input :.form-control.form-control-lg
+                {:placeholder "Email"
+                 :type        "text"
+                 :value       email
+                 :onBlur
+                 #?(:clj  nil
+                    :cljs #(prim/transact! this
+                             `[(fs/mark-complete! {:field :user/email})]))
+                 :onChange
+                 #?(:clj nil
+                    :cljs #(m/set-string! this :user/email :event %))}))
+            (dom/fieldset :.form-group
+              (dom/input :.form-control.form-control-lg
+                {:placeholder "Password"
+                 :type        "password"
+                 :value       password
+                 :onBlur
+                 #?(:clj  nil
+                    :cljs #(prim/transact! this
+                             `[(fs/mark-complete! {:field :user/password})]))
+                 :onChange
+                 #?(:clj nil
+                    :cljs #(m/set-string! this :user/password :event %))}) )
+            (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
+              {:onClick #?(:clj nil
+                           :cljs #(prim/transact! this `[(sign-up ~props)]))}
+              "Sign up")))))))
+
+(def ui-sign-up-form (prim/factory SignUpForm))
+
+#?(:cljs
+   (defmutation load-sign-up-form [_]
+     (action [{:keys [state] :as env}]
+       (swap! state
+         #(fs/add-form-config* % SignUpForm [:root/sign-up-form :new-user])))
+     (refresh [env] [:screen])))
+
+(defsc SignUpScreen [this {user :new-user}]
+  {:initial-state (fn [params] {:screen    :screen/sign-up
+                                :screen-id :top
+                                :new-user  #:user{:name "" :email "" :password ""}})
+   :query         [:screen :screen-id
+                   {:new-user (prim/get-query SignUpForm)}]}
+  (ui-sign-up-form user))
