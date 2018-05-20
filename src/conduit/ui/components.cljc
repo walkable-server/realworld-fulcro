@@ -12,6 +12,12 @@
 (declare SettingsForm)
 
 #?(:cljs
+   (defn go-to-login [component]
+     (prim/transact! component
+       `[(r/route-to {:handler :screen/log-in})
+         :screen])))
+
+#?(:cljs
    (defn go-to-sign-up [component]
      (prim/transact! component
        `[(load-sign-up-form)
@@ -59,12 +65,6 @@
 
 (declare ArticlePreview)
 
-#?(:cljs
-   (defn do-login [component]
-     (prim/transact! component `[(login {:email "jake@jake.jake" :password "foobar"})])
-     (df/load component :articles/all ArticlePreview)
-     (df/load component :articles/feed ArticlePreview)))
-
 (defsc NavBar [this {current-user-id :user/id :as props}]
   {:query         [:user/id
                    [r/routers-table '_]]}
@@ -100,8 +100,8 @@
           (when-not logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
-                {:className (when (= current-screen :screen/login) "active")
-                 :onClick   #?(:cljs #(do-login this)
+                {:className (when (= current-screen :screen/log-in) "active")
+                 :onClick   #?(:cljs #(go-to-login this)
                                :clj nil)}
                 (dom/i :.ion-gear-a)
                 "Login")))
@@ -920,7 +920,7 @@
           (dom/div :.text-xs-center
             {:href    "javascript:void(0)"
              :onClick #?(:clj nil
-                         :cljs #(prim/transact! this `[(go-to-login)]))}
+                         :cljs #(go-to-login this))}
             "Have an account?")
           #_
           (dom/ul :.error-messages
@@ -983,3 +983,46 @@
    :query         [:screen :screen-id
                    {:new-user (prim/get-query SignUpForm)}]}
   (ui-sign-up-form user))
+
+(defsc LogInForm [this props]
+  (let [{:user/keys [email password] :as credentials} (prim/get-state this)]
+    (dom/div :.auth-page
+      (dom/div :.container.page
+        (dom/div :.row
+          (dom/div :.col-md-6.offset-md-3.col-xs-12
+            (dom/h1 :.text-xs-center
+              "Log in")
+            (dom/div :.text-xs-center
+              {:href    "javascript:void(0)"
+               :onClick #?(:clj nil
+                           :cljs #(go-to-sign-up this))}
+              "Don't have an account?")
+            (dom/form
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Email"
+                   :type        "text"
+                   :value       (or email "")
+                   :onChange
+                   #?(:clj  nil
+                      :cljs #(prim/update-state! this assoc :user/email (.. % -target -value)))}))
+              (dom/fieldset :.form-group
+                (dom/input :.form-control.form-control-lg
+                  {:placeholder "Password"
+                   :type        "password"
+                   :value       (or password "")
+                   :onChange
+                   #?(:clj  nil
+                      :cljs #(prim/update-state! this assoc :user/password (.. % -target -value)))}) )
+              (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
+                {:onClick #?(:clj nil
+                             :cljs #(prim/transact! this `[(log-in ~credentials)]))}
+                "Sign up"))))))))
+
+(def ui-log-in-form (prim/factory LogInForm))
+
+(defsc LogInScreen [this props]
+  {:initial-state (fn [params] {:screen    :screen/log-in
+                                :screen-id :top})
+   :query         [:screen :screen-id]}
+  (ui-log-in-form {}))
