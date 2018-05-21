@@ -1011,7 +1011,7 @@
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
                 {:onClick #?(:clj nil
                              :cljs #(prim/transact! this `[(log-in ~credentials)]))}
-                "Sign up"))))))))
+                "Log in"))))))))
 
 (def ui-log-in-form (prim/factory LogInForm))
 
