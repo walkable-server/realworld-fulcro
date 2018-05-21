@@ -86,3 +86,15 @@
     (if current-user
       (article/unlike db current-user id)
       {})))
+
+(defmutation add-tag [{:keys [article-id tag]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (if current-user
+      (article/add-tag db current-user article-id tag)
+      {})))
+
+(defmutation remove-tag [{:keys [article-id tag]}]
+  (action [{:keys [duct/logger] :app/keys [db current-user]}]
+    (if current-user
+      (article/remove-tag db current-user article-id tag)
+      {})))
