@@ -242,17 +242,19 @@
 
 (def ui-article-meta (prim/factory ArticleMeta {:keyfn :article/id}))
 
-(defsc Comment [this {:comment/keys [id author body created-at]}
-                {:keys [delete-comment editing-comment-id set-editing-comment-id]}]
+(declare ui-comment-form)
+
+(defsc Comment [this {:comment/keys [id author body created-at] :as props}
+                {:keys [delete-comment editing-comment-id set-editing-comment-id] :as computed-map}]
   {:ident         [:comment/by-id :comment/id]
-   :initial-state (fn [params]
-                    #:comment{:id     :none
+   :initial-state (fn [{:comment/keys [id]}]
+                    #:comment{:id     id
                               :body   ""
                               :author (prim/get-initial-state UserTinyPreview #:user{:id :guest})})
    :query         [:comment/id :comment/created-at :comment/body
                    {:comment/author (prim/get-query UserTinyPreview)}]}
   (if (= editing-comment-id id)
-    (dom/div "Todo: edit form goes here")
+    (ui-comment-form (prim/computed props computed-map))
     (dom/div :.card
       (dom/div :.card-block
         (dom/p :.card-text
@@ -280,7 +282,7 @@
     (.focus input-field)
     (.setSelectionRange input-field input-field-length input-field-length)))
 
-(defsc CommentForm [this {:comment/keys [id body author] :as props} {:keys [article-id]}]
+(defsc CommentForm [this {:comment/keys [id body author] :as props} {:keys [article-id set-editing-comment-id]}]
   {:query             [:comment/id :comment/body {:comment/author (prim/get-query UserTinyPreview)}]
    :initial-state     (fn [params] #:comment{:id     :none
                                              :body   ""
@@ -315,8 +317,9 @@
                                {:article-id ~article-id
                                 :diff       {[:comment/by-id ~(if (= :none id) (prim/tempid) id)]
                                              ~state}})])
-                         (when (= :none id)
-                           (prim/set-state! this {}))))}
+                         (if (= :none id)
+                           (prim/set-state! this {})
+                           (set-editing-comment-id :none))))}
             (if (number? id)
               "Update Comment"
               "Post Comment")))))))
@@ -331,12 +334,17 @@
                    :article/body :article/image
                    {:article/comments (prim/get-query Comment)}
                    {:ph/article (prim/get-query ArticleMeta)}]}
-  (let [delete-comment   #?(:clj  nil
-                            :cljs #(prim/transact! this
-                                     `[(mutations/delete-comment {:article/id ~id :comment/id ~%})]))
+  (let [delete-comment #?(:clj  nil
+                          :cljs #(prim/transact! this
+                                   `[(mutations/delete-comment {:article/id ~id :comment/id ~%})]))
 
         editing-comment-id     (prim/get-state this :editing-comment-id)
-        set-editing-comment-id #(prim/set-state! this {:editing-comment-id %})]
+        set-editing-comment-id #(prim/set-state! this {:editing-comment-id %})
+
+        computed-map {:article-id             id
+                      :delete-comment         delete-comment
+                      :editing-comment-id     editing-comment-id
+                      :set-editing-comment-id set-editing-comment-id}]
     (dom/div :.article-page
       (dom/div :.banner
         (dom/div :.container
@@ -350,10 +358,8 @@
         (dom/div :.article-actions (ui-article-meta article))
         (dom/div :.row
           (dom/div :.col-xs-12.col-md-8.offset-md-2
-            (ui-comment-form (prim/computed #:comment{:id :none} {:article-id id}))
-            (mapv #(ui-comment (prim/computed % {:delete-comment         delete-comment
-                                                 :editing-comment-id     editing-comment-id
-                                                 :set-editing-comment-id set-editing-comment-id}))
+            (ui-comment-form (prim/computed #:comment{:id :none} computed-map))
+            (mapv #(ui-comment (prim/computed % computed-map))
               comments)))))))
 
 (def ui-article (prim/factory Article {:keyfn :article/id}))
