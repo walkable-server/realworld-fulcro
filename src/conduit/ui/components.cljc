@@ -41,7 +41,8 @@
 #?(:cljs
    (defn edit-article [component {:article/keys [id] :as article}]
      (prim/transact! component
-       `[(use-article-as-form ~article)
+       `[(load-article-to-editor ~article)
+         (use-article-as-form ~article)
          (r/route-to {:handler      :screen/editor
                       :route-params {:article-id ~id}})
          :article-to-edit])))
@@ -585,9 +586,20 @@
                           :article-to-edit [:article/by-id id]}))))
      (refresh [env] [:screen])))
 
-(defsc ArticleEditor [this {:article/keys [id slug title description body] :as props}]
+(defsc TagItem [this {:tag/keys [tag]} {:keys [on-delete]}]
+  {:query [:tag/tag]}
+  (dom/span :.tag-pill.tag-default
+    (dom/i :.ion-close-round
+      {:onClick #?(:clj nil
+                   :cljs #(on-delete tag))})
+    tag))
+
+(def ui-tag-item (prim/factory TagItem {:keyfn :tag/tag}))
+
+(defsc ArticleEditor [this {:article/keys [id slug title description body tags] :as props}]
   {:initial-state (fn [{:article/keys [id]}] #:article{:id :none :body "" :title "" :description "" :slug ""})
    :query         [:article/id :article/slug  :article/title :article/description :article/body
+                   {:article/tags [:tag/tag]}
                    fs/form-config-join]
    :ident         [:article/by-id :article/id]
    :form-fields   #{:article/slug  :article/title
@@ -649,13 +661,21 @@
                    :onChange
                    #?(:clj nil
                       :cljs #(m/set-string! this :article/body :event %))}))
-              #_
               (dom/fieldset :.form-group
-                (dom/input :.form-control
-                  {:placeholder "Enter tags"
-                   :name        "tag"
-                   :type        "text"})
-                (dom/div :.tag-list))
+                (let [new-tag (prim/get-state this :new-tag)]
+                  (dom/input :.form-control
+                    {:placeholder "Enter tags"
+                     :name        "tag"
+                     :type        "text"
+                     :onChange    #(prim/set-state! this {:new-tag (.. % -target -value)})
+                     :onKeyDown   #(let [key (.-key %)]
+                                     (when (and (= key "Enter") (seq new-tag))
+                                       (prim/transact! this `[(mutations/add-tag {:article-id ~id :tag ~new-tag})])
+                                       (prim/set-state! this {:new-tag ""})))
+                     :value       (or new-tag "")}))
+                (dom/div :.tag-list
+                  (let [on-delete-tag #(prim/transact! this `[(mutations/remove-tag {:article-id ~id :tag ~%})])]
+                    (map #(ui-tag-item (prim/computed % {:on-delete on-delete-tag})) tags))))
               (dom/button :.btn.btn-lg.pull-xs-right.btn-primary
                 {:type "button"
                  :onClick
@@ -722,6 +742,17 @@
      (remote [env]
        (df/remote-load env))
      (refresh [env] [:screen :article-to-view])))
+
+(declare ArticleEditor)
+
+#?(:cljs
+   (defmutation load-article-to-editor [{:article/keys [id]}]
+     (action [{:keys [state] :as env}]
+       (df/load-action env [:article/by-id id] ArticleEditor
+         {:without #{:fulcro.ui.form-state/config}}))
+     (remote [env]
+       (df/remote-load env))
+     (refresh [env] [:screen])))
 
 #?(:cljs
    (defmutation load-liked-articles-to-screen [{:user/keys [id]}]
