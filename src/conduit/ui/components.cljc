@@ -674,11 +674,11 @@
        (df/remote-load env))))
 
 #?(:cljs
-   (defmutation login [credentials]
+   (defmutation log-in [credentials]
      (action [{:keys [state] :as env}]
        (df/load-action env :user/whoami SettingsForm
          {:params  {:login credentials}
-          :without #{:fulcro.ui.form-state/config}}))
+          :without #{:fulcro.ui.form-state/config :user/password}}))
      (remote [env]
        (df/remote-load env))))
 
