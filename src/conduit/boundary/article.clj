@@ -15,6 +15,10 @@
   (update-comment [db author-id comment-id comment])
   (destroy-comment [db author-id comment-id]))
 
+(defprotocol Tag
+  (add-tag [db author-id article-id tag])
+  (remove-tag [db author-id article-id tag]))
+
 (defn delete-non-existing-where-clause [article-id existing]
   (concat
     [(str "article_id = ? and tag not in ("
@@ -95,3 +99,23 @@
       ["author_id = ? AND id = ?" author-id comment-id]))
   (destroy-comment [{db :spec} author-id comment-id]
     (jdbc/delete! db "\"comment\"" ["author_id = ? AND id = ?" author-id comment-id])))
+
+(extend-protocol Tag
+  duct.database.sql.Boundary
+  (add-tag [db author-id article-id tag]
+    (let [results (jdbc/query (:spec db)
+                    ["select id from \"article\" where author_id = ? and id = ?"
+                     author-id article-id])]
+      (when (seq results)
+        (jdbc/execute! (:spec db)
+          [(str "INSERT INTO \"tag\" (tag, article_id)"
+             " SELECT ?, ?"
+             " WHERE NOT EXISTS (SELECT * FROM \"tag\""
+             " WHERE tag = ? AND article_id = ?)")
+           tag article-id tag article-id]))))
+  (remove-tag [db author-id article-id tag]
+    (let [results (jdbc/query (:spec db)
+                    ["select id from \"article\" where author_id = ? and id = ?"
+                     author-id article-id])]
+      (when (seq results)
+        (jdbc/delete! (:spec db) "\"tag\"" ["tag = ? AND article_id = ?" tag article-id])))))
