@@ -15,6 +15,18 @@
   (update-comment [db author-id comment-id comment])
   (destroy-comment [db author-id comment-id]))
 
+(defn delete-non-existing-where-clause [article-id existing]
+  (concat
+    [(str "article_id = ? and tag not in ("
+        (clojure.string/join ", " (repeat (count existing) \?))
+        ")")
+     article-id]
+    (vec existing)))
+
+(comment
+  (= (delete-non-existing-where-clause 1 #{"foo" "bar"})
+    ["article_id = ? and tag not in (?, ?)" 1 "foo" "bar"]))
+
 (extend-protocol Article
   duct.database.sql.Boundary
   (article-by-slug [{db :spec} article-slug]
@@ -36,8 +48,22 @@
     (jdbc/delete! (:spec db) "\"article\"" ["author_id = ? AND id = ?" author-id article-id]))
 
   (update-article [db author-id id article]
-    (jdbc/update! (:spec db) "\"article\"" (select-keys article [:slug :title :description :body])
-      ["author_id = ? AND id = ?" author-id id]))
+    (let [results (jdbc/query (:spec db)
+                    ["select id, article_id, tag from \"article\" left join \"tag\" on tag.article_id = article.id where author_id = ? and id = ?" author-id id])]
+      (when (seq results)
+        (let [new-article (select-keys article [:slug :title :description :body])]
+          (when (seq new-article)
+            (jdbc/update! (:spec db) "\"article\"" new-article ["id = ?" id])))
+        (let [old-tags (->> (filter :article_id results)
+                         (map :tag) set)
+              new-tags (->> (:article/tags article)
+                         (map :tag/tag) set)
+              existing (clojure.set/intersection old-tags new-tags)]
+          (jdbc/delete! (:spec db) "\"tag\"" (delete-non-existing-where-clause id existing))
+          (jdbc/insert-multi! (:spec db) "\"tag\""
+            (->> (clojure.set/difference new-tags existing)
+              (mapv (fn [tag] {:article_id id :tag tag}))))
+          {}))))
 
   (like [db user-id article-id]
     (jdbc/execute! (:spec db)
