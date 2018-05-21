@@ -61,7 +61,7 @@
           results (jdbc/insert! (:spec db) "\"comment\"" comment-item)]
       (-> results first :id)))
   (update-comment [db author-id comment-id comment-item]
-    (jdbc/update! (:spec db) "\"article\"" (select-keys comment-item [:body])
+    (jdbc/update! (:spec db) "\"comment\"" (select-keys comment-item [:body])
       ["author_id = ? AND id = ?" author-id comment-id]))
   (destroy-comment [{db :spec} author-id comment-id]
     (jdbc/delete! db "\"comment\"" ["author_id = ? AND id = ?" author-id comment-id])))
