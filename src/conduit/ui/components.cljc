@@ -104,7 +104,6 @@
                 {:className (when (= current-screen :screen/log-in) "active")
                  :onClick   #?(:cljs #(go-to-login this)
                                :clj nil)}
-                (dom/i :.ion-gear-a)
                 "Login")))
 
           (when-not logged-in?
