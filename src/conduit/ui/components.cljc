@@ -342,9 +342,6 @@
     (dom/div :.article-page
       (dom/div :.banner
         (dom/div :.container
-          ;;(dom/div (pr-str []))
-          (dom/div {:onClick #?(:cljs #(prim/set-state! this {:foo "yup"})
-                                :clj nil)} "change me")
           (dom/h1 title)
           (ui-article-meta article)))
       (dom/div :.container.page
