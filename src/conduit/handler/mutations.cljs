@@ -10,11 +10,18 @@
 
 (defmutation submit-comment [{:keys [article-id diff]}]
   (action [{:keys [state]}]
-    (swap! state #(let [ident (util/get-ident diff)]
+    (println (pr-str [diff]))
+    (swap! state #(let [ident (util/get-ident diff)
+                        id    (second ident)]
                     (-> %
-                      (fs/entity->pristine* ident)
+                      (update-in ident merge
+                        (if (number? id) #:comment{:updated-at (js/Date.)} #:comment{:id id :created-at (js/Date.)})
+                        (util/get-item diff))
                       (update-in [:article/by-id article-id :article/comments]
-                        (fnil conj []) ident)))))
+                        (if (number? id)
+                          (fn [comments _] comments)
+                          (fnil conj []))
+                        ident)))))
   (refresh [env] [:article/comments])
   (remote [env] true))
 
