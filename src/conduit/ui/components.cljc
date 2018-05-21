@@ -280,60 +280,58 @@
     (.focus input-field)
     (.setSelectionRange input-field input-field-length input-field-length)))
 
-(defsc CommentForm [this {:comment/keys [id body author] :as props} {:keys [article-id on-focus]}]
-  {:query             [:comment/id :comment/body {:comment/author (prim/get-query UserTinyPreview)}
-                       fs/form-config-join]
+(defsc CommentForm [this {:comment/keys [id body author] :as props} {:keys [article-id]}]
+  {:query             [:comment/id :comment/body {:comment/author (prim/get-query UserTinyPreview)}]
    :initial-state     (fn [params] #:comment{:id     :none
                                              :body   ""
                                              :author (prim/get-initial-state UserTinyPreview #:user {:id :guest})})
    :ident             [:comment/by-id :comment/id]
-   :componentDidMount #(when (tempid? (:comment/id (prim/props this)))
-                         (focus-field this "comment_field"))
-   :form-fields       #{:comment/body}}
-  (dom/form :.card.comment-form
-    (dom/div :.card-block
-      (dom/textarea :.form-control
-        {:placeholder "Write a comment..."
-         :rows        "3"
-         :ref         "comment_field"
-         :value       body
-         :onFocus     on-focus
-         :onBlur
-         #?(:clj  nil
-            :cljs #(prim/transact! this
-                     `[(fs/mark-complete! {:field :comment/body})]))
-         :onChange
-         #?(:clj nil
-            :cljs #(m/set-string! this :comment/body :event %))}))
-    (dom/div :.card-footer
-      (dom/img :.comment-author-img
-        {:src (:user/image author)})
-      (dom/button :.btn.btn-sm.btn-primary
-        {:onClick #?(:clj  nil
-                     :cljs #(do (prim/transact! this `[(mutations/submit-comment
-                                                         {:article-id ~article-id
-                                                          :diff       ~(fs/dirty-fields props false)})])
-                                (when (tempid? id)
-                                  (prim/transact! this `[(set-article-comment-blank {:article/id ~article-id})]))))}
-        (if (number? id)
-          "Update Comment"
-          "Post Comment")))))
+   :componentDidMount #(when (number? (:comment/id (prim/props this)))
+                         (focus-field this "comment_field"))}
+  (let [state (prim/get-state this)]
+    (dom/form :.card.comment-form
+      (dom/div :.card-block
+        (dom/textarea :.form-control
+          {:placeholder "Write a comment..."
+           :rows        "3"
+           :ref         "comment_field"
+           :value       (or (:comment/body state) body "")
+           :onChange
+           #?(:clj  nil
+              :cljs #(prim/set-state! this {:comment/body (.. % -target -value)}))}))
+      (dom/div :.card-footer
+        (dom/img :.comment-author-img
+          {:src (:user/image author)})
+        (let [can-submit? (and (seq (:comment/body state))
+                            (not= (:comment/body state) body))]
+          (dom/button :.btn.btn-sm
+            {:className (when (or (not state) can-submit?)
+                          "btn-primary")
+             :onClick
+             #?(:clj  nil
+                :cljs #(when can-submit?
+                         (prim/transact! this
+                           `[(mutations/submit-comment
+                               {:article-id ~article-id
+                                :diff       {[:comment/by-id ~(if (= :none id) (prim/tempid) id)]
+                                             ~state}})])
+                         (when (= :none id)
+                           (prim/set-state! this {}))))}
+            (if (number? id)
+              "Update Comment"
+              "Post Comment")))))))
 
 (def ui-comment-form (prim/factory CommentForm {:keyfn :comment/id}))
 
 (defsc Article [this {:article/keys [id author-id slug title description body image comments]
-                      :keys         [ph/article]}
-                {:keys [new-comment]}]
+                      :keys         [ph/article]}]
   {:ident         [:article/by-id :article/id]
    :initial-state (fn [params] #:article{:id :none :comments (prim/get-initial-state Comment {})})
    :query         [:article/id :article/author-id :article/slug :article/title :article/description
                    :article/body :article/image
                    {:article/comments (prim/get-query Comment)}
                    {:ph/article (prim/get-query ArticleMeta)}]}
-  (let [on-focus-comment #?(:clj  nil
-                            :cljs #(prim/transact! this
-                                     `[(create-temp-comment-if-not-found {:article/id ~id})]))
-        delete-comment   #?(:clj  nil
+  (let [delete-comment   #?(:clj  nil
                             :cljs #(prim/transact! this
                                      `[(mutations/delete-comment {:article/id ~id :comment/id ~%})]))
 
@@ -352,7 +350,7 @@
         (dom/div :.article-actions (ui-article-meta article))
         (dom/div :.row
           (dom/div :.col-xs-12.col-md-8.offset-md-2
-            (ui-comment-form (prim/computed new-comment {:on-focus on-focus-comment :article-id id}))
+            (ui-comment-form (prim/computed #:comment{:id :none} {:article-id id}))
             (mapv #(ui-comment (prim/computed % {:delete-comment         delete-comment
                                                  :editing-comment-id     editing-comment-id
                                                  :set-editing-comment-id set-editing-comment-id}))
@@ -687,7 +685,7 @@
      (action [{:keys [state] :as env}]
        (df/load-action env :user/whoami SettingsForm
          {:params  {:sign-up new-user}
-          :without #{:fulcro.ui.form-state/config}}))
+          :without #{:fulcro.ui.form-state/config :user/password}}))
      (remote [env]
        (df/remote-load env))))
 
@@ -710,25 +708,14 @@
      (action [{:keys [state] :as env}]
        (df/load-action env [:article/by-id id] Article)
        (swap! state
-         #(-> %
-            (fs/add-form-config* CommentForm [:comment/by-id :none])
-            (update-in [:screen/article id]
-              (fn [x] (or x
-                        {:screen          :screen/article
-                         :article-id      id
-                         :article-to-view [:article/by-id id]
-                         :new-comment     [:comment/by-id :none]}))))))
+         #(update-in % [:screen/article id]
+            (fn [x] (or x
+                      {:screen          :screen/article
+                       :article-id      id
+                       :article-to-view [:article/by-id id]})))))
      (remote [env]
        (df/remote-load env))
      (refresh [env] [:screen :article-to-view])))
-
-#?(:cljs
-   (defmutation set-article-comment-blank [{:article/keys [id]}]
-     (action [{:keys [state] :as env}]
-       (swap! state
-         #(assoc-in % [:screen/article id :new-comment]
-            [:comment/by-id :none])))
-     (refresh [env] [:article-to-view])))
 
 #?(:cljs
    (defmutation load-liked-articles-to-screen [{:user/keys [id]}]
@@ -892,16 +879,14 @@
                   "Favorited Articles"))))
           (ui-profile-router router))))))
 
-(defsc ArticleScreen [this {:keys [screen article-id article-to-view new-comment]}]
+(defsc ArticleScreen [this {:keys [screen article-id article-to-view]}]
   {:ident         (fn [] [screen article-id])
    :initial-state (fn [params] {:screen          :screen/article
                                 :article-id      :none
-                                :article-to-view (prim/get-initial-state Article #:article{:id :none})
-                                :new-comment     (prim/get-initial-state CommentForm #:comment{:id :none})})
+                                :article-to-view (prim/get-initial-state Article #:article{:id :none})})
    :query         (fn [] [:screen :article-id
-                          {:article-to-view (prim/get-query Article)}
-                          {:new-comment (prim/get-query CommentForm)}])}
-  (ui-article (prim/computed article-to-view {:new-comment new-comment})))
+                          {:article-to-view (prim/get-query Article)}])}
+  (ui-article article-to-view ))
 
 (defsc SignUpForm [this {:user/keys [name email] :as props}]
   {:query         [:user/name :user/email fs/form-config-join]
