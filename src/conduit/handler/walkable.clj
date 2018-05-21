@@ -12,7 +12,7 @@
 (defn find-user-in-params [db params]
   (cond
     (:login params)
-    (let [{:keys [email password]} (:login params)]
+    (let [{:user/keys [email password]} (:login params)]
       (user/find-login db email password))
 
     (:sign-up params)
