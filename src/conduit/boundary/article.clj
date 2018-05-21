@@ -49,21 +49,25 @@
 
   (update-article [db author-id id article]
     (let [results (jdbc/query (:spec db)
-                    ["select id, article_id, tag from \"article\" left join \"tag\" on tag.article_id = article.id where author_id = ? and id = ?" author-id id])]
+                    [(if (:article/tags article)
+                       "select id, article_id, tag from \"article\" left join \"tag\" on tag.article_id = article.id where author_id = ? and id = ?"
+                       "select id, article_id, tag from \"article\" where author_id = ? and id = ?")
+                     author-id id])]
       (when (seq results)
         (let [new-article (select-keys article [:slug :title :description :body])]
           (when (seq new-article)
             (jdbc/update! (:spec db) "\"article\"" new-article ["id = ?" id])))
-        (let [old-tags (->> (filter :article_id results)
-                         (map :tag) set)
-              new-tags (->> (:article/tags article)
-                         (map :tag/tag) set)
-              existing (clojure.set/intersection old-tags new-tags)]
-          (jdbc/delete! (:spec db) "\"tag\"" (delete-non-existing-where-clause id existing))
-          (jdbc/insert-multi! (:spec db) "\"tag\""
-            (->> (clojure.set/difference new-tags existing)
-              (mapv (fn [tag] {:article_id id :tag tag}))))
-          {}))))
+        (when (:article/tags article)
+          (let [old-tags (->> (filter :article_id results)
+                           (map :tag) set)
+                new-tags (->> (:article/tags article)
+                           (map :tag/tag) set)
+                existing (clojure.set/intersection old-tags new-tags)]
+            (jdbc/delete! (:spec db) "\"tag\"" (delete-non-existing-where-clause id existing))
+            (jdbc/insert-multi! (:spec db) "\"tag\""
+              (->> (clojure.set/difference new-tags existing)
+                (mapv (fn [tag] {:article_id id :tag tag}))))
+            {})))))
 
   (like [db user-id article-id]
     (jdbc/execute! (:spec db)
