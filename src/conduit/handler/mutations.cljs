@@ -69,3 +69,17 @@
   (action [{:keys [state]}]
     (swap! state #(assoc-in % [:article/by-id id :article/liked-by-me] false)))
   (remote [env] true))
+
+(defmutation add-tag [{:keys [article-id tag]}]
+  (action [{:keys [state]}]
+    (swap! state update-in [:article/by-id article-id :article/tags]
+      (fnil conj [])
+      {:tag/tag tag}))
+  (remote [env] true))
+
+(defmutation remove-tag [{:keys [article-id tag]}]
+  (action [{:keys [state]}]
+    (swap! state update-in [:article/by-id article-id :article/tags]
+      #(filterv (fn [x] (not= (:tag/tag x) %2)) %1)
+      tag))
+  (remote [env] true))
