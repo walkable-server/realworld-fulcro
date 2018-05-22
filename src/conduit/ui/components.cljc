@@ -66,11 +66,12 @@
 
 (declare ArticlePreview)
 
-(defsc NavBar [this {current-user-id :user/id :as props}]
-  {:query         [:user/id
-                   [r/routers-table '_]]}
-  (let [[current-screen _] (r/current-route props :router/top)
-        logged-in? (number? current-user-id)]
+(defsc NavBar [this props]
+  {:query [[r/routers-table '_]]}
+  (let [[current-screen _]         (r/current-route props :router/top)
+        whoami                     (prim/shared this :user/whoami)
+        {current-user-id :user/id} whoami
+        logged-in?                 (number? current-user-id)]
     (dom/nav :.navbar.navbar-light
       (dom/div :.container
         (dom/div :.navbar-brand
