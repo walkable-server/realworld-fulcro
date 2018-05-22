@@ -107,7 +107,8 @@
   Root
   {} ; initial state. Leave empty to use :initial-state from root component
   {:inspect-data true
-   :fulcro       {:started-callback
+   :fulcro       {:reconciler-options {:shared-fn #(select-keys % [:user/whoami])}
+                  :started-callback
                   (fn [app]
                     (df/load app :articles/all comp/ArticlePreview)
                     (df/load app :tags/all comp/Tag))
