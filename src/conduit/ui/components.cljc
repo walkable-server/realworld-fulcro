@@ -247,14 +247,16 @@
           (dom/i :.ion-heart)
           "Unfavorite Post"
           (dom/span :.counter
-            "(" liked-by-count ")"))
+            " (" liked-by-count ")"))
         (dom/button :.btn.btn-sm.btn-outline-secondary
-          {:onClick #?(:cljs #(prim/transact! this `[(mutations/like {:article/id ~id})])
+          {:onClick #?(:cljs #(if (= :guest current-user-id)
+                                (js/alert "You must log in first.")
+                                (prim/transact! this `[(mutations/like {:article/id ~id})]))
                        :clj nil)}
           (dom/i :.ion-heart)
           "Favorite Post"
           (dom/span :.counter
-            "(" liked-by-count ")"))))))
+            " (" liked-by-count ")"))))))
 
 (def ui-article-meta (prim/factory ArticleMeta {:keyfn :article/id}))
 
