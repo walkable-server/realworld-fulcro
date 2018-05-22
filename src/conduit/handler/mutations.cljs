@@ -1,6 +1,7 @@
 (ns conduit.handler.mutations
   (:require [fulcro.client.mutations :refer [defmutation]]
             [conduit.util :as util]
+            [fulcro.client.primitives :as prim]
             [fulcro.ui.form-state :as fs]))
 
 (defmutation submit-article [diff]
@@ -83,3 +84,7 @@
       #(filterv (fn [x] (not= (:tag/tag x) %2)) %1)
       tag))
   (remote [env] true))
+
+(defmutation rerender-root [_]
+  (action [{:keys [reconciler] :as env}]
+    (prim/force-root-render! reconciler)))
