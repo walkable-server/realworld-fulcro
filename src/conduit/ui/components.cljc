@@ -300,15 +300,15 @@
     (.focus input-field)
     (.setSelectionRange input-field input-field-length input-field-length)))
 
-(defsc CommentForm [this {:comment/keys [id body author] :as props} {:keys [article-id set-editing-comment-id]}]
-  {:query             [:comment/id :comment/body {:comment/author (prim/get-query UserTinyPreview)}]
-   :initial-state     (fn [params] #:comment{:id     :none
-                                             :body   ""
-                                             :author (prim/get-initial-state UserTinyPreview #:user {:id :guest})})
+(defsc CommentForm [this {:comment/keys [id body] :as props} {:keys [article-id set-editing-comment-id]}]
+  {:query             [:comment/id :comment/body]
+   :initial-state     (fn [params] #:comment{:id   :none
+                                             :body ""})
    :ident             [:comment/by-id :comment/id]
    :componentDidMount #(when (number? (:comment/id (prim/props this)))
                          (focus-field this "comment_field"))}
-  (let [state (prim/get-state this)]
+  (let [state  (prim/get-state this)
+        whoami (prim/shared this :user/whoami)]
     (dom/form :.card.comment-form
       (dom/div :.card-block
         (dom/textarea :.form-control
@@ -321,15 +321,15 @@
               :cljs #(prim/set-state! this {:comment/body (.. % -target -value)}))}))
       (dom/div :.card-footer
         (dom/img :.comment-author-img
-          {:src (:user/image author)})
-        (let [can-submit? (and (seq (:comment/body state))
-                            (not= (:comment/body state) body))]
-          (dom/button :.btn.btn-sm
-            {:className (when (or (not state) can-submit?)
-                          "btn-primary")
-             :onClick
-             #?(:clj  nil
-                :cljs #(when can-submit?
+          {:src (:user/image whoami)})
+        (dom/button :.btn.btn-sm
+          {:className "btn-primary"
+           :onClick
+           #?(:clj  nil
+              :cljs #(if (= :guest (:user/id whoami))
+                       (js/alert "You must log in first")
+                       (when (and (seq (:comment/body state))
+                               (not= (:comment/body state) body))
                          (prim/transact! this
                            `[(mutations/submit-comment
                                {:article-id ~article-id
@@ -337,10 +337,10 @@
                                              ~state}})])
                          (if (= :none id)
                            (prim/set-state! this {})
-                           (set-editing-comment-id :none))))}
-            (if (number? id)
-              "Update Comment"
-              "Post Comment")))))))
+                           (set-editing-comment-id :none)))))}
+          (if (number? id)
+            "Update Comment"
+            "Post Comment"))))))
 
 (def ui-comment-form (prim/factory CommentForm {:keyfn :comment/id}))
 
