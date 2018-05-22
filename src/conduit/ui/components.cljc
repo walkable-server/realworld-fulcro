@@ -113,7 +113,14 @@
                 {:className (when (= current-screen :screen/sign-up) "active")
                  :onClick   #?(:cljs #(go-to-sign-up this)
                                :clj nil)}
-                "Sign up"))))))))
+                "Sign up")))
+
+          (when logged-in?
+            (dom/li :.nav-item
+              (dom/div :.nav-link
+                {:onClick #?(:cljs #(prim/transact! this `[(log-out)])
+                             :clj nil)}
+                "Log out"))))))))
 
 (def ui-nav-bar (prim/factory NavBar))
 
