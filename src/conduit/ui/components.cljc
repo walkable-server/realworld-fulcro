@@ -331,7 +331,7 @@
 (defsc Article [this {:article/keys [id author-id slug title description body image comments]
                       :keys         [ph/article]}]
   {:ident         [:article/by-id :article/id]
-   :initial-state (fn [params] #:article{:id :none :comments (prim/get-initial-state Comment {})})
+   :initial-state (fn [params] #:article{:id :none :comments (prim/get-initial-state Comment #:comment{:id :none})})
    :query         [:article/id :article/author-id :article/slug :article/title :article/description
                    :article/body :article/image
                    {:article/comments (prim/get-query Comment)}
