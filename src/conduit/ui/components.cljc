@@ -144,7 +144,7 @@
 (def ui-banner (prim/factory Banner))
 
 (defsc UserTinyPreview [this props]
-  {:query [:user/id :user/username :user/name]
+  {:query [:user/id :user/username :user/name :user/image]
    :initial-state (fn [params] #:user{:id :guest})
    :ident [:user/by-id :user/id]})
 
