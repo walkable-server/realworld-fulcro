@@ -185,21 +185,24 @@
   {:ident [:article/by-id :article/id]
    :query [:article/id :article/author-id :article/slug :article/title :article/description :article/body
            {:ph/article (prim/get-query ArticlePreviewMeta)}]}
-  (dom/div :.article-preview
-    (ui-article-preview-meta article)
-    (dom/span :.pull-xs-right
-      (dom/i :.ion-edit
-        {:onClick #?(:cljs #(on-edit {:article/id id})
-                     :clj nil)} " ")
-      (dom/i :.ion-trash-a
-        {:onClick #?(:cljs #(on-delete {:article/id id})
-                     :clj nil)} " "))
-    (dom/div :.preview-link
-      (dom/h1 {:onClick #?(:cljs #(go-to-article this {:article/id id})
-                           :clj nil)}
-        title)
-      (dom/p description)
-      (dom/span "Read more..."))))
+  (let [whoami                     (prim/shared this :user/whoami)
+        {current-user-id :user/id} whoami]
+    (dom/div :.article-preview
+      (ui-article-preview-meta article)
+      (when (= current-user-id author-id)
+        (dom/span :.pull-xs-right
+          (dom/i :.ion-edit
+            {:onClick #?(:cljs #(on-edit {:article/id id})
+                         :clj nil)} " ")
+          (dom/i :.ion-trash-a
+            {:onClick #?(:cljs #(on-delete {:article/id id})
+                         :clj nil)} " ")))
+      (dom/div :.preview-link
+        (dom/h1 {:onClick #?(:cljs #(go-to-article this {:article/id id})
+                             :clj nil)}
+          title)
+        (dom/p description)
+        (dom/span "Read more...")))))
 
 (def ui-article-preview (prim/factory ArticlePreview {:keyfn :article/id}))
 
