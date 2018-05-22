@@ -79,6 +79,7 @@
                                                                    :author      {:user/id :guest}}}
                                   :user/whoami   #:user {:id    :guest
                                                          :name  "Guest"
+                                                         :image "https://static.productionready.io/images/smiley-cyrus.jpg"
                                                          :email "non@exist"}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query         [{:router/top (prim/get-query TopRouter)}
