@@ -211,47 +211,50 @@
   {:ident [:article/by-id :article/id]
    :query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
            {:article/author (prim/get-query UserPreview)}]}
-  (dom/div :.article-meta
-    (dom/div {:onClick #?(:cljs #(go-to-profile this author)
-                          :clj nil)}
-      (dom/img {:src (:user/image author)}))
-    (dom/div :.info
-      (dom/div :.author {:onClick #?(:cljs #(go-to-profile this author)
-                                     :clj nil)}
-        (:user/name author))
-      (dom/span :.date
-        #?(:clj  created-at
-           :cljs (js-date->string created-at))))
+  (let [whoami                     (prim/shared this :user/whoami)
+        {current-user-id :user/id} whoami]
+    (dom/div :.article-meta
+      (dom/div {:onClick #?(:cljs #(go-to-profile this author)
+                            :clj nil)}
+        (dom/img {:src (:user/image author)}))
+      (dom/div :.info
+        (dom/div :.author {:onClick #?(:cljs #(go-to-profile this author)
+                                       :clj nil)}
+          (:user/name author))
+        (dom/span :.date
+          #?(:clj  created-at
+             :cljs (js-date->string created-at))))
+      ;; don't show follow button to themselves
+      (when (not= (:user/id author) current-user-id)
+        (if (:user/followed-by-me author)
+          (dom/button :.btn.btn-sm.btn-outline-primary
+            {:onClick #?(:cljs #(prim/transact! this `[(mutations/unfollow ~author)])
+                         :clj nil)}
+            (dom/i :.ion-plus-round)
+            "Unfollow " (:user/name author)
+            (dom/span :.counter "(" (:user/followed-by-count author) ")"))
+          (dom/button :.btn.btn-sm.btn-outline-secondary
+            {:onClick #?(:cljs #(prim/transact! this `[(mutations/follow ~author)])
+                         :clj nil)}
+            (dom/i :.ion-plus-round)
+            "Follow " (:user/name author)
+            (dom/span :.counter "(" (:user/followed-by-count author) ")"))))
 
-    (if (:user/followed-by-me author)
-      (dom/button :.btn.btn-sm.btn-outline-primary
-        {:onClick #?(:cljs #(prim/transact! this `[(mutations/unfollow ~author)])
-                     :clj nil)}
-        (dom/i :.ion-plus-round)
-        "Unfollow " (:user/name author)
-        (dom/span :.counter "(" (:user/followed-by-count author) ")"))
-      (dom/button :.btn.btn-sm.btn-outline-secondary
-        {:onClick #?(:cljs #(prim/transact! this `[(mutations/follow ~author)])
-                     :clj nil)}
-        (dom/i :.ion-plus-round)
-        "Follow " (:user/name author)
-        (dom/span :.counter "(" (:user/followed-by-count author) ")")))
-
-    (if liked-by-me
-      (dom/button :.btn.btn-sm.btn-outline-primary
-        {:onClick #?(:cljs #(prim/transact! this `[(mutations/unlike {:article/id ~id})])
-                     :clj nil)}
-        (dom/i :.ion-heart)
-        "Unfavorite Post"
-        (dom/span :.counter
-          "(" liked-by-count ")"))
-      (dom/button :.btn.btn-sm.btn-outline-secondary
-        {:onClick #?(:cljs #(prim/transact! this `[(mutations/like {:article/id ~id})])
-                     :clj nil)}
-        (dom/i :.ion-heart)
-        "Favorite Post"
-        (dom/span :.counter
-          "(" liked-by-count ")")))))
+      (if liked-by-me
+        (dom/button :.btn.btn-sm.btn-outline-primary
+          {:onClick #?(:cljs #(prim/transact! this `[(mutations/unlike {:article/id ~id})])
+                       :clj nil)}
+          (dom/i :.ion-heart)
+          "Unfavorite Post"
+          (dom/span :.counter
+            "(" liked-by-count ")"))
+        (dom/button :.btn.btn-sm.btn-outline-secondary
+          {:onClick #?(:cljs #(prim/transact! this `[(mutations/like {:article/id ~id})])
+                       :clj nil)}
+          (dom/i :.ion-heart)
+          "Favorite Post"
+          (dom/span :.counter
+            "(" liked-by-count ")"))))))
 
 (def ui-article-meta (prim/factory ArticleMeta {:keyfn :article/id}))
 
