@@ -533,13 +533,17 @@
           (dom/img :.user-img {:src image})
           (dom/h4 name)
           (dom/p bio)
-          (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
-            {:onClick #?(:cljs #(if followed-by-me
-                                  (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
-                                  (prim/transact! this `[(mutations/follow {:user/id ~id})]))
-                         :clj nil)}
-            (dom/i :.ion-plus-round)
-            (str (if followed-by-me "Unfollow " "Follow ") name)))))))
+          (let [current-user-id (-> (prim/shared this :user/whoami) :user/id)]
+            (when (not= id current-user-id)
+              (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
+                {:onClick #?(:cljs #(if (= :guest current-user-id)
+                                      (js/alert "You must log in first")
+                                      (if followed-by-me
+                                        (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
+                                        (prim/transact! this `[(mutations/follow {:user/id ~id})])))
+                             :clj nil)}
+                (dom/i :.ion-plus-round)
+                (str (if followed-by-me "Unfollow " "Follow ") name)))))))))
 
 (def ui-profile (prim/factory Profile))
 
