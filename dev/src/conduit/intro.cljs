@@ -75,14 +75,11 @@
                                                                    :title       ""
                                                                    :slug        ""
                                                                    :description ""
-                                                                   :author      [:user/by-id :guest]}}
-                                  :comment/by-id {:none #:comment {:id :none :body "" :author [:user/by-id :guest]}}
-                                  :user/whoami   [:user/by-id :guest]
-                                  :user/by-id    {:guest {:user/id       :guest
-                                                          :user/name     "Guest"
-                                                          :user/email    "non@exist"
-                                                          :user/like     []
-                                                          :user/articles []}}}
+                                                                   :comments    [#:comment{:id :none :body "" :author {:user/id :guest}}]
+                                                                   :author      {:user/id :guest}}}
+                                  :user/whoami   #:user {:id    :guest
+                                                         :name  "Guest"
+                                                         :email "non@exist"}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query         [{:router/top (prim/get-query TopRouter)}
                    {:user/whoami (prim/get-query comp/NavBar)}]}
