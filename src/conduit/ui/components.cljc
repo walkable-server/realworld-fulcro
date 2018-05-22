@@ -156,7 +156,8 @@
            {:article/author (prim/get-query UserPreview)}]
    :ident [:article/by-id :article/id]}
   (dom/div :.article-meta
-    (dom/a {:href (str "/users/" (:user/username author))}
+    (dom/div {:onClick #?(:cljs #(go-to-profile this author)
+                          :clj nil)}
       (dom/img {:src (:user/image author)}))
     (dom/div :.info
       (dom/div :.author
