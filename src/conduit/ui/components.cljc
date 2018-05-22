@@ -703,7 +703,8 @@
      (action [{:keys [state] :as env}]
        (df/load-action env :user/whoami SettingsForm
          {:params  {:login credentials}
-          :without #{:fulcro.ui.form-state/config :user/password}}))
+          :without #{:fulcro.ui.form-state/config :user/password}
+          :post-mutation `mutations/rerender-root}))
      (remote [env]
        (df/remote-load env))))
 
@@ -712,7 +713,8 @@
      (action [{:keys [state] :as env}]
        (df/load-action env :user/whoami SettingsForm
          {:params  {:sign-up new-user}
-          :without #{:fulcro.ui.form-state/config :user/password}}))
+          :without #{:fulcro.ui.form-state/config :user/password}
+          :post-mutation `mutations/rerender-root}))
      (remote [env]
        (df/remote-load env))))
 
