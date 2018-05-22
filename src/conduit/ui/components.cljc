@@ -178,17 +178,18 @@
            {:ph/article (prim/get-query ArticlePreviewMeta)}]}
   (dom/div :.article-preview
     (ui-article-preview-meta article)
+    (dom/span :.pull-xs-right
+      (dom/i :.ion-edit
+        {:onClick #?(:cljs #(on-edit {:article/id id})
+                     :clj nil)} " ")
+      (dom/i :.ion-trash-a
+        {:onClick #?(:cljs #(on-delete {:article/id id})
+                     :clj nil)} " "))
     (dom/div :.preview-link
       (dom/h1 {:onClick #?(:cljs #(go-to-article this {:article/id id})
                            :clj nil)}
         title)
       (dom/p description)
-      (dom/p {:onClick #?(:cljs #(on-edit {:article/id id})
-                          :clj nil)}
-        "Edit me")
-      (dom/p {:onClick #?(:cljs #(on-delete {:article/id id})
-                          :clj nil)}
-        "Delete me")
       (dom/span "Read more..."))))
 
 (def ui-article-preview (prim/factory ArticlePreview {:keyfn :article/id}))
