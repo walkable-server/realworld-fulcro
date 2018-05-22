@@ -234,7 +234,9 @@
             "Unfollow " (:user/name author)
             (dom/span :.counter "(" (:user/followed-by-count author) ")"))
           (dom/button :.btn.btn-sm.btn-outline-secondary
-            {:onClick #?(:cljs #(prim/transact! this `[(mutations/follow ~author)])
+            {:onClick #?(:cljs #(if (= :guest current-user-id)
+                                  (js/alert "You must log in first")
+                                  (prim/transact! this `[(mutations/follow ~author)]))
                          :clj nil)}
             (dom/i :.ion-plus-round)
             "Follow " (:user/name author)
