@@ -82,12 +82,11 @@
                                                          :email "non@exist"}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query         [{:router/top (prim/get-query TopRouter)}
-                   {:user/whoami (prim/get-query comp/NavBar)}]}
-  (let [current-user (get props :user/whoami)]
-    (dom/div
-      (comp/ui-nav-bar current-user)
-      (ui-top router)
-      (comp/ui-footer))))
+                   {:user/whoami (prim/get-query comp/UserTinyPreview)}]}
+  (dom/div
+    (comp/ui-nav-bar)
+    (ui-top router)
+    (comp/ui-footer)))
 
 (def token-store (atom "No token"))
 
