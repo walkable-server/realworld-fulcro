@@ -436,20 +436,27 @@
 (def ui-feeds-router (prim/factory FeedsRouter))
 
 (defsc FeedSelector [this props]
-  {:query         [[r/routers-table '_]]}
-  (let [[current-screen _] (r/current-route props :router/feeds)]
+  {:query [[r/routers-table '_]]}
+  (let [[current-screen _] (r/current-route props :router/feeds)
+        whoami             (prim/shared this :user/whoami)
+        not-logged-in      (= :guest (:user/id whoami))]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
-        (dom/li :.nav-item
-          (dom/div :.nav-link
-            {:className (if (= current-screen :screen.feed/personal) "active" "disabled")
-             :onClick #(prim/transact! this `[(load-personal-feed)
-                                              (r/route-to {:handler :screen.feed/personal})])}
-            "Your Feed"))
+        (when (or (not not-logged-in)
+                (and not-logged-in (= current-screen :screen.feed/personal)))
+          (dom/li :.nav-item
+            (dom/div :.nav-link
+              {:className (if (= current-screen :screen.feed/personal) "active" "disabled")
+               :onClick   #?(:cljs #(if not-logged-in
+                                      (js/alert "You must log in first")
+                                      (prim/transact! this `[(load-personal-feed)
+                                                             (r/route-to {:handler :screen.feed/personal})]))
+                             :clj nil)}
+              "Your Feed")))
         (dom/li :.nav-item
           (dom/div :.nav-link
             {:className (if (= current-screen :screen.feed/global) "active" "disabled")
-             :onClick #(prim/transact! this `[(r/route-to {:handler :screen.feed/global})])}
+             :onClick   #(prim/transact! this `[(r/route-to {:handler :screen.feed/global})])}
             "Global Feed"))))))
 
 (def ui-feed-selector (prim/factory FeedSelector))
