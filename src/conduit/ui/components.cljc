@@ -290,9 +290,11 @@
         (dom/span :.date-posted
           #?(:clj  created-at
              :cljs (js-date->string created-at)))
-        (dom/span :.mod-options
-          (dom/i :.ion-edit {:onClick #?(:cljs #(set-editing-comment-id id) :clj nil)} " ")
-          (dom/i :.ion-trash-a {:onClick #?(:cljs #(delete-comment id) :clj nil)} " "))))))
+        (let [whoami (prim/shared this :user/whoami)]
+          (when (= (:user/id whoami) (:user/id author))
+            (dom/span :.mod-options
+              (dom/i :.ion-edit {:onClick #?(:cljs #(set-editing-comment-id id) :clj nil)} " ")
+              (dom/i :.ion-trash-a {:onClick #?(:cljs #(delete-comment id) :clj nil)} " "))))))))
 
 (def ui-comment (prim/factory Comment {:keyfn :comment/id}))
 
