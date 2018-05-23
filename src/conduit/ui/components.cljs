@@ -4,65 +4,58 @@
     [fulcro.ui.form-state :as fs]
     [conduit.handler.mutations :as mutations]
     [fulcro.tempid :refer [tempid?]]
-    #?(:cljs [fulcro.client.mutations :as m :refer [defmutation]])
-    #?(:cljs [fulcro.client.data-fetch :as df])
+    [fulcro.client.mutations :as m :refer [defmutation]]
+    [fulcro.client.data-fetch :as df]
     [fulcro.client.routing :as r]
-    #?(:cljs [fulcro.client.dom :as dom] :clj [fulcro.client.dom-server :as dom])))
+    [fulcro.client.dom :as dom]))
 
 (declare SettingsForm)
 
-#?(:cljs
-   (defn go-to-login [component]
-     (prim/transact! component
-       `[(r/route-to {:handler :screen/log-in})
-         :screen])))
+(defn go-to-login [component]
+  (prim/transact! component
+    `[(r/route-to {:handler :screen/log-in})
+      :screen]))
 
-#?(:cljs
-   (defn go-to-sign-up [component]
-     (prim/transact! component
-       `[(load-sign-up-form)
-         (r/route-to {:handler :screen/sign-up})])))
+(defn go-to-sign-up [component]
+  (prim/transact! component
+    `[(load-sign-up-form)
+      (r/route-to {:handler :screen/sign-up})]))
 
-#?(:cljs
-   (defn go-to-settings [component {:user/keys [id]}]
-     (prim/transact! component
-       `[(use-settings-as-form {:user/id ~id})
-         (r/route-to {:handler :screen/settings})])))
+(defn go-to-settings [component {:user/keys [id]}]
+  (prim/transact! component
+    `[(use-settings-as-form {:user/id ~id})
+      (r/route-to {:handler :screen/settings})]))
 
-#?(:cljs
-   (defn go-to-new-article [component]
-     (prim/transact! component
-       `[(create-temp-article-if-not-found)
-         (use-current-temp-article-as-form)
-         (r/route-to {:handler      :screen/editor
-                      :route-params {:article-id :current-temp-article}})
-         :article-to-edit])))
+(defn go-to-new-article [component]
+  (prim/transact! component
+    `[(create-temp-article-if-not-found)
+      (use-current-temp-article-as-form)
+      (r/route-to {:handler      :screen/editor
+                   :route-params {:article-id :current-temp-article}})
+      :article-to-edit]))
 
-#?(:cljs
-   (defn edit-article [component {:article/keys [id] :as article}]
-     (prim/transact! component
-       `[(load-article-to-editor ~article)
-         (use-article-as-form ~article)
-         (r/route-to {:handler      :screen/editor
-                      :route-params {:article-id ~id}})
-         :article-to-edit])))
+(defn edit-article [component {:article/keys [id] :as article}]
+  (prim/transact! component
+    `[(load-article-to-editor ~article)
+      (use-article-as-form ~article)
+      (r/route-to {:handler      :screen/editor
+                   :route-params {:article-id ~id}})
+      :article-to-edit]))
 
-#?(:cljs
-   (defn go-to-profile [component {:user/keys [id] :as profile}]
-     (prim/transact! component
-       `[(load-profile-to-screen ~profile)
-         (load-owned-articles-to-screen ~profile)
-         (r/route-to {:handler      :screen.profile/owned-articles
-                      :route-params {:user-id ~id}})
-         :profile-to-view])))
+(defn go-to-profile [component {:user/keys [id] :as profile}]
+  (prim/transact! component
+    `[(load-profile-to-screen ~profile)
+      (load-owned-articles-to-screen ~profile)
+      (r/route-to {:handler      :screen.profile/owned-articles
+                   :route-params {:user-id ~id}})
+      :profile-to-view]))
 
-#?(:cljs
-   (defn go-to-article [component {:article/keys [id] :as article}]
-     (prim/transact! component
-       `[(load-article-to-screen ~article)
-         (r/route-to {:handler      :screen/article
-                      :route-params {:article-id ~id}})
-         :article-to-view])))
+(defn go-to-article [component {:article/keys [id] :as article}]
+  (prim/transact! component
+    `[(load-article-to-screen ~article)
+      (r/route-to {:handler      :screen/article
+                   :route-params {:article-id ~id}})
+      :article-to-view]))
 
 (declare ArticlePreview)
 
@@ -80,46 +73,40 @@
           (dom/li :.nav-item
             (dom/div :.nav-link
               {:className (when (= current-screen :screen/home) "active")
-               :onClick   #?(:cljs #(prim/transact! this `[(r/route-to {:handler :screen/home})])
-                             :clj nil)}
+               :onClick   #(prim/transact! this `[(r/route-to {:handler :screen/home})])}
               "Home") )
           (when logged-in?
             (dom/li :.nav-item
               (dom/a :.nav-link
                 {:className (when (= current-screen :screen/editor) "active")
-                 :onClick   #?(:cljs #(go-to-new-article this)
-                               :clj nil)}
+                 :onClick   #(go-to-new-article this)}
                 (dom/i :.ion-compose)
                 "New Post")))
           (when logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/settings) "active")
-                 :onClick   #?(:cljs #(go-to-settings this {:user/id current-user-id})
-                               :clj nil)}
+                 :onClick   #(go-to-settings this {:user/id current-user-id})}
                 (dom/i :.ion-gear-a)
                 "Settings")))
           (when-not logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/log-in) "active")
-                 :onClick   #?(:cljs #(go-to-login this)
-                               :clj nil)}
+                 :onClick   #(go-to-login this)}
                 "Login")))
 
           (when-not logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/sign-up) "active")
-                 :onClick   #?(:cljs #(go-to-sign-up this)
-                               :clj nil)}
+                 :onClick   #(go-to-sign-up this)}
                 "Sign up")))
 
           (when logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
-                {:onClick #?(:cljs #(prim/transact! this `[(log-out)])
-                             :clj nil)}
+                {:onClick #(prim/transact! this `[(log-out)])}
                 "Log out"))))))))
 
 (def ui-nav-bar (prim/factory NavBar))
@@ -153,27 +140,23 @@
    :initial-state (fn [params] #:user{:id :guest})
    :ident [:user/by-id :user/id]})
 
-#?(:cljs
-   (defn js-date->string [date]
-     (when (instance? js/Date date)
-       (.toDateString date))))
+(defn js-date->string [date]
+  (when (instance? js/Date date)
+    (.toDateString date)))
 
 (defsc ArticlePreviewMeta [this {:article/keys [author created-at liked-by-count]}]
   {:query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
            {:article/author (prim/get-query UserPreview)}]
    :ident [:article/by-id :article/id]}
   (dom/div :.article-meta
-    (dom/div {:onClick #?(:cljs #(go-to-profile this author)
-                          :clj nil)}
+    (dom/div {:onClick #(go-to-profile this author)}
       (dom/img {:src (:user/image author)}))
     (dom/div :.info
       (dom/div :.author
-        {:onClick #?(:cljs #(go-to-profile this author)
-                     :clj nil)}
+        {:onClick #(go-to-profile this author)}
         (:user/name author))
       (dom/span :.date
-        #?(:clj  created-at
-           :cljs (js-date->string created-at))))
+        (js-date->string created-at)))
     (dom/button :.btn.btn-outline-primary.btn-sm.pull-xs-right
       (dom/i :.ion-heart)
       liked-by-count)))
@@ -192,14 +175,11 @@
       (when (= current-user-id author-id)
         (dom/span :.pull-xs-right
           (dom/i :.ion-edit
-            {:onClick #?(:cljs #(on-edit {:article/id id})
-                         :clj nil)} " ")
+            {:onClick #(on-edit {:article/id id})} " ")
           (dom/i :.ion-trash-a
-            {:onClick #?(:cljs #(on-delete {:article/id id})
-                         :clj nil)} " ")))
+            {:onClick #(on-delete {:article/id id})} " ")))
       (dom/div :.preview-link
-        (dom/h1 {:onClick #?(:cljs #(go-to-article this {:article/id id})
-                             :clj nil)}
+        (dom/h1 {:onClick #(go-to-article this {:article/id id})}
           title)
         (dom/p description)
         (dom/span "Read more...")))))
@@ -214,47 +194,40 @@
   (let [whoami                     (prim/shared this :user/whoami)
         {current-user-id :user/id} whoami]
     (dom/div :.article-meta
-      (dom/div {:onClick #?(:cljs #(go-to-profile this author)
-                            :clj nil)}
+      (dom/div {:onClick #(go-to-profile this author)}
         (dom/img {:src (:user/image author)}))
       (dom/div :.info
-        (dom/div :.author {:onClick #?(:cljs #(go-to-profile this author)
-                                       :clj nil)}
+        (dom/div :.author {:onClick #(go-to-profile this author)}
           (:user/name author))
         (dom/span :.date
-          #?(:clj  created-at
-             :cljs (js-date->string created-at))))
+          (js-date->string created-at)))
       ;; don't show follow button to themselves
       (when (not= (:user/id author) current-user-id)
         (if (:user/followed-by-me author)
           (dom/button :.btn.btn-sm.btn-outline-primary
-            {:onClick #?(:cljs #(prim/transact! this `[(mutations/unfollow ~author)])
-                         :clj nil)}
+            {:onClick #(prim/transact! this `[(mutations/unfollow ~author)])}
             (dom/i :.ion-plus-round)
             "Unfollow " (:user/name author)
             (dom/span :.counter "(" (:user/followed-by-count author) ")"))
           (dom/button :.btn.btn-sm.btn-outline-secondary
-            {:onClick #?(:cljs #(if (= :guest current-user-id)
-                                  (js/alert "You must log in first")
-                                  (prim/transact! this `[(mutations/follow ~author)]))
-                         :clj nil)}
+            {:onClick #(if (= :guest current-user-id)
+                         (js/alert "You must log in first")
+                         (prim/transact! this `[(mutations/follow ~author)]))}
             (dom/i :.ion-plus-round)
             "Follow " (:user/name author)
             (dom/span :.counter "(" (:user/followed-by-count author) ")"))))
 
       (if liked-by-me
         (dom/button :.btn.btn-sm.btn-outline-primary
-          {:onClick #?(:cljs #(prim/transact! this `[(mutations/unlike {:article/id ~id})])
-                       :clj nil)}
+          {:onClick #(prim/transact! this `[(mutations/unlike {:article/id ~id})])}
           (dom/i :.ion-heart)
           "Unfavorite Post"
           (dom/span :.counter
             " (" liked-by-count ")"))
         (dom/button :.btn.btn-sm.btn-outline-secondary
-          {:onClick #?(:cljs #(if (= :guest current-user-id)
-                                (js/alert "You must log in first.")
-                                (prim/transact! this `[(mutations/like {:article/id ~id})]))
-                       :clj nil)}
+          {:onClick #(if (= :guest current-user-id)
+                       (js/alert "You must log in first.")
+                       (prim/transact! this `[(mutations/like {:article/id ~id})]))}
           (dom/i :.ion-heart)
           "Favorite Post"
           (dom/span :.counter
@@ -280,21 +253,18 @@
         (dom/p :.card-text
           body))
       (dom/div :.card-footer
-        (dom/div :.comment-author {:onClick #?(:cljs #(go-to-profile this author)
-                                               :clj nil)}
+        (dom/div :.comment-author {:onClick #(go-to-profile this author)}
           (dom/img :.comment-author-img
             {:src (:user/image author)}))
-        (dom/div :.comment-author {:onClick #?(:cljs #(go-to-profile this author)
-                                               :clj nil)}
+        (dom/div :.comment-author {:onClick #(go-to-profile this author)}
           (:user/name author))
         (dom/span :.date-posted
-          #?(:clj  created-at
-             :cljs (js-date->string created-at)))
+          (js-date->string created-at))
         (let [whoami (prim/shared this :user/whoami)]
           (when (= (:user/id whoami) (:user/id author))
             (dom/span :.mod-options
-              (dom/i :.ion-edit {:onClick #?(:cljs #(set-editing-comment-id id) :clj nil)} " ")
-              (dom/i :.ion-trash-a {:onClick #?(:cljs #(delete-comment id) :clj nil)} " "))))))))
+              (dom/i :.ion-edit {:onClick #(set-editing-comment-id id) } " ")
+              (dom/i :.ion-trash-a {:onClick #(delete-comment id) } " "))))))))
 
 (def ui-comment (prim/factory Comment {:keyfn :comment/id}))
 
@@ -320,28 +290,25 @@
            :rows        "3"
            :ref         "comment_field"
            :value       (or (:comment/body state) body "")
-           :onChange
-           #?(:clj  nil
-              :cljs #(prim/set-state! this {:comment/body (.. % -target -value)}))}))
+           :onChange    #(prim/set-state! this {:comment/body (.. % -target -value)})}))
       (dom/div :.card-footer
         (dom/img :.comment-author-img
           {:src (:user/image whoami)})
         (dom/button :.btn.btn-sm
           {:className "btn-primary"
            :onClick
-           #?(:clj  nil
-              :cljs #(if (= :guest (:user/id whoami))
-                       (js/alert "You must log in first")
-                       (when (and (seq (:comment/body state))
-                               (not= (:comment/body state) body))
-                         (prim/transact! this
-                           `[(mutations/submit-comment
-                               {:article-id ~article-id
-                                :diff       {[:comment/by-id ~(if (= :none id) (prim/tempid) id)]
-                                             ~state}})])
-                         (if (= :none id)
-                           (prim/set-state! this {})
-                           (set-editing-comment-id :none)))))}
+           #(if (= :guest (:user/id whoami))
+              (js/alert "You must log in first")
+              (when (and (seq (:comment/body state))
+                      (not= (:comment/body state) body))
+                (prim/transact! this
+                  `[(mutations/submit-comment
+                      {:article-id ~article-id
+                       :diff       {[:comment/by-id ~(if (= :none id) (prim/tempid) id)]
+                                    ~state}})])
+                (if (= :none id)
+                  (prim/set-state! this {})
+                  (set-editing-comment-id :none))))}
           (if (number? id)
             "Update Comment"
             "Post Comment"))))))
@@ -356,9 +323,8 @@
                    :article/body :article/image
                    {:article/comments (prim/get-query Comment)}
                    {:ph/article (prim/get-query ArticleMeta)}]}
-  (let [delete-comment #?(:clj  nil
-                          :cljs #(prim/transact! this
-                                   `[(mutations/delete-comment {:article/id ~id :comment/id ~%})]))
+  (let [delete-comment #(prim/transact! this
+                          `[(mutations/delete-comment {:article/id ~id :comment/id ~%})])
 
         editing-comment-id     (prim/get-state this :editing-comment-id)
         set-editing-comment-id #(prim/set-state! this {:editing-comment-id %})
@@ -404,7 +370,7 @@
 (defn article-list
   [component articles msg-when-empty]
   (let [edit-article   (fn [{:article/keys [id] :as article}]
-                         #?(:cljs (edit-article component article)))
+                         (edit-article component article))
         delete-article (fn [{:article/keys [id] :as article}]
                          (prim/transact! component `[(mutations/delete-article ~article)]))]
     (dom/div
@@ -447,11 +413,10 @@
           (dom/li :.nav-item
             (dom/div :.nav-link
               {:className (if (= current-screen :screen.feed/personal) "active" "disabled")
-               :onClick   #?(:cljs #(if not-logged-in
-                                      (js/alert "You must log in first")
-                                      (prim/transact! this `[(load-personal-feed)
-                                                             (r/route-to {:handler :screen.feed/personal})]))
-                             :clj nil)}
+               :onClick   #(if not-logged-in
+                             (js/alert "You must log in first")
+                             (prim/transact! this `[(load-personal-feed)
+                                                    (r/route-to {:handler :screen.feed/personal})]))}
               "Your Feed")))
         (dom/li :.nav-item
           (dom/div :.nav-link
@@ -536,12 +501,11 @@
           (let [current-user-id (-> (prim/shared this :user/whoami) :user/id)]
             (when (not= id current-user-id)
               (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
-                {:onClick #?(:cljs #(if (= :guest current-user-id)
-                                      (js/alert "You must log in first")
-                                      (if followed-by-me
-                                        (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
-                                        (prim/transact! this `[(mutations/follow {:user/id ~id})])))
-                             :clj nil)}
+                {:onClick #(if (= :guest current-user-id)
+                             (js/alert "You must log in first")
+                             (if followed-by-me
+                               (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
+                               (prim/transact! this `[(mutations/follow {:user/id ~id})])))}
                 (dom/i :.ion-plus-round)
                 (str (if followed-by-me "Unfollow " "Follow ") name)))))))))
 
@@ -572,10 +536,9 @@
            :article-id      :current-temp-article
            :article-to-edit [:article/by-id tempid]})))))
 
-#?(:cljs
-   (defmutation create-temp-article-if-not-found [_]
-     (action [{:keys [state]}]
-       (swap! state #(create-temp-article-if-not-found prim/tempid %)))))
+(defmutation create-temp-article-if-not-found [_]
+  (action [{:keys [state]}]
+    (swap! state #(create-temp-article-if-not-found prim/tempid %))))
 
 (defn create-temp-comment-if-not-found
   [tempid-fn {:article/keys [id]} state]
@@ -595,35 +558,31 @@
           [:comment/by-id tempid])
         (fs/add-form-config* CommentForm [:comment/by-id tempid])))))
 
-#?(:cljs
-   (defmutation create-temp-comment-if-not-found [article]
-     (action [{:keys [state]}]
-       (swap! state #(create-temp-comment-if-not-found prim/tempid article %)))
-     (refresh [env] [:new-comment])))
+(defmutation create-temp-comment-if-not-found [article]
+  (action [{:keys [state]}]
+    (swap! state #(create-temp-comment-if-not-found prim/tempid article %)))
+  (refresh [env] [:new-comment]))
 
-#?(:cljs
-   (defmutation use-current-temp-article-as-form [_]
-     (action [{:keys [state]}]
-       (swap! state #(let [temp-ident (get-in % [:screen/editor :current-temp-article :article-to-edit])]
-                       (fs/add-form-config* % ArticleEditor temp-ident))))))
+(defmutation use-current-temp-article-as-form [_]
+  (action [{:keys [state]}]
+    (swap! state #(let [temp-ident (get-in % [:screen/editor :current-temp-article :article-to-edit])]
+                    (fs/add-form-config* % ArticleEditor temp-ident)))))
 
-#?(:cljs
-   (defmutation use-article-as-form [{:article/keys [id]}]
-     (action [{:keys [state]}]
-       (swap! state #(-> %
-                       (fs/add-form-config* ArticleEditor [:article/by-id id])
-                       (assoc-in [:screen/editor id]
-                         {:screen          :screen/editor
-                          :article-id      id
-                          :article-to-edit [:article/by-id id]}))))
-     (refresh [env] [:screen])))
+(defmutation use-article-as-form [{:article/keys [id]}]
+  (action [{:keys [state]}]
+    (swap! state #(-> %
+                    (fs/add-form-config* ArticleEditor [:article/by-id id])
+                    (assoc-in [:screen/editor id]
+                      {:screen          :screen/editor
+                       :article-id      id
+                       :article-to-edit [:article/by-id id]}))))
+  (refresh [env] [:screen]))
 
 (defsc TagItem [this {:tag/keys [tag]} {:keys [on-delete]}]
   {:query [:tag/tag]}
   (dom/span :.tag-pill.tag-default
     (dom/i :.ion-close-round
-      {:onClick #?(:clj nil
-                   :cljs #(on-delete tag))})
+      {:onClick #(on-delete tag)})
     tag))
 
 (def ui-tag-item (prim/factory TagItem {:keyfn :tag/tag}))
@@ -648,51 +607,35 @@
                    :type        "text"
                    :name        "title"
                    :value       title
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :article/title})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :article/title :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :article/title})])
+                   :onChange    #(m/set-string! this :article/title :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control
                   {:placeholder "What's this article about?",
                    :type        "text"
                    :name        "description"
                    :value       description
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :article/description})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :article/description :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :article/description})])
+                   :onChange    #(m/set-string! this :article/description :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control
                   {:placeholder "Slug",
                    :type        "text"
                    :name        "slug"
                    :value       slug
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :article/slug})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :article/slug :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :article/slug})])
+                   :onChange    #(m/set-string! this :article/slug :event %)}))
               (dom/fieldset :.form-group
                 (dom/textarea :.form-control
-                  {:rows  "8", :placeholder "Write your article (in markdown)"
-                   :name  "body"
-                   :value body
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :article/body})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :article/body :event %))}))
+                  {:rows     "8", :placeholder "Write your article (in markdown)"
+                   :name     "body"
+                   :value    body
+                   :onBlur   #(prim/transact! this
+                                `[(fs/mark-complete! {:field :article/body})])
+                   :onChange #(m/set-string! this :article/body :event %)}))
               (dom/fieldset :.form-group
                 (let [new-tag (prim/get-state this :new-tag)]
                   (dom/input :.form-control
@@ -709,10 +652,8 @@
                   (let [on-delete-tag #(prim/transact! this `[(mutations/remove-tag {:article-id ~id :tag ~%})])]
                     (map #(ui-tag-item (prim/computed % {:on-delete on-delete-tag})) tags))))
               (dom/button :.btn.btn-lg.pull-xs-right.btn-primary
-                {:type "button"
-                 :onClick
-                 #?(:clj  nil
-                    :cljs #(prim/transact! this `[(mutations/submit-article ~(fs/dirty-fields props false))]))}
+                {:type    "button"
+                 :onClick #(prim/transact! this `[(mutations/submit-article ~(fs/dirty-fields props false))])}
                 (if (tempid? id)
                   "Publish Article"
                   "Update Article")))))))))
@@ -722,120 +663,110 @@
 (defsc Settings [this props]
   {:query         [:user/image :user/name :user/bio :user/email]})
 
-#?(:cljs
-   (defmutation load-personal-feed [_]
-     (action [{:keys [state] :as env}]
-       (df/load-action env :articles/feed ArticlePreview))
-     (remote [env]
-       (df/remote-load env))))
+(defmutation load-personal-feed [_]
+  (action [{:keys [state] :as env}]
+    (df/load-action env :articles/feed ArticlePreview))
+  (remote [env]
+    (df/remote-load env)))
 
-#?(:cljs
-   (defmutation log-in [credentials]
-     (action [{:keys [state] :as env}]
-       (df/load-action env :user/whoami SettingsForm
-         {:params  {:login credentials}
-          :without #{:fulcro.ui.form-state/config :user/password}
-          :post-mutation `mutations/rerender-root}))
-     (remote [env]
-       (df/remote-load env))))
+(defmutation log-in [credentials]
+  (action [{:keys [state] :as env}]
+    (df/load-action env :user/whoami SettingsForm
+      {:params        {:login credentials}
+       :without       #{:fulcro.ui.form-state/config :user/password}
+       :post-mutation `mutations/rerender-root}))
+  (remote [env]
+    (df/remote-load env)))
 
-#?(:cljs
-   (defmutation log-out [_]
-     (action [{:keys [state] :as env}]
-       (df/load-action env :user/whoami UserTinyPreview
-         {:params  {:logout true}
-          :post-mutation `mutations/rerender-root}))
-     (remote [env]
-       (df/remote-load env))))
+(defmutation log-out [_]
+  (action [{:keys [state] :as env}]
+    (df/load-action env :user/whoami UserTinyPreview
+      {:params        {:logout true}
+       :post-mutation `mutations/rerender-root}))
+  (remote [env]
+    (df/remote-load env)))
 
-#?(:cljs
-   (defmutation sign-up [new-user]
-     (action [{:keys [state] :as env}]
-       (df/load-action env :user/whoami SettingsForm
-         {:params  {:sign-up new-user}
-          :without #{:fulcro.ui.form-state/config :user/password}
-          :post-mutation `mutations/rerender-root}))
-     (remote [env]
-       (df/remote-load env))))
+(defmutation sign-up [new-user]
+  (action [{:keys [state] :as env}]
+    (df/load-action env :user/whoami SettingsForm
+      {:params        {:sign-up new-user}
+       :without       #{:fulcro.ui.form-state/config :user/password}
+       :post-mutation `mutations/rerender-root}))
+  (remote [env]
+    (df/remote-load env)))
 
-#?(:cljs
-   (defmutation load-profile-to-screen [{:user/keys [id]}]
-     (action [{:keys [state] :as env}]
-       (df/load-action env [:user/by-id id] Profile {:without #{:router/profile}})
-       (swap! state
-         #(-> %
-            (assoc-in [:screen/profile id]
-              {:screen          :screen/profile
-               :user-id         id
-               :profile-to-view [:user/by-id id]}))))
-     (remote [env]
-       (df/remote-load env))
-     (refresh [env] [:screen :profile-to-view])))
+(defmutation load-profile-to-screen [{:user/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (df/load-action env [:user/by-id id] Profile {:without #{:router/profile}})
+    (swap! state
+      #(-> %
+         (assoc-in [:screen/profile id]
+           {:screen          :screen/profile
+            :user-id         id
+            :profile-to-view [:user/by-id id]}))))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env] [:screen :profile-to-view]))
 
-#?(:cljs
-   (defmutation load-article-to-screen [{:article/keys [id]}]
-     (action [{:keys [state] :as env}]
-       (df/load-action env [:article/by-id id] Article)
-       (swap! state
-         #(update-in % [:screen/article id]
-            (fn [x] (or x
-                      {:screen          :screen/article
-                       :article-id      id
-                       :article-to-view [:article/by-id id]})))))
-     (remote [env]
-       (df/remote-load env))
-     (refresh [env] [:screen :article-to-view])))
+(defmutation load-article-to-screen [{:article/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (df/load-action env [:article/by-id id] Article)
+    (swap! state
+      #(update-in % [:screen/article id]
+         (fn [x] (or x
+                   {:screen          :screen/article
+                    :article-id      id
+                    :article-to-view [:article/by-id id]})))))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env] [:screen :article-to-view]))
 
 (declare ArticleEditor)
 
-#?(:cljs
-   (defmutation load-article-to-editor [{:article/keys [id]}]
-     (action [{:keys [state] :as env}]
-       (df/load-action env [:article/by-id id] ArticleEditor
-         {:without #{:fulcro.ui.form-state/config}}))
-     (remote [env]
-       (df/remote-load env))
-     (refresh [env] [:screen])))
+(defmutation load-article-to-editor [{:article/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (df/load-action env [:article/by-id id] ArticleEditor
+      {:without #{:fulcro.ui.form-state/config}}))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env] [:screen]))
 
-#?(:cljs
-   (defmutation load-liked-articles-to-screen [{:user/keys [id]}]
-     (action [{:keys [state] :as env}]
-       (df/load-action env [:user/by-id id] LikedArticles)
-       (swap! state
-         #(-> %
-            (assoc-in [:screen.profile/liked-articles id]
-              {:screen          :screen.profile/liked-articles
-               :user-id         id
-               :profile-to-view [:user/by-id id]}))))
-     (remote [env]
-       (df/remote-load env))
-     (refresh [env] [:profile-to-view])))
+(defmutation load-liked-articles-to-screen [{:user/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (df/load-action env [:user/by-id id] LikedArticles)
+    (swap! state
+      #(-> %
+         (assoc-in [:screen.profile/liked-articles id]
+           {:screen          :screen.profile/liked-articles
+            :user-id         id
+            :profile-to-view [:user/by-id id]}))))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env] [:profile-to-view]))
 
-#?(:cljs
-   (defmutation load-owned-articles-to-screen [{:user/keys [id]}]
-     (action [{:keys [state] :as env}]
-       (df/load-action env [:user/by-id id] OwnedArticles)
-       (swap! state
-         #(-> %
-            (assoc-in [:screen.profile/owned-articles id]
-              {:screen          :screen.profile/owned-articles
-               :user-id         id
-               :profile-to-view [:user/by-id id]}))))
-     (remote [env]
-       (df/remote-load env))
-     (refresh [env] [:profile-to-view])))
+(defmutation load-owned-articles-to-screen [{:user/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (df/load-action env [:user/by-id id] OwnedArticles)
+    (swap! state
+      #(-> %
+         (assoc-in [:screen.profile/owned-articles id]
+           {:screen          :screen.profile/owned-articles
+            :user-id         id
+            :profile-to-view [:user/by-id id]}))))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env] [:profile-to-view]))
 
-#?(:cljs
-   (defmutation use-settings-as-form [{:user/keys [id]}]
-     (action [{:keys [state] :as env}]
-       (swap! state #(-> %
-                       (fs/add-form-config* SettingsForm [:user/by-id id])
-                       (assoc-in [:root/settings-form :user] [:user/by-id id]))))))
+(defmutation use-settings-as-form [{:user/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (swap! state #(-> %
+                    (fs/add-form-config* SettingsForm [:user/by-id id])
+                    (assoc-in [:root/settings-form :user] [:user/by-id id])))))
 
 (defsc SettingsForm [this {:user/keys [id image name bio email] :as props}]
   {:query       [:user/id :user/image :user/name :user/bio :user/email
                  fs/form-config-join]
-   :ident [:user/by-id :user/id]
+   :ident       [:user/by-id :user/id]
    :form-fields #{:user/image :user/name :user/bio :user/email}}
   (dom/div :.settings-page
     (dom/div :.container.page
@@ -850,58 +781,40 @@
                   {:placeholder "URL of profile picture",
                    :type        "text"
                    :value       image
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :user/image})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :user/image :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :user/image})])
+                   :onChange    #(m/set-string! this :user/image :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Your Name",
                    :type        "text"
                    :value       name
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :user/name})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :user/name :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :user/name})])
+                   :onChange    #(m/set-string! this :user/name :event %)}))
               (dom/fieldset :.form-group
                 (dom/textarea :.form-control.form-control-lg
                   {:rows        "8",
                    :placeholder "Short bio about you"
                    :value       (or bio "")
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :user/bio})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :user/bio :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :user/bio})])
+                   :onChange    #(m/set-string! this :user/bio :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Email",
                    :type        "text"
                    :value       email
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :user/email})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :user/email :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :user/email})])
+                   :onChange    #(m/set-string! this :user/email :event %)}))
               #_
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Password",
                    :type        "password"}))
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                {:onClick
-                 #?(:clj  nil
-                    :cljs #(prim/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))]))}
+                {:onClick #(prim/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))])}
                 "Update Settings"))))))))
 
 (def ui-settings-form (prim/factory SettingsForm))
@@ -941,21 +854,21 @@
             (dom/ul :.nav.nav-pills.outline-active
               (dom/li :.nav-item
                 (dom/div :.nav-link.active
-                  {:onClick #?(:cljs #(prim/transact! this
-                                        `[(load-owned-articles-to-screen {:user/id ~user-id})
-                                          (r/route-to {:handler      :screen.profile/owned-articles
-                                                       :route-params {:user-id ~user-id}})
-                                          :profile-to-view])
-                               :clj nil)}
+                  {:onClick #(prim/transact! this
+                               `[(load-owned-articles-to-screen {:user/id ~user-id})
+                                 (r/route-to {:handler      :screen.profile/owned-articles
+                                              :route-params {:user-id ~user-id}})
+                                 :profile-to-view])
+                   }
                   "My Articles"))
               (dom/li :.nav-item
                 (dom/div :.nav-link
-                  {:onClick #?(:cljs #(prim/transact! this
-                                        `[(load-liked-articles-to-screen {:user/id ~user-id})
-                                          (r/route-to {:handler      :screen.profile/liked-articles
-                                                       :route-params {:user-id ~user-id}})
-                                          :profile-to-view])
-                               :clj nil)}
+                  {:onClick #(prim/transact! this
+                               `[(load-liked-articles-to-screen {:user/id ~user-id})
+                                 (r/route-to {:handler      :screen.profile/liked-articles
+                                              :route-params {:user-id ~user-id}})
+                                 :profile-to-view])
+                   }
                   "Favorited Articles"))))
           (ui-profile-router router))))))
 
@@ -982,8 +895,7 @@
               "Sign up")
             (dom/div :.text-xs-center
               {:href    "javascript:void(0)"
-               :onClick #?(:clj nil
-                           :cljs #(go-to-login this))}
+               :onClick #(go-to-login this)}
               "Have an account?")
             #_
             (dom/ul :.error-messages
@@ -994,46 +906,34 @@
                   {:placeholder "Your Name"
                    :type        "text"
                    :value       name
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :user/name})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :user/name :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :user/name})])
+                   :onChange    #(m/set-string! this :user/name :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Email"
                    :type        "text"
                    :value       email
-                   :onBlur
-                   #?(:clj  nil
-                      :cljs #(prim/transact! this
-                               `[(fs/mark-complete! {:field :user/email})]))
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(m/set-string! this :user/email :event %))}))
+                   :onBlur      #(prim/transact! this
+                                   `[(fs/mark-complete! {:field :user/email})])
+                   :onChange    #(m/set-string! this :user/email :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Password"
                    :type        "password"
                    :value       (or password "")
-                   :onChange
-                   #?(:clj nil
-                      :cljs #(prim/set-state! this {:user/password (.. % -target -value)}))}) )
+                   :onChange    #(prim/set-state! this {:user/password (.. % -target -value)})}) )
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                {:onClick #?(:clj nil
-                             :cljs #(prim/transact! this `[(sign-up ~(merge props state))]))}
+                {:onClick #(prim/transact! this `[(sign-up ~(merge props state))])}
                 "Sign up"))))))))
 
 (def ui-sign-up-form (prim/factory SignUpForm))
 
-#?(:cljs
-   (defmutation load-sign-up-form [_]
-     (action [{:keys [state] :as env}]
-       (swap! state
-         #(fs/add-form-config* % SignUpForm [:root/sign-up-form :new-user])))
-     (refresh [env] [:screen])))
+(defmutation load-sign-up-form [_]
+  (action [{:keys [state] :as env}]
+    (swap! state
+      #(fs/add-form-config* % SignUpForm [:root/sign-up-form :new-user])))
+  (refresh [env] [:screen]))
 
 (defsc SignUpScreen [this {user :new-user}]
   {:initial-state (fn [params] {:screen    :screen/sign-up
@@ -1053,8 +953,7 @@
               "Log in")
             (dom/div :.text-xs-center
               {:href    "javascript:void(0)"
-               :onClick #?(:clj nil
-                           :cljs #(go-to-sign-up this))}
+               :onClick #(go-to-sign-up this)}
               "Don't have an account?")
             (dom/form
               (dom/fieldset :.form-group
@@ -1062,20 +961,15 @@
                   {:placeholder "Email"
                    :type        "text"
                    :value       (or email "")
-                   :onChange
-                   #?(:clj  nil
-                      :cljs #(prim/update-state! this assoc :user/email (.. % -target -value)))}))
+                   :onChange    #(prim/update-state! this assoc :user/email (.. % -target -value))}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Password"
                    :type        "password"
                    :value       (or password "")
-                   :onChange
-                   #?(:clj  nil
-                      :cljs #(prim/update-state! this assoc :user/password (.. % -target -value)))}) )
+                   :onChange    #(prim/update-state! this assoc :user/password (.. % -target -value))}) )
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                {:onClick #?(:clj nil
-                             :cljs #(prim/transact! this `[(log-in ~credentials)]))}
+                {:onClick #(prim/transact! this `[(log-in ~credentials)])}
                 "Log in"))))))))
 
 (def ui-log-in-form (prim/factory LogInForm))
