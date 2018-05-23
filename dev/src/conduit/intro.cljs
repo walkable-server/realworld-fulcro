@@ -2,6 +2,7 @@
   (:require [devcards.core :as dc :refer-macros [defcard]]
             [fulcro.client.data-fetch :as df]
             [fulcro.client.routing :as r]
+            [conduit.ui.other :as other]
             [conduit.handler.mutations :as mutations]
             [fulcro.client.data-fetch :as df]
             [fulcro.client.network :as net]
@@ -83,7 +84,7 @@
                                                          :email "non@exist"}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query         [{:router/top (prim/get-query TopRouter)}
-                   {:user/whoami (prim/get-query comp/UserTinyPreview)}]}
+                   {:user/whoami (prim/get-query other/UserTinyPreview)}]}
   (dom/div
     (comp/ui-nav-bar)
     (ui-top router)

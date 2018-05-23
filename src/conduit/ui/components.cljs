@@ -4,27 +4,20 @@
     [fulcro.ui.form-state :as fs]
     [conduit.handler.mutations :as mutations]
     [fulcro.tempid :refer [tempid?]]
+    [conduit.ui.other :as other]
+    [conduit.ui.account :as account]
     [fulcro.client.mutations :as m :refer [defmutation]]
     [fulcro.client.data-fetch :as df]
     [fulcro.client.routing :as r]
     [fulcro.client.dom :as dom]))
 
-(declare SettingsForm)
+(declare ArticlePreview)
 
-(defn go-to-login [component]
-  (prim/transact! component
-    `[(r/route-to {:handler :screen/log-in})
-      :screen]))
-
-(defn go-to-sign-up [component]
-  (prim/transact! component
-    `[(load-sign-up-form)
-      (r/route-to {:handler :screen/sign-up})]))
-
-(defn go-to-settings [component {:user/keys [id]}]
-  (prim/transact! component
-    `[(use-settings-as-form {:user/id ~id})
-      (r/route-to {:handler :screen/settings})]))
+(defmutation load-personal-feed [_]
+  (action [{:keys [state] :as env}]
+    (df/load-action env :articles/feed ArticlePreview))
+  (remote [env]
+    (df/remote-load env)))
 
 (defn go-to-new-article [component]
   (prim/transact! component
@@ -86,21 +79,21 @@
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/settings) "active")
-                 :onClick   #(go-to-settings this {:user/id current-user-id})}
+                 :onClick   #(account/go-to-settings this {:user/id current-user-id})}
                 (dom/i :.ion-gear-a)
                 "Settings")))
           (when-not logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/log-in) "active")
-                 :onClick   #(go-to-login this)}
+                 :onClick   #(account/go-to-log-in this)}
                 "Login")))
 
           (when-not logged-in?
             (dom/li :.nav-item
               (dom/div :.nav-link
                 {:className (when (= current-screen :screen/sign-up) "active")
-                 :onClick   #(go-to-sign-up this)}
+                 :onClick   #(account/go-to-sign-up this)}
                 "Sign up")))
 
           (when logged-in?
@@ -130,23 +123,13 @@
 
 (def ui-banner (prim/factory Banner))
 
-(defsc UserTinyPreview [this props]
-  {:query [:user/id :user/username :user/name :user/image]
-   :initial-state (fn [params] #:user{:id :guest})
-   :ident [:user/by-id :user/id]})
-
-(defsc UserPreview [this props]
-  {:query [:user/id :user/image :user/username :user/name :user/followed-by-me :user/followed-by-count]
-   :initial-state (fn [params] #:user{:id :guest})
-   :ident [:user/by-id :user/id]})
-
 (defn js-date->string [date]
   (when (instance? js/Date date)
     (.toDateString date)))
 
 (defsc ArticlePreviewMeta [this {:article/keys [author created-at liked-by-count]}]
   {:query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
-           {:article/author (prim/get-query UserPreview)}]
+           {:article/author (prim/get-query other/UserPreview)}]
    :ident [:article/by-id :article/id]}
   (dom/div :.article-meta
     (dom/div {:onClick #(go-to-profile this author)}
@@ -190,7 +173,7 @@
                                          author]}]
   {:ident [:article/by-id :article/id]
    :query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
-           {:article/author (prim/get-query UserPreview)}]}
+           {:article/author (prim/get-query other/UserPreview)}]}
   (let [whoami                     (prim/shared this :user/whoami)
         {current-user-id :user/id} whoami]
     (dom/div :.article-meta
@@ -243,9 +226,9 @@
    :initial-state (fn [{:comment/keys [id]}]
                     #:comment{:id     id
                               :body   ""
-                              :author (prim/get-initial-state UserTinyPreview #:user{:id :guest})})
+                              :author (prim/get-initial-state other/UserTinyPreview #:user{:id :guest})})
    :query         [:comment/id :comment/created-at :comment/body
-                   {:comment/author (prim/get-query UserTinyPreview)}]}
+                   {:comment/author (prim/get-query other/UserTinyPreview)}]}
   (if (= editing-comment-id id)
     (ui-comment-form (prim/computed props computed-map))
     (dom/div :.card
@@ -660,41 +643,6 @@
 
 (def ui-article-editor (prim/factory ArticleEditor))
 
-(defsc Settings [this props]
-  {:query         [:user/image :user/name :user/bio :user/email]})
-
-(defmutation load-personal-feed [_]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :articles/feed ArticlePreview))
-  (remote [env]
-    (df/remote-load env)))
-
-(defmutation log-in [credentials]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami SettingsForm
-      {:params        {:login credentials}
-       :without       #{:fulcro.ui.form-state/config :user/password}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
-
-(defmutation log-out [_]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami UserTinyPreview
-      {:params        {:logout true}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
-
-(defmutation sign-up [new-user]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami SettingsForm
-      {:params        {:sign-up new-user}
-       :without       #{:fulcro.ui.form-state/config :user/password}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
-
 (defmutation load-profile-to-screen [{:user/keys [id]}]
   (action [{:keys [state] :as env}]
     (df/load-action env [:user/by-id id] Profile {:without #{:router/profile}})
@@ -757,74 +705,12 @@
     (df/remote-load env))
   (refresh [env] [:profile-to-view]))
 
-(defmutation use-settings-as-form [{:user/keys [id]}]
-  (action [{:keys [state] :as env}]
-    (swap! state #(-> %
-                    (fs/add-form-config* SettingsForm [:user/by-id id])
-                    (assoc-in [:root/settings-form :user] [:user/by-id id])))))
-
-(defsc SettingsForm [this {:user/keys [id image name bio email] :as props}]
-  {:query       [:user/id :user/image :user/name :user/bio :user/email
-                 fs/form-config-join]
-   :ident       [:user/by-id :user/id]
-   :form-fields #{:user/image :user/name :user/bio :user/email}}
-  (dom/div :.settings-page
-    (dom/div :.container.page
-      (dom/div :.row
-        (dom/div :.col-md-6.offset-md-3.col-xs-12
-          (dom/h1 :.text-xs-center
-            "Your Settings")
-          (dom/form
-            (dom/fieldset
-              (dom/fieldset :.form-group
-                (dom/input :.form-control
-                  {:placeholder "URL of profile picture",
-                   :type        "text"
-                   :value       image
-                   :onBlur      #(prim/transact! this
-                                   `[(fs/mark-complete! {:field :user/image})])
-                   :onChange    #(m/set-string! this :user/image :event %)}))
-              (dom/fieldset :.form-group
-                (dom/input :.form-control.form-control-lg
-                  {:placeholder "Your Name",
-                   :type        "text"
-                   :value       name
-                   :onBlur      #(prim/transact! this
-                                   `[(fs/mark-complete! {:field :user/name})])
-                   :onChange    #(m/set-string! this :user/name :event %)}))
-              (dom/fieldset :.form-group
-                (dom/textarea :.form-control.form-control-lg
-                  {:rows        "8",
-                   :placeholder "Short bio about you"
-                   :value       (or bio "")
-                   :onBlur      #(prim/transact! this
-                                   `[(fs/mark-complete! {:field :user/bio})])
-                   :onChange    #(m/set-string! this :user/bio :event %)}))
-              (dom/fieldset :.form-group
-                (dom/input :.form-control.form-control-lg
-                  {:placeholder "Email",
-                   :type        "text"
-                   :value       email
-                   :onBlur      #(prim/transact! this
-                                   `[(fs/mark-complete! {:field :user/email})])
-                   :onChange    #(m/set-string! this :user/email :event %)}))
-              #_
-              (dom/fieldset :.form-group
-                (dom/input :.form-control.form-control-lg
-                  {:placeholder "Password",
-                   :type        "password"}))
-              (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                {:onClick #(prim/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))])}
-                "Update Settings"))))))))
-
-(def ui-settings-form (prim/factory SettingsForm))
-
 (defsc SettingScreen [this {user [:root/settings-form :user]}]
   {:initial-state (fn [params] {:screen             :screen/settings
                                 :screen-id          :top})
    :query         [:screen :screen-id
-                   {[:root/settings-form :user] (prim/get-query SettingsForm)}]}
-  (ui-settings-form user))
+                   {[:root/settings-form :user] (prim/get-query account/SettingsForm)}]}
+  (account/ui-settings-form user))
 
 (defsc EditorScreen [this {:keys [screen article-to-edit article-id]}]
   {:ident         (fn [] [screen article-id])
@@ -881,101 +767,16 @@
                           {:article-to-view (prim/get-query Article)}])}
   (ui-article article-to-view ))
 
-(defsc SignUpForm [this {:user/keys [name email] :as props}]
-  {:query         [:user/name :user/email fs/form-config-join]
-   :initial-state (fn [params] #:user{:name "" :email ""})
-   :ident         (fn [] [:root/sign-up-form :new-user])
-   :form-fields   #{:user/name :user/email}}
-  (let [{:user/keys [password] :as state} (prim/get-state this)]
-    (dom/div :.auth-page
-      (dom/div :.container.page
-        (dom/div :.row
-          (dom/div :.col-md-6.offset-md-3.col-xs-12
-            (dom/h1 :.text-xs-center
-              "Sign up")
-            (dom/div :.text-xs-center
-              {:href    "javascript:void(0)"
-               :onClick #(go-to-login this)}
-              "Have an account?")
-            #_
-            (dom/ul :.error-messages
-              (dom/li "That email is already taken") )
-            (dom/form
-              (dom/fieldset :.form-group
-                (dom/input :.form-control.form-control-lg
-                  {:placeholder "Your Name"
-                   :type        "text"
-                   :value       name
-                   :onBlur      #(prim/transact! this
-                                   `[(fs/mark-complete! {:field :user/name})])
-                   :onChange    #(m/set-string! this :user/name :event %)}))
-              (dom/fieldset :.form-group
-                (dom/input :.form-control.form-control-lg
-                  {:placeholder "Email"
-                   :type        "text"
-                   :value       email
-                   :onBlur      #(prim/transact! this
-                                   `[(fs/mark-complete! {:field :user/email})])
-                   :onChange    #(m/set-string! this :user/email :event %)}))
-              (dom/fieldset :.form-group
-                (dom/input :.form-control.form-control-lg
-                  {:placeholder "Password"
-                   :type        "password"
-                   :value       (or password "")
-                   :onChange    #(prim/set-state! this {:user/password (.. % -target -value)})}) )
-              (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                {:onClick #(prim/transact! this `[(sign-up ~(merge props state))])}
-                "Sign up"))))))))
-
-(def ui-sign-up-form (prim/factory SignUpForm))
-
-(defmutation load-sign-up-form [_]
-  (action [{:keys [state] :as env}]
-    (swap! state
-      #(fs/add-form-config* % SignUpForm [:root/sign-up-form :new-user])))
-  (refresh [env] [:screen]))
-
 (defsc SignUpScreen [this {user :new-user}]
   {:initial-state (fn [params] {:screen    :screen/sign-up
                                 :screen-id :top
                                 :new-user  #:user{:name "" :email ""}})
    :query         [:screen :screen-id
-                   {:new-user (prim/get-query SignUpForm)}]}
-  (ui-sign-up-form user))
-
-(defsc LogInForm [this props]
-  (let [{:user/keys [email password] :as credentials} (prim/get-state this)]
-    (dom/div :.auth-page
-      (dom/div :.container.page
-        (dom/div :.row
-          (dom/div :.col-md-6.offset-md-3.col-xs-12
-            (dom/h1 :.text-xs-center
-              "Log in")
-            (dom/div :.text-xs-center
-              {:href    "javascript:void(0)"
-               :onClick #(go-to-sign-up this)}
-              "Don't have an account?")
-            (dom/form
-              (dom/fieldset :.form-group
-                (dom/input :.form-control.form-control-lg
-                  {:placeholder "Email"
-                   :type        "text"
-                   :value       (or email "")
-                   :onChange    #(prim/update-state! this assoc :user/email (.. % -target -value))}))
-              (dom/fieldset :.form-group
-                (dom/input :.form-control.form-control-lg
-                  {:placeholder "Password"
-                   :type        "password"
-                   :value       (or password "")
-                   :onChange    #(prim/update-state! this assoc :user/password (.. % -target -value))}) )
-              (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                {:onClick #(prim/transact! this `[(log-in ~credentials)])}
-                "Log in"))))))))
-
-(def ui-log-in-form (prim/factory LogInForm))
+                   {:new-user (prim/get-query account/SignUpForm)}]}
+  (account/ui-sign-up-form user))
 
 (defsc LogInScreen [this props]
   {:initial-state (fn [params] {:screen    :screen/log-in
                                 :screen-id :top})
    :query         [:screen :screen-id]}
-  (ui-log-in-form {}))
+  (account/ui-log-in-form {}))
