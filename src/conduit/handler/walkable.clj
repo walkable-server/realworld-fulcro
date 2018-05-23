@@ -28,13 +28,19 @@
              (map? (-> env :ast :params)))
          (let [params                      (-> env :ast :params)
                {:app/keys [db jwt-secret]} env]
-           (if-let [{user-id :id} (find-user-in-params db params)]
-             (let [token (jwt/sign {:user/id user-id} jwt-secret)]
-               (-> env
-                 (assoc :app/current-user user-id)
-                 reader
-                 (assoc :token token)))
-             {}))
+           (if (:logout params)
+             #:user{:id        :guest
+                    :name      "Guest"
+                    :image     "https://static.productionready.io/images/smiley-cyrus.jpg"
+                    :email     "non@exist"
+                    :app/token "No token"}
+             (if-let [{user-id :id} (find-user-in-params db params)]
+               (let [token (jwt/sign {:user/id user-id} jwt-secret)]
+                 (-> env
+                   (assoc :app/current-user user-id)
+                   reader
+                   (assoc :app/token token)))
+               {})))
          (reader env))))})
 
 (def query-top-tags

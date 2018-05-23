@@ -740,6 +740,15 @@
        (df/remote-load env))))
 
 #?(:cljs
+   (defmutation log-out [_]
+     (action [{:keys [state] :as env}]
+       (df/load-action env :user/whoami UserTinyPreview
+         {:params  {:logout true}
+          :post-mutation `mutations/rerender-root}))
+     (remote [env]
+       (df/remote-load env))))
+
+#?(:cljs
    (defmutation sign-up [new-user]
      (action [{:keys [state] :as env}]
        (df/load-action env :user/whoami SettingsForm
