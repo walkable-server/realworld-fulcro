@@ -19,7 +19,7 @@
                           (:screen/editor :screen/article)
                           :article-id
 
-                          :screen/profile
+                          :screen.profile/by-user-id
                           :user-id
 
                           :screen-id)
@@ -31,7 +31,7 @@
   :screen/log-in   account/LogInScreen
   :screen/sign-up  account/SignUpScreen
   :screen/article  article/ArticleScreen
-  :screen/profile  profile/ProfileScreen)
+  :screen.profile/by-user-id  profile/ProfileScreen)
 
 (def ui-top (prim/factory TopRouter))
 
@@ -60,12 +60,12 @@
       [(r/router-instruction :router/top [:screen/home :top])
        (r/router-instruction :router/feeds [:screen.feed/personal :top])])
 
-    (r/make-route :screen.profile/owned-articles
-      [(r/router-instruction :router/top [:screen/profile :param/user-id])
-       (r/router-instruction :router/profile [:screen.profile/owned-articles :param/user-id])])
-    (r/make-route :screen.profile/liked-articles
-      [(r/router-instruction :router/top [:screen/profile :param/user-id])
-       (r/router-instruction :router/profile [:screen.profile/liked-articles :param/user-id])])))
+    (r/make-route :screen.owned-articles/by-user-id
+      [(r/router-instruction :router/top [:screen.profile/by-user-id :param/user-id])
+       (r/router-instruction :router/profile [:screen.owned-articles/by-user-id :param/user-id])])
+    (r/make-route :screen.liked-articles/by-user-id
+      [(r/router-instruction :router/top [:screen.profile/by-user-id :param/user-id])
+       (r/router-instruction :router/profile [:screen.liked-articles/by-user-id :param/user-id])])))
 
 (defsc Root [this {router :router/top :as props}]
   {:initial-state (fn [params] (merge routing-tree
@@ -74,7 +74,7 @@
                                                                    :title       ""
                                                                    :slug        ""
                                                                    :description ""
-                                                                   :comments    [#:comment{:id :none :body "" :author {:user/id :guest}}]
+                                                                   :comments    []
                                                                    :author      {:user/id :guest}}}
                                   :user/whoami   #:user {:id    :guest
                                                          :name  "Guest"

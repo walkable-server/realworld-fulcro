@@ -38,7 +38,7 @@
   (prim/transact! component
     `[(conduit.ui.profile/load-profile-to-screen ~profile)
       (conduit.ui.profile/load-owned-articles-to-screen ~profile)
-      (r/route-to {:handler      :screen.profile/owned-articles
+      (r/route-to {:handler      :screen.owned-articles/by-user-id
                    :route-params {:user-id ~id}})
       :profile-to-view]))
 
@@ -46,7 +46,7 @@
   (prim/transact! component
     `[(conduit.ui.profile/load-profile-to-screen ~profile)
       (conduit.ui.profile/load-liked-articles-to-screen ~profile)
-      (r/route-to {:handler      :screen.profile/liked-articles
+      (r/route-to {:handler      :screen.liked-articles/by-user-id
                    :route-params {:user-id ~id}})
       :profile-to-view]))
 
