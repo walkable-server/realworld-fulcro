@@ -96,18 +96,17 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc PersonalFeed [this {:keys [screen] articles :articles/feed}]
-  {:initial-state {:screen :screen.feed/personal}
+(defsc PersonalFeed [this {:keys [screen articles]}]
+  {:initial-state {:screen :screen.feed/personal
+                   :articles []}
    :ident         (fn [] [screen :top])
-   :query         [:screen
-                   {[:articles/feed '_] (prim/get-query preview/ArticlePreview)}]}
+   :query         [:screen {:articles (prim/get-query preview/ArticlePreview)}]}
   (preview/article-list this articles "You have no article!"))
 
-(defsc GlobalFeed [this {:keys [screen] articles :articles/all}]
+(defsc GlobalFeed [this {:keys [screen articles]}]
   {:initial-state {:screen :screen.feed/global}
    :ident         (fn [] [screen :top])
-   :query         [:screen
-                   {[:articles/all '_] (prim/get-query preview/ArticlePreview)}]}
+   :query         [:screen {:articles (prim/get-query preview/ArticlePreview)}]}
   (preview/article-list this articles "No article!"))
 
 (r/defrouter FeedsRouter :router/feeds
@@ -166,12 +165,12 @@
 
 (defmutation load-personal-feed [_]
   (action [{:keys [state] :as env}]
-    (df/load-action env :articles/feed preview/ArticlePreview))
+    (df/load-action env :articles/feed preview/ArticlePreview {:target [:screen.feed/personal :top :articles]}))
   (remote [env]
     (df/remote-load env)))
 
 (defmutation load-global-feed [_]
   (action [{:keys [state] :as env}]
-    (df/load-action env :articles/all preview/ArticlePreview))
+    (df/load-action env :articles/all preview/ArticlePreview {:target [:screen.feed/global :top :articles]}))
   (remote [env]
     (df/remote-load env)))

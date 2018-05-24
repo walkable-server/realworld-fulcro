@@ -90,5 +90,5 @@
 
 (defn started-callback [app]
   (df/load app :user/whoami other/UserTinyPreview)
-  (df/load app :articles/all preview/ArticlePreview)
+  (df/load app :articles/all preview/ArticlePreview {:target [:screen.feed/global :top :articles]})
   (df/load app :tags/all home/Tag))
