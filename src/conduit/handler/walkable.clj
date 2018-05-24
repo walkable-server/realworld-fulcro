@@ -19,28 +19,34 @@
     (let [new-user (:sign-up params)]
       (user/create-user db (rename-keys new-user mutations/remove-user-namespace)))))
 
+(def guest-user
+  #:user{:id        :guest
+         :name      "Guest"
+         :image     "https://static.productionready.io/images/smiley-cyrus.jpg"
+         :email     "non@exist"
+         :app/token "No token"})
+
 (def pre-processing-login
   {::p/wrap-read
    (fn [reader]
      (fn [env]
-       (if (and (= (-> env :ast :dispatch-key)
-                  :user/whoami)
-             (map? (-> env :ast :params)))
-         (let [params                      (-> env :ast :params)
-               {:app/keys [db jwt-secret]} env]
-           (if (:logout params)
-             #:user{:id        :guest
-                    :name      "Guest"
-                    :image     "https://static.productionready.io/images/smiley-cyrus.jpg"
-                    :email     "non@exist"
-                    :app/token "No token"}
-             (if-let [{user-id :id} (find-user-in-params db params)]
-               (let [token (jwt/sign {:user/id user-id} jwt-secret)]
-                 (-> env
-                   (assoc :app/current-user user-id)
-                   reader
-                   (assoc :app/token token)))
-               {})))
+       (if (= (-> env :ast :dispatch-key) :user/whoami)
+         (if (map? (-> env :ast :params))
+           (let [params                      (-> env :ast :params)
+                 {:app/keys [db jwt-secret]} env]
+             (when-not (:logout params)
+               guest-user
+               (if-let [{user-id :id} (find-user-in-params db params)]
+                 (let [token (jwt/sign {:user/id user-id} jwt-secret)]
+                   (-> env
+                     (assoc :app/current-user user-id)
+                     reader
+                     (assoc :app/token token)))
+                 guest-user)))
+           (let [result (reader env)]
+             (if (seq result)
+               result
+               guest-user)))
          (reader env))))})
 
 (def query-top-tags
@@ -55,13 +61,13 @@
   (p/parser
     {:mutate server-mutate
      ::p/plugins
-     [(p/env-plugin
+     [pre-processing-login
+      (p/env-plugin
         {::p/reader
          [sqb/pull-entities p/map-reader p/env-placeholder-reader
           {:tags/all (fn [{::sqb/keys [run-query sql-db]}]
                        ;; todo: cache this!
-                       (into [] (run-query sql-db [query-top-tags])))}]})
-      pre-processing-login]}))
+                       (into [] (run-query sql-db [query-top-tags])))}]})]}))
 
 (def extra-conditions
   {:articles/feed
