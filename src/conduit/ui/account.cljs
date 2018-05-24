@@ -1,66 +1,16 @@
 (ns conduit.ui.account
   (:require
-    [fulcro.client.primitives :as prim :refer [defsc]]
-    [conduit.ui.other :as other]
-    [fulcro.ui.form-state :as fs]
-    [conduit.handler.mutations :as mutations]
-    [fulcro.tempid :refer [tempid?]]
-    [fulcro.client.mutations :as m :refer [defmutation]]
-    [fulcro.client.data-fetch :as df]
-    [fulcro.client.routing :as r]
-    [fulcro.client.dom :as dom]))
-
-(defn go-to-log-in [component]
-  (prim/transact! component
-    `[(r/route-to {:handler :screen/log-in})
-      :screen]))
-
-(defn go-to-sign-up [component]
-  (prim/transact! component
-    `[(load-sign-up-form)
-      (r/route-to {:handler :screen/sign-up})]))
-
-(defn go-to-settings [component {:user/keys [id]}]
-  (prim/transact! component
-    `[(use-settings-as-form {:user/id ~id})
-      (r/route-to {:handler :screen/settings})]))
+   [fulcro.client.primitives :as prim :refer [defsc]]
+   [conduit.ui.other :as other]
+   [fulcro.ui.form-state :as fs]
+   [conduit.handler.mutations :as mutations]
+   [fulcro.client.mutations :as m :refer [defmutation]]
+   [fulcro.client.data-fetch :as df]
+   [fulcro.client.dom :as dom]
+   [conduit.ui.routes :as routes]))
 
 (defsc Settings [this props]
   {:query [:user/image :user/name :user/bio :user/email]})
-
-(declare SettingsForm)
-
-(defmutation log-in [credentials]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami SettingsForm
-      {:params        {:login credentials}
-       :without       #{:fulcro.ui.form-state/config :user/password}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
-
-(defmutation log-out [_]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami other/UserTinyPreview
-      {:params        {:logout true}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
-
-(defmutation sign-up [new-user]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami SettingsForm
-      {:params        {:sign-up new-user}
-       :without       #{:fulcro.ui.form-state/config :user/password}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
-
-(defmutation use-settings-as-form [{:user/keys [id]}]
-  (action [{:keys [state] :as env}]
-    (swap! state #(-> %
-                    (fs/add-form-config* SettingsForm [:user/by-id id])
-                    (assoc-in [:root/settings-form :user] [:user/by-id id])))))
 
 (defsc SettingsForm [this {:user/keys [id image name bio email] :as props}]
   {:query       [:user/id :user/image :user/name :user/bio :user/email
@@ -138,7 +88,7 @@
                 "Sign up")
               (dom/p  :.text-xs-center
                 (dom/a {:href    "javascript:void(0)"
-                        :onClick #(go-to-log-in this)}
+                        :onClick #(routes/go-to-log-in this)}
                   "Have an account?"))
               #_
               (dom/ul :.error-messages
@@ -195,7 +145,7 @@
                 "Log in")
               (dom/p :.text-xs-center
                 (dom/a {:href    "javascript:void(0)"
-                        :onClick #(go-to-sign-up this)}
+                        :onClick #(routes/go-to-sign-up this)}
                   "Don't have an account?"))
               (dom/form
                 (dom/fieldset :.form-group
@@ -215,3 +165,56 @@
                   "Log in")))))))))
 
 (def ui-log-in-form (prim/factory LogInForm))
+
+(defsc SignUpScreen [this {user :new-user}]
+  {:initial-state (fn [params] {:screen    :screen/sign-up
+                                :screen-id :top
+                                :new-user  #:user{:name "" :email ""}})
+   :query         [:screen :screen-id
+                   {:new-user (prim/get-query SignUpForm)}]}
+  (ui-sign-up-form user))
+
+(defsc LogInScreen [this props]
+  {:initial-state (fn [params] {:screen    :screen/log-in
+                                :screen-id :top})
+   :query         [:screen :screen-id]}
+  (ui-log-in-form {}))
+
+(defsc SettingScreen [this {user [:root/settings-form :user]}]
+  {:initial-state (fn [params] {:screen             :screen/settings
+                                :screen-id          :top})
+   :query         [:screen :screen-id
+                   {[:root/settings-form :user] (prim/get-query SettingsForm)}]}
+  (ui-settings-form user))
+
+(defmutation log-in [credentials]
+  (action [{:keys [state] :as env}]
+    (df/load-action env :user/whoami SettingsForm
+      {:params        {:login credentials}
+       :without       #{:fulcro.ui.form-state/config :user/password}
+       :post-mutation `mutations/rerender-root}))
+  (remote [env]
+    (df/remote-load env)))
+
+(defmutation log-out [_]
+  (action [{:keys [state] :as env}]
+    (df/load-action env :user/whoami other/UserTinyPreview
+      {:params        {:logout true}
+       :post-mutation `mutations/rerender-root}))
+  (remote [env]
+    (df/remote-load env)))
+
+(defmutation sign-up [new-user]
+  (action [{:keys [state] :as env}]
+    (df/load-action env :user/whoami SettingsForm
+      {:params        {:sign-up new-user}
+       :without       #{:fulcro.ui.form-state/config :user/password}
+       :post-mutation `mutations/rerender-root}))
+  (remote [env]
+    (df/remote-load env)))
+
+(defmutation use-settings-as-form [{:user/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (swap! state #(-> %
+                    (fs/add-form-config* SettingsForm [:user/by-id id])
+                    (assoc-in [:root/settings-form :user] [:user/by-id id])))))

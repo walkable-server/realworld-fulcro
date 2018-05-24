@@ -2,14 +2,19 @@
   (:require [devcards.core :as dc :refer-macros [defcard]]
             [fulcro.client.data-fetch :as df]
             [fulcro.client.routing :as r]
+            [conduit.ui.article-preview :as preview]
             [conduit.ui.other :as other]
             [conduit.handler.mutations :as mutations]
             [fulcro.client.data-fetch :as df]
             [fulcro.client.network :as net]
             [fulcro.client.primitives :as prim :refer [defsc]]
             [fulcro.client.cards :refer [defcard-fulcro]]
-            [conduit.ui.components :as comp]
-            [fulcro.client.dom :as dom]))
+            [conduit.ui.home :as home]
+            [fulcro.client.dom :as dom]
+            [conduit.ui.editor :as editor]
+            [conduit.ui.account :as account]
+            [conduit.ui.article :as article]
+            [conduit.ui.profile :as profile]))
 
 (r/defrouter TopRouter :router/top
   (fn [this props]
@@ -24,13 +29,13 @@
                           :screen-id)
           screen-id (get props screen-id-key)]
       [screen-name screen-id]))
-  :screen/home     comp/Home
-  :screen/settings comp/SettingScreen
-  :screen/editor   comp/EditorScreen
-  :screen/log-in    comp/LogInScreen
-  :screen/sign-up  comp/SignUpScreen
-  :screen/article  comp/ArticleScreen
-  :screen/profile  comp/ProfileScreen)
+  :screen/home     home/Home
+  :screen/settings account/SettingScreen
+  :screen/editor   editor/EditorScreen
+  :screen/log-in   account/LogInScreen
+  :screen/sign-up  account/SignUpScreen
+  :screen/article  article/ArticleScreen
+  :screen/profile  profile/ProfileScreen)
 
 (def ui-top (prim/factory TopRouter))
 
@@ -86,9 +91,9 @@
    :query         [{:router/top (prim/get-query TopRouter)}
                    {:user/whoami (prim/get-query other/UserTinyPreview)}]}
   (dom/div
-    (comp/ui-nav-bar)
+    (home/ui-nav-bar)
     (ui-top router)
-    (comp/ui-footer)))
+    (home/ui-footer)))
 
 (def token-store (atom "No token"))
 
@@ -108,8 +113,8 @@
    :fulcro       {:reconciler-options {:shared-fn #(select-keys % [:user/whoami])}
                   :started-callback
                   (fn [app]
-                    (df/load app :articles/all comp/ArticlePreview)
-                    (df/load app :tags/all comp/Tag))
+                    (df/load app :articles/all preview/ArticlePreview)
+                    (df/load app :tags/all home/Tag))
                   :networking {:remote (net/fulcro-http-remote
                                          {:url "/api"
                                           :response-middleware (net/wrap-fulcro-response wrap-remember-token)

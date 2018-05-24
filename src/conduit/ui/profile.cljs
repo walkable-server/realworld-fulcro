@@ -1,0 +1,151 @@
+(ns conduit.ui.profile
+  (:require
+   [fulcro.client.primitives :as prim :refer [defsc]]
+   [conduit.handler.mutations :as mutations]
+   [conduit.ui.other :as other]
+   [conduit.ui.comment :as comment]
+   [conduit.ui.routes :as routes]
+   [fulcro.client.mutations :as m :refer [defmutation]]
+   [fulcro.client.data-fetch :as df]
+   [fulcro.client.routing :as r]
+   [fulcro.client.dom :as dom]
+   [conduit.ui.article-preview :as preview]))
+
+(defsc LikedArticles [this {:user/keys [id] articles :user/like}]
+  {:ident         [:user/by-id :user/id]
+   :query         [:user/id {:user/like (prim/get-query preview/ArticlePreview)}]}
+  (preview/article-list this articles "This user liked no article!"))
+
+(def ui-liked-articles (prim/factory LikedArticles))
+
+(defsc LikedArticlesScreen
+  [this {:keys [screen profile-to-view user-id]}]
+  {:initial-state (fn [params]
+                    {:screen          :screen.profile/liked-articles
+                     :user-id         :guest
+                     :profile-to-view (prim/get-initial-state LikedArticles #:user{:id :guest})})
+   :ident         (fn [] [screen user-id])
+   :query         [:screen :user-id {:profile-to-view (prim/get-query LikedArticles)}]}
+  (ui-liked-articles profile-to-view))
+
+(defsc OwnedArticles [this {:user/keys [id articles]}]
+  {:ident         [:user/by-id :user/id]
+   :query         [:user/id {:user/articles (prim/get-query preview/ArticlePreview)}]}
+  (preview/article-list this articles "This user has no article!"))
+
+(def ui-owned-articles (prim/factory OwnedArticles))
+
+(defsc OwnedArticlesScreen
+  [this {:keys [screen profile-to-view user-id]}]
+  {:initial-state (fn [params]
+                    {:screen          :screen.profile/owned-articles
+                     :user-id         :guest
+                     :profile-to-view (prim/get-initial-state OwnedArticles #:user {:id :guest})})
+   :ident         (fn [] [screen user-id])
+   :query         [:screen :user-id {:profile-to-view (prim/get-query OwnedArticles)}]}
+  (ui-owned-articles profile-to-view))
+
+(r/defrouter ProfileRouter :router/profile
+  [:screen :user-id]
+  :screen.profile/owned-articles OwnedArticlesScreen
+  :screen.profile/liked-articles LikedArticlesScreen)
+
+(def ui-profile-router (prim/factory ProfileRouter))
+
+(defsc Profile [this {:user/keys [id name username image bio followed-by-me]}]
+  {:ident         [:user/by-id :user/id]
+   :query         [:user/id :user/name :user/username :user/image :user/bio :user/followed-by-me]}
+  (dom/div :.user-info
+    (dom/div :.container
+      (dom/div :.row
+        (dom/div :.col-xs-12.col-md-10.offset-md-1
+          (dom/img :.user-img {:src image})
+          (dom/h4 name)
+          (dom/p bio)
+          (let [current-user-id (-> (prim/shared this :user/whoami) :user/id)]
+            (when (not= id current-user-id)
+              (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
+                {:onClick #(if (= :guest current-user-id)
+                             (js/alert "You must log in first")
+                             (if followed-by-me
+                               (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
+                               (prim/transact! this `[(mutations/follow {:user/id ~id})])))}
+                (dom/i :.ion-plus-round)
+                (str (if followed-by-me "Unfollow " "Follow ") name)))))))))
+
+(def ui-profile (prim/factory Profile))
+
+(defsc ProfileListSelector [this profile-to-view]
+  (let [whoami (prim/shared this :user/whoami)]
+    (dom/div :.articles-toggle
+      (dom/ul :.nav.nav-pills.outline-active
+        (dom/li :.nav-item
+          (dom/div :.nav-link.active
+            {:onClick #(routes/go-to-profile this profile-to-view)}
+            (if (= (:user/id whoami) (:user/id profile-to-view))
+              "My"
+              (str (:user/name profile-to-view) "'s"))
+            " Articles"))
+        (dom/li :.nav-item
+          (dom/div :.nav-link
+            {:onClick #(routes/go-to-liked-article this profile-to-view)}
+            "Favorited Articles"))))))
+
+(def ui-profile-list-selector (prim/factory ProfileListSelector))
+
+(defsc ProfileScreen [this {:keys  [screen profile-to-view user-id]
+                            router [r/routers-table :router/profile]}]
+  {:ident         (fn [] [screen user-id])
+   :initial-state (fn [params] {:screen          :screen/profile
+                                :user-id         :guest
+                                :profile-to-view (prim/get-initial-state Profile #:user{:id :guest})
+                                :router/profile  {}})
+   :query         (fn [] [:screen :user-id
+                          {[r/routers-table :router/profile] (prim/get-query ProfileRouter)}
+                          {:profile-to-view (prim/get-query Profile)}])}
+  (dom/div :.profile-page
+    (ui-profile profile-to-view)
+    (dom/div :.container
+      (dom/div :.row
+        (dom/div :.col-xs-12.col-md-10.offset-md-1
+          (ui-profile-list-selector profile-to-view)
+          (ui-profile-router router))))))
+
+(defmutation load-profile-to-screen [{:user/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (df/load-action env [:user/by-id id] Profile {:without #{:router/profile}})
+    (swap! state
+      #(-> %
+         (assoc-in [:screen/profile id]
+           {:screen          :screen/profile
+            :user-id         id
+            :profile-to-view [:user/by-id id]}))))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env] [:screen :profile-to-view]))
+
+(defmutation load-liked-articles-to-screen [{:user/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (df/load-action env [:user/by-id id] LikedArticles)
+    (swap! state
+      #(-> %
+         (assoc-in [:screen.profile/liked-articles id]
+           {:screen          :screen.profile/liked-articles
+            :user-id         id
+            :profile-to-view [:user/by-id id]}))))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env] [:profile-to-view]))
+
+(defmutation load-owned-articles-to-screen [{:user/keys [id]}]
+  (action [{:keys [state] :as env}]
+    (df/load-action env [:user/by-id id] OwnedArticles)
+    (swap! state
+      #(-> %
+         (assoc-in [:screen.profile/owned-articles id]
+           {:screen          :screen.profile/owned-articles
+            :user-id         id
+            :profile-to-view [:user/by-id id]}))))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env] [:profile-to-view]))
