@@ -74,15 +74,13 @@
   (action [{:keys [state]}]
     (swap! state update-in [:article/by-id article-id :article/tags]
       (fnil conj [])
-      {:tag/tag tag}))
-  (remote [env] true))
+      {:tag/tag tag})))
 
 (defmutation remove-tag [{:keys [article-id tag]}]
   (action [{:keys [state]}]
     (swap! state update-in [:article/by-id article-id :article/tags]
       #(filterv (fn [x] (not= (:tag/tag x) %2)) %1)
-      tag))
-  (remote [env] true))
+      tag)))
 
 (defmutation rerender-root [_]
   (action [{:keys [reconciler] :as env}]
