@@ -11,7 +11,6 @@
 
 (defmutation submit-comment [{:keys [article-id diff]}]
   (action [{:keys [state]}]
-    (println (pr-str [diff]))
     (swap! state #(let [ident (util/get-ident diff)
                         id    (second ident)]
                     (-> %
