@@ -20,14 +20,21 @@
 
 (def ui-tag-item (prim/factory TagItem {:keyfn :tag/tag}))
 
-(defsc ArticleEditor [this {:article/keys [id slug title description body tags] :as props}]
+(defsc ArticleEditor* [this {:article/keys [id slug title description body tags] :as props}]
   {:initial-state (fn [{:article/keys [id]}] #:article{:id :none :body "" :title "" :description "" :slug ""})
    :query         [:article/id :article/slug  :article/title :article/description :article/body
                    {:article/tags [:tag/tag]}
                    fs/form-config-join]
+   :ident         [:article/by-id :article/id]})
+
+(defsc ArticleEditor [this {:article/keys [id slug title description body tags] :as props}]
+  {:initial-state (fn [{:article/keys [id]}] #:article{:id :none :body "" :title "" :description "" :slug ""})
+   :query         [:article/id :article/slug  :article/title :article/description :article/body
+                   :article/tags
+                   fs/form-config-join]
    :ident         [:article/by-id :article/id]
    :form-fields   #{:article/slug  :article/title
-                    :article/description :article/body}}
+                    :article/description :article/body :article/tags}}
   (dom/div :.editor-page
     (dom/div :.container.page
       (dom/div :.row
@@ -136,8 +143,7 @@
 
 (defmutation load-article-to-editor [{:article/keys [id]}]
   (action [{:keys [state] :as env}]
-    (df/load-action env [:article/by-id id] ArticleEditor
-      {:without #{:fulcro.ui.form-state/config}}))
+    (df/load-action env [:article/by-id id] ArticleEditor*))
   (remote [env]
     (df/remote-load env))
   (refresh [env] [:screen]))
