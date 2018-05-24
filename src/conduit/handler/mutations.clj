@@ -12,9 +12,6 @@
 (def remove-user-namespace
   (util/remove-namespace "user" [:username :name :email :bio :image :password]))
 
-(def remove-article-namespace
-  (util/remove-namespace "article" [:title :body :slug :description]))
-
 (def remove-comment-namespace
   (util/remove-namespace "comment" [:body]))
 
@@ -23,8 +20,7 @@
     ;;(log logger :info :article diff)
     (if current-user
       (let [[_ article-id] (util/get-ident diff)
-            article        (-> (util/get-item diff)
-                             (rename-keys remove-article-namespace))]
+            article        (util/get-item diff)]
         (if (tempid? article-id)
           (let [new-id (article/create-article db current-user article)]
             {::prim/tempids {article-id new-id}})
