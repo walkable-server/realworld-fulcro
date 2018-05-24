@@ -31,7 +31,7 @@
 
 (defsc OwnedArticles [this {:user/keys [id articles]}]
   {:ident         [:user/by-id :user/id]
-   :initial-state (fn [params] #:user{:id :guest :article []})
+   :initial-state (fn [params] #:user{:id :guest :articles []})
    :query         [:user/id {:user/articles (prim/get-query preview/ArticlePreview)}]}
   (preview/article-list this articles "This user has no article!"))
 
@@ -56,7 +56,10 @@
 
 (defsc Profile [this {:user/keys [id name username image bio followed-by-me]}]
   {:ident         [:user/by-id :user/id]
-   :query         [:user/id :user/name :user/username :user/image :user/bio :user/followed-by-me]}
+   :initial-state (fn [params] #:user {:id :guest :like [] :articles []})
+   :query         [:user/id :user/name :user/username :user/image :user/bio :user/followed-by-me
+                   {:user/like (prim/get-query preview/ArticlePreview)}
+                   {:user/articles (prim/get-query preview/ArticlePreview)}]}
   (dom/div :.user-info
     (dom/div :.container
       (dom/div :.row
@@ -77,52 +80,59 @@
 
 (def ui-profile (prim/factory Profile))
 
-(defsc ProfileListSelector [this profile-to-view]
-  (let [[current-screen _] (r/current-route props :router/top)
+(defsc ListSelector [this props {:user/keys [id name]}]
+  {:query [[r/routers-table '_]]}
+  (let [[current-screen _] (r/current-route props :router/profile)
         whoami             (prim/shared this :user/whoami)]
     (dom/div :.articles-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (dom/li :.nav-item
-          (pr-str [current-screen])
-          (dom/div :.nav-link.active
-            {:className (when (= current-screen :screen/home) "active")
-             :onClick   #(routes/go-to-profile this profile-to-view)}
-            (if (= (:user/id whoami) (:user/id profile-to-view))
+          (dom/div :.nav-link
+            {:className (when (= current-screen :screen.owned-articles/by-user-id) "active")
+             :onClick   #(routes/go-to-profile this {:user/id id})}
+            (if (= (:user/id whoami) id)
               "My"
-              (str (:user/name profile-to-view) "'s"))
+              (str name "'s"))
             " Articles"))
         (dom/li :.nav-item
           (dom/div :.nav-link
-            {:onClick #(routes/go-to-liked-article this profile-to-view)}
+            {:className (when (= current-screen :screen.liked-articles/by-user-id) "active")
+             :onClick #(routes/go-to-liked-article this {:user/id id})}
             "Favorited Articles"))))))
 
-(def ui-profile-list-selector (prim/factory ProfileListSelector))
+(def ui-list-selector (prim/factory ListSelector))
 
-(defsc ProfileScreen [this {:keys  [screen profile-to-view user-id]
+(defsc ProfileScreen [this {:keys  [screen profile-to-view user-id list-selector]
                             router [r/routers-table :router/profile]}]
   {:ident         (fn [] [screen user-id])
    :initial-state (fn [params] {:screen          :screen.profile/by-user-id
                                 :user-id         :guest
-                                :profile-to-view (prim/get-initial-state Profile #:user{:id :guest})
-                                :router/profile  {}})
+                                :list-selector   {}
+                                :profile-to-view (prim/get-initial-state Profile #:user{:id :guest})})
    :query         (fn [] [:screen :user-id
                           {[r/routers-table :router/profile] (prim/get-query ProfileRouter)}
+                          {:list-selector (prim/get-query ListSelector)}
                           {:profile-to-view (prim/get-query Profile)}])}
   (dom/div :.profile-page
     (ui-profile profile-to-view)
     (dom/div :.container
       (dom/div :.row
         (dom/div :.col-xs-12.col-md-10.offset-md-1
-          (ui-profile-list-selector profile-to-view)
+          (ui-list-selector (prim/computed list-selector profile-to-view))
           (ui-profile-router router))))))
 
 (defmutation load-profile-to-screen [{:user/keys [id]}]
   (action [{:keys [state] :as env}]
-    (df/load-action env [:user/by-id id] Profile {:without #{:router/profile}})
+    (df/load-action env [:user/by-id id] Profile {:without #{:user/like}})
     (swap! state
       #(-> %
          (assoc-in [:screen.profile/by-user-id id]
            {:screen          :screen.profile/by-user-id
+            :user-id         id
+            :list-selector   {}
+            :profile-to-view [:user/by-id id]})
+         (assoc-in [:screen.owned-articles/by-user-id id]
+           {:screen          :screen.owned-articles/by-user-id
             :user-id         id
             :profile-to-view [:user/by-id id]}))))
   (remote [env]
@@ -131,7 +141,7 @@
 
 (defmutation load-liked-articles-to-screen [{:user/keys [id]}]
   (action [{:keys [state] :as env}]
-    (df/load-action env [:user/by-id id] LikedArticles)
+    (df/load-action env [:user/by-id id] Profile {:focus [:user/like]})
     (swap! state
       #(-> %
          (assoc-in [:screen.liked-articles/by-user-id id]
@@ -144,13 +154,7 @@
 
 (defmutation load-owned-articles-to-screen [{:user/keys [id]}]
   (action [{:keys [state] :as env}]
-    (df/load-action env [:user/by-id id] OwnedArticles)
-    (swap! state
-      #(-> %
-         (assoc-in [:screen.owned-articles/by-user-id id]
-           {:screen          :screen.owned-articles/by-user-id
-            :user-id         id
-            :profile-to-view [:user/by-id id]}))))
+    (df/load-action env [:user/by-id id] Profile {:focus [:user/articles]}))
   (remote [env]
     (df/remote-load env))
   (refresh [env] [:profile-to-view]))
