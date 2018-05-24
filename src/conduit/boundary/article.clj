@@ -1,6 +1,11 @@
 (ns conduit.boundary.article
   (:require [clojure.java.jdbc :as jdbc]
+            [clojure.set :refer [rename-keys]]
+            [conduit.util :as util]
             [duct.database.sql]))
+
+(def remove-article-namespace
+  (util/remove-namespace "article" [:title :body :slug :description :tags]))
 
 (defprotocol Article
   (article-by-slug [db article])
@@ -37,15 +42,16 @@
     (:id (first (jdbc/find-by-keys db "\"article\"" {:slug article-slug}))))
 
   (create-article [{db :spec} author-id article]
-    (let [tags           (:tags article)
-          article        (-> article (select-keys [:title :slug :description :body])
+    (let [tags           (:article/tags article)
+          article        (-> (rename-keys article remove-article-namespace)
+                           (select-keys [:title :slug :description :body])
                            (assoc :author_id author-id))
           results        (jdbc/insert! db "\"article\"" article)
           new-article-id (-> results first :id)]
       (when new-article-id
         (when (seq tags)
           (jdbc/insert-multi! db "\"tag\""
-            (mapv (fn [tag] {:article_id new-article-id :tag tag}) tags)))
+            (mapv (fn [{:tag/keys [tag]}] {:article_id new-article-id :tag tag}) tags)))
         new-article-id)))
 
   (destroy-article [db author-id article-id]
@@ -58,7 +64,8 @@
                        "select id, article_id, tag from \"article\" where author_id = ? and id = ?")
                      author-id id])]
       (when (seq results)
-        (let [new-article (select-keys article [:slug :title :description :body])]
+        (let [new-article (-> (rename-keys article remove-article-namespace)
+                            (select-keys [:slug :title :description :body]))]
           (when (seq new-article)
             (jdbc/update! (:spec db) "\"article\"" new-article ["id = ?" id])))
         (when (:article/tags article)
