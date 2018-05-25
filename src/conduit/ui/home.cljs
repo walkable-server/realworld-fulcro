@@ -96,45 +96,42 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc PersonalFeed [this {:keys [screen articles]}]
-  {:initial-state {:screen :screen.feed/personal
-                   :articles []}
-   :ident         (fn [] [screen :top])
-   :query         [:screen {:articles (prim/get-query preview/ArticlePreview)}]}
-  (preview/article-list this articles "You have no article!"))
-
-(defsc GlobalFeed [this {:keys [screen articles]}]
-  {:initial-state {:screen :screen.feed/global}
-   :ident         (fn [] [screen :top])
-   :query         [:screen {:articles (prim/get-query preview/ArticlePreview)}]}
-  (preview/article-list this articles "No article!"))
+(defsc Feed [this {:keys [screen feed articles]}]
+  {:initial-state (fn [params] {:screen   :screen/feed
+                                :feed     (or (:feed params) :global)
+                                :articles []})
+   :ident         (fn [] [screen feed])
+   :query         [:screen :feed {:articles (prim/get-query preview/ArticlePreview)}]}
+  (preview/article-list this articles
+    (if (= feed :personal)
+      "You have no article!"
+      "No article!")))
 
 (r/defrouter FeedsRouter :router/feeds
-  (fn [this props] [(:screen props) :top])
-  :screen.feed/global   GlobalFeed
-  :screen.feed/personal PersonalFeed)
+  (fn [this props] [(:screen props) (:feed props)])
+  :screen/feed Feed)
 
 (def ui-feeds-router (prim/factory FeedsRouter))
 
 (defsc FeedSelector [this props]
   {:query [[r/routers-table '_]]}
-  (let [[current-screen _] (r/current-route props :router/feeds)
+  (let [[_screen current-feed] (r/current-route props :router/feeds)
         whoami             (prim/shared this :user/whoami)
         not-logged-in      (= :guest (:user/id whoami))]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (when (or (not not-logged-in)
-                (and not-logged-in (= current-screen :screen.feed/personal)))
+                (and not-logged-in (= current-feed :personal)))
           (dom/li :.nav-item
             (dom/div :.nav-link
-              {:className (if (= current-screen :screen.feed/personal) "active" "disabled")
+              {:className (if (= current-feed :personal) "active" "disabled")
                :onClick   #(if not-logged-in
                              (js/alert "You must log in first")
                              (routes/go-to-personal-feed this))}
               "Your Feed")))
         (dom/li :.nav-item
           (dom/div :.nav-link
-            {:className (if (= current-screen :screen.feed/global) "active" "disabled")
+            {:className (if (= current-feed :global) "active" "disabled")
              :onClick   #(routes/go-to-global-feed this)}
             "Global Feed"))))))
 
@@ -163,14 +160,13 @@
 
 ;; mutations
 
-(defmutation load-personal-feed [_]
+(defmutation load-feed [{:keys [feed]}]
   (action [{:keys [state] :as env}]
-    (df/load-action env :articles/feed preview/ArticlePreview {:target [:screen.feed/personal :top :articles]}))
-  (remote [env]
-    (df/remote-load env)))
-
-(defmutation load-global-feed [_]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :articles/all preview/ArticlePreview {:target [:screen.feed/global :top :articles]}))
+    (swap! state
+      #(update-in % [:screen/feed feed]
+         (fn [x] (or x {:screen :screen/feed
+                        :feed   feed}))))
+    (df/load-action env (if (= feed :personal) :articles/feed :articles/all)
+      preview/ArticlePreview {:target [:screen/feed feed :articles]}))
   (remote [env]
     (df/remote-load env)))
