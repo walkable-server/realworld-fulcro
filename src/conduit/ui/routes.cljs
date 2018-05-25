@@ -54,12 +54,14 @@
 
 ;; conduit.ui.home
 (defn go-to-personal-feed [component]
-  (prim/transact! component `[(conduit.ui.home/load-personal-feed)
-                              (r/route-to {:handler :screen.feed/personal})]))
+  (prim/transact! component `[(conduit.ui.home/load-feed {:feed :personal})
+                              (r/route-to {:handler :screen/feed
+                                           :route-params {:feed :personal}})]))
 
 (defn go-to-global-feed [component]
-  (prim/transact! component `[(conduit.ui.home/load-global-feed)
-                              (r/route-to {:handler :screen.feed/global})]))
+  (prim/transact! component `[(conduit.ui.home/load-feed {:feed :global})
+                              (r/route-to {:handler :screen/feed
+                                           :route-params {:feed :global}})]))
 
 ;; conduit.ui.editor
 
