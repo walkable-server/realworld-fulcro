@@ -53,12 +53,9 @@
     (r/make-route :screen/log-in
       [(r/router-instruction :router/top [:screen/log-in :top])])
 
-    (r/make-route :screen.feed/global
+    (r/make-route :screen/feed
       [(r/router-instruction :router/top [:screen/home :top])
-       (r/router-instruction :router/feeds [:screen.feed/global :top])])
-    (r/make-route :screen.feed/personal
-      [(r/router-instruction :router/top [:screen/home :top])
-       (r/router-instruction :router/feeds [:screen.feed/personal :top])])
+       (r/router-instruction :router/feeds [:screen/feed :param/feed])])
 
     (r/make-route :screen.owned-articles/by-user-id
       [(r/router-instruction :router/top [:screen.profile/by-user-id :param/user-id])
@@ -90,5 +87,5 @@
 
 (defn started-callback [app]
   (df/load app :user/whoami other/UserTinyPreview)
-  (df/load app :articles/all preview/ArticlePreview {:target [:screen.feed/global :top :articles]})
+  (df/load app :articles/all preview/ArticlePreview {:target [:screen/feed :global :articles]})
   (df/load app :tags/all home/Tag))
