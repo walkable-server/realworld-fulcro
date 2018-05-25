@@ -6,7 +6,7 @@
             [buddy.sign.jwt :as jwt]
             [clojure.java.jdbc :as jdbc]
             [conduit.handler.mutations :as mutations]
-            [fulcro.server :as server :refer [parser server-mutate defmutation]]
+            [fulcro.server :as server :refer [server-mutate]]
             [com.wsscode.pathom.core :as p]))
 
 (defn find-user-in-params [db params]
