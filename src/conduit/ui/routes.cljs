@@ -53,15 +53,10 @@
                    :route-params {:user-id ~id}})]))
 
 ;; conduit.ui.home
-(defn go-to-personal-feed [component]
-  (prim/transact! component `[(conduit.ui.home/load-feed {:feed :personal})
+(defn go-to-feed [component {:keys [feed page] :or {page 1}}]
+  (prim/transact! component `[(conduit.ui.home/load-feed {:feed ~feed :page ~page})
                               (r/route-to {:handler :screen/feed
-                                           :route-params {:feed :personal}})]))
-
-(defn go-to-global-feed [component]
-  (prim/transact! component `[(conduit.ui.home/load-feed {:feed :global})
-                              (r/route-to {:handler :screen/feed
-                                           :route-params {:feed :global}})]))
+                                           :route-params {:feed ~feed :page ~page}})]))
 
 ;; conduit.ui.editor
 
