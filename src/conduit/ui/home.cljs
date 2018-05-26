@@ -96,16 +96,30 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc Feed [this {:keys [screen feed articles]}]
-  {:initial-state (fn [params] {:screen   :screen/feed
-                                :feed     (or (:feed params) :global)
+(defrecord FeedPageId [feed page])
+
+(defsc FeedPage [this {:keys [feed page articles]}]
+  {:ident         (fn [] [:feed/page (FeedPageId. feed page)])
+   :initial-state (fn [params] {:feed     :global
+                                :page     1
                                 :articles []})
-   :ident         (fn [] [screen feed])
-   :query         [:screen :feed {:articles (prim/get-query preview/ArticlePreview)}]}
+   :query         [:feed :page {:articles (prim/get-query preview/ArticlePreview)}]}
   (preview/article-list this articles
     (if (= feed :personal)
       "You have no article!"
       "No article!")))
+
+(def ui-feed-page (prim/factory FeedPage))
+
+(defsc Feed [this {:keys [screen feed current-page page]}]
+  {:initial-state (fn [params] {:screen       :screen/feed
+                                :feed         :global
+                                :current-page 1
+                                :page         (prim/get-initial-state FeedPage {:feed :global :page 1})
+                                :total-pages  20})
+   :ident         (fn [] [screen feed])
+   :query         [:screen :feed :current-page {:page (prim/get-query FeedPage)} ]}
+  (ui-feed-page page))
 
 (r/defrouter FeedsRouter :router/feeds
   (fn [this props] [(:screen props) (:feed props)])
@@ -127,12 +141,12 @@
               {:className (if (= current-feed :personal) "active" "disabled")
                :onClick   #(if not-logged-in
                              (js/alert "You must log in first")
-                             (routes/go-to-personal-feed this))}
+                             (routes/go-to-feed this {:feed :personal}))}
               "Your Feed")))
         (dom/li :.nav-item
           (dom/div :.nav-link
             {:className (if (= current-feed :global) "active" "disabled")
-             :onClick   #(routes/go-to-global-feed this)}
+             :onClick   #(routes/go-to-feed this {:feed :global})}
             "Global Feed"))))))
 
 (def ui-feed-selector (prim/factory FeedSelector))
@@ -160,13 +174,27 @@
 
 ;; mutations
 
-(defmutation load-feed [{:keys [feed]}]
+(defn load-opts [{:keys [feed page] :or {page 1}}]
+  (let [items-per-page 5]
+    {:target [:feed/page (FeedPageId. feed page) :articles]
+     :params {:offset   (* items-per-page (dec page))
+              :limit    items-per-page
+              :order-by [:article/id :desc]}}))
+
+(defmutation load-feed [{:keys [feed page] :or {page 1}}]
   (action [{:keys [state] :as env}]
     (swap! state
-      #(update-in % [:screen/feed feed]
-         (fn [x] (or x {:screen :screen/feed
-                        :feed   feed}))))
+      #(-> (update-in % [:screen/feed feed]
+             (fn [x] (or x {:screen       :screen/feed
+                            :feed         feed
+                            :current-page page
+                            :total-pages  30 ;; fixme
+                            :page         [:feed/page (FeedPageId. feed page)]})))
+         (update-in [:feed/page (FeedPageId. feed page)]
+           (fn [x] (or x {:feed feed
+                          :page page
+                          :articles []})))))
     (df/load-action env (if (= feed :personal) :articles/feed :articles/all)
-      preview/ArticlePreview {:target [:screen/feed feed :articles]}))
+      preview/ArticlePreview (load-opts {:feed feed :page page})))
   (remote [env]
     (df/remote-load env)))
