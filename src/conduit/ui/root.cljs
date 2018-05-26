@@ -77,6 +77,10 @@
                                                          :name  "Guest"
                                                          :image "https://static.productionready.io/images/smiley-cyrus.jpg"
                                                          :email "non@exist"}}
+                                 {:screen/feed {:global {:screen       :screen/feed
+                                                         :feed         :global
+                                                         :current-page 1
+                                                         :total-items  0}}}
                                  {:router/top (prim/get-initial-state TopRouter {})}))
    :query         [{:router/top (prim/get-query TopRouter)}
                    {:user/whoami (prim/get-query other/UserTinyPreview)}]}
