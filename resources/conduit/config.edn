@@ -64,10 +64,13 @@
             :tag/tag
             :comment/id :comment/created-at :comment/updated-at :comment/body]
 
-  :idents {:user/by-id                    :user/id
-           [:users/all :user/whoami]      "user"
-           [:articles/all :articles/feed] "article"
-           :article/by-id                 :article/id}
+  :idents {:user/by-id               :user/id
+           [:users/all :user/whoami] "user"
+
+           [:articles/all :articles/count-all :articles/feed :articles/count-feed]
+           "article"
+
+           :article/by-id :article/id}
 
   :joins {[:user/followed-by :user/followed-by-me :user/followed-by-count]
           [:user/id :follow/followee-id :follow/follower-id :user/id]
@@ -82,6 +85,9 @@
           :article/author [:article/author-id :user/id]
 
           :comment/author [:comment/author-id :user/id]}
+
+  :pseudo-columns {:pagination/count   [:count-*]
+                   :pagination/last-id [:max :article/id]}
 
   :aggregators {[:article/liked-by-count :user/followed-by-count]
                 [:count-*]
