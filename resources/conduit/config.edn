@@ -83,11 +83,11 @@
 
           :comment/author [:comment/author-id :user/id]}
 
-  :aggregate-joins {[:article/liked-by-count :user/followed-by-count]
-                    [:count-*]
+  :aggregators {[:article/liked-by-count :user/followed-by-count]
+                [:count-*]
 
-                    [:user/followed-by-me :article/liked-by-me]
-                    [:< 0 [:count-*]]}
+                [:user/followed-by-me :article/liked-by-me]
+                [:< 0 [:count-*]]}
 
   :reversed-joins {:user/follows  :user/followed-by
                    :user/like     :article/liked-by
