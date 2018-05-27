@@ -3,6 +3,10 @@
     [fulcro.client.primitives :as prim :refer [defsc]]
     [fulcro.client.dom :as dom]))
 
+(defsc Pagination [this props]
+  {:query [:pagination/count
+           :pagination/last-id]})
+
 (defsc UserTinyPreview [this props]
   {:query [:user/id :user/username :user/name :user/image]
    :initial-state (fn [params] #:user{:id :guest})
