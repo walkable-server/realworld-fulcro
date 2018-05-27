@@ -70,7 +70,7 @@
                        (into [] (run-query sql-db [query-top-tags])))}]})]}))
 
 (def extra-conditions
-  {:articles/feed
+  {[:articles/feed :articles/count-feed]
    (fn [{:app/keys [current-user]}]
      {:article/author {:user/followed-by [:= current-user :user/id]}})
 
