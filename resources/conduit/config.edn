@@ -100,10 +100,15 @@
                    :user/articles :article/author}
 
   :cardinality {:user/whoami    :one
-                :user/by-id     :one
-                :article/by-id  :one
-                :article/author :one
-                :comment/author :one}}
+
+                [:user/by-id :article/by-id]
+                :one
+
+                [:article/author :comment/author]
+                :one
+
+                [:articles/count-all :articles/count-feed]
+                :one}}
 
  :conduit.handler.transit-format/transit-json-format {}
 
