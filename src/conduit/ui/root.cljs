@@ -88,5 +88,6 @@
 
 (defn started-callback [app]
   (df/load app :user/whoami other/UserTinyPreview)
-  (df/load app :articles/all preview/ArticlePreview (home/load-opts {:feed :global :page 1}))
+  (df/load app :articles/all preview/ArticlePreview (home/load-page-opts {:feed :global :page 1}))
+  (df/load app :articles/count-all other/Pagination (home/load-pagination-opts {:feed :global}))
   (df/load app :tags/all home/Tag))
