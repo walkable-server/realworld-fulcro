@@ -8,7 +8,8 @@
    [fulcro.client.data-fetch :as df]
    [fulcro.client.routing :as r]
    [fulcro.client.dom :as dom]
-   [conduit.ui.routes :as routes]))
+   [conduit.ui.routes :as routes]
+   [conduit.util :as util]))
 
 (defsc NavBar [this props]
   {:query [[r/routers-table '_]]}
@@ -111,15 +112,23 @@
 
 (def ui-feed-page (prim/factory FeedPage))
 
-(defsc Feed [this {:keys [screen feed current-page page]}]
+(defsc Feed [this {:keys [screen feed current-page page pagination]}]
   {:initial-state (fn [params] {:screen       :screen/feed
                                 :feed         :global
+                                :pagination   #:pagination {:total 0 :last-id nil}
                                 :current-page 1
-                                :page         (prim/get-initial-state FeedPage {:feed :global :page 1})
-                                :total-pages  20})
+                                :page         (prim/get-initial-state FeedPage {:feed :global :page 1})})
    :ident         (fn [] [screen feed])
-   :query         [:screen :feed :current-page {:page (prim/get-query FeedPage)} ]}
-  (ui-feed-page page))
+   :query         [:screen :feed :current-page :pagination {:page (prim/get-query FeedPage)}]}
+  (dom/div
+    (ui-feed-page page)
+    (let [{:pagination/keys [total last-id]} pagination
+          items-per-page                     5
+          go-to-page                         #(routes/go-to-feed this {:feed feed :page %})]
+      (when total
+        (map #(other/ui-page-item (prim/computed {:page %} {:go-to-page   go-to-page
+                                                            :current-page current-page}))
+          (range 1 (inc (util/page-number total items-per-page))))))))
 
 (r/defrouter FeedsRouter :router/feeds
   (fn [this props] [(:screen props) (:feed props)])
@@ -174,12 +183,15 @@
 
 ;; mutations
 
-(defn load-opts [{:keys [feed page] :or {page 1}}]
+(defn load-page-opts [{:keys [feed page] :or {page 1}}]
   (let [items-per-page 5]
     {:target [:feed/page (FeedPageId. feed page) :articles]
      :params {:offset   (* items-per-page (dec page))
               :limit    items-per-page
               :order-by [:article/id :desc]}}))
+
+(defn load-pagination-opts [{:keys [feed]}]
+  {:target [:screen/feed feed :pagination]})
 
 (defmutation load-feed [{:keys [feed page] :or {page 1}}]
   (action [{:keys [state] :as env}]
@@ -187,14 +199,18 @@
       #(-> (update-in % [:screen/feed feed]
              (fn [x] (or x {:screen       :screen/feed
                             :feed         feed
-                            :current-page page
-                            :total-pages  30 ;; fixme
-                            :page         [:feed/page (FeedPageId. feed page)]})))
+                            :pagination   #:pagination {:total   0
+                                                        :last-id nil}})))
          (update-in [:feed/page (FeedPageId. feed page)]
-           (fn [x] (or x {:feed feed
-                          :page page
-                          :articles []})))))
+           (fn [x] (or x {:feed     feed
+                          :page     page
+                          :articles []})))
+         (update-in [:screen/feed feed] merge
+           {:current-page page
+            :page         [:feed/page (FeedPageId. feed page)]})))
     (df/load-action env (if (= feed :personal) :articles/feed :articles/all)
-      preview/ArticlePreview (load-opts {:feed feed :page page})))
+      preview/ArticlePreview (load-page-opts {:feed feed :page page}))
+    (df/load-action env (if (= feed :personal) :articles/count-feed :articles/count-all)
+      other/Pagination (load-pagination-opts {:feed feed})))
   (remote [env]
     (df/remote-load env)))
