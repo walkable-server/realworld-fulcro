@@ -86,7 +86,7 @@
 
           :comment/author [:comment/author-id :user/id]}
 
-  :pseudo-columns {:pagination/count   [:count-*]
+  :pseudo-columns {:pagination/total   [:count-*]
                    :pagination/last-id [:max :article/id]}
 
   :aggregators {[:article/liked-by-count :user/followed-by-count]
