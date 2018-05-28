@@ -84,7 +84,7 @@
 
 (defsc Tag [this {:tag/keys [tag]}]
   {:query [:tag/tag :tag/count]}
-  (dom/a  :.tag-pill.tag-default {:href (str "/tag/" tag)} tag))
+  (dom/a  :.tag-pill.tag-default {:href ""} tag))
 
 (def ui-tag (prim/factory Tag {:keyfn :tag/tag}))
 
