@@ -54,10 +54,11 @@
 
 (def ui-profile-router (prim/factory ProfileRouter))
 
-(defsc Profile [this {:user/keys [id name username image bio followed-by-me]}]
+(defsc Profile [this {:user/keys [id name username image bio followed-by-me followed-by-count]}]
   {:ident         [:user/by-id :user/id]
    :initial-state (fn [params] #:user {:id :guest :like [] :articles []})
-   :query         [:user/id :user/name :user/username :user/image :user/bio :user/followed-by-me
+   :query         [:user/id :user/name :user/username :user/image :user/bio
+                   :user/followed-by-me :user/followed-by-count
                    {:user/like (prim/get-query preview/ArticlePreview)}
                    {:user/articles (prim/get-query preview/ArticlePreview)}]}
   (dom/div :.user-info
@@ -68,7 +69,9 @@
           (dom/h4 name)
           (dom/p bio)
           (let [current-user-id (-> (prim/shared this :user/whoami) :user/id)]
-            (when (not= id current-user-id)
+            (if (= id current-user-id)
+              (dom/button :.btn.btn-sm.btn-outline-secondary
+                "You have " followed-by-count " followers")
               (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
                 {:onClick #(if (= :guest current-user-id)
                              (js/alert "You must log in first")
@@ -76,7 +79,8 @@
                                (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
                                (prim/transact! this `[(mutations/follow {:user/id ~id})])))}
                 (dom/i :.ion-plus-round)
-                (str (if followed-by-me "Unfollow " "Follow ") name)))))))))
+                (if followed-by-me "Unfollow " "Follow ")
+                name "(" followed-by-count ")"))))))))
 
 (def ui-profile (prim/factory Profile))
 
