@@ -49,25 +49,32 @@
   (remote [env] true)
   (refresh [env] [:article/comments]))
 
-;; todo: increase/decrease counts by 1
 (defmutation follow [{:user/keys [id]}]
   (action [{:keys [state]}]
-    (swap! state #(assoc-in % [:user/by-id id :user/followed-by-me] true)))
+    (swap! state #(-> %
+                    (assoc-in [:user/by-id id :user/followed-by-me] true)
+                    (update-in [:user/by-id id :user/followed-by-count] (fnil inc 0)))))
   (remote [env] true))
 
 (defmutation unfollow [{:user/keys [id]}]
   (action [{:keys [state]}]
-    (swap! state #(assoc-in % [:user/by-id id :user/followed-by-me] false)))
+    (swap! state #(-> %
+                   (assoc-in [:user/by-id id :user/followed-by-me] false)
+                   (update-in [:user/by-id id :user/followed-by-count] (fnil dec 1)))))
   (remote [env] true))
 
 (defmutation like [{:article/keys [id]}]
   (action [{:keys [state]}]
-    (swap! state #(assoc-in % [:article/by-id id :article/liked-by-me] true)))
+    (swap! state #(-> %
+                    (assoc-in [:article/by-id id :article/liked-by-me] true)
+                    (update-in [:article/by-id id :article/liked-by-count] (fnil inc 0)))))
   (remote [env] true))
 
 (defmutation unlike [{:article/keys [id]}]
   (action [{:keys [state]}]
-    (swap! state #(assoc-in % [:article/by-id id :article/liked-by-me] false)))
+    (swap! state #(-> %
+                   (assoc-in [:article/by-id id :article/liked-by-me] false)
+                   (update-in [:article/by-id id :article/liked-by-count] (fnil dec 1)))))
   (remote [env] true))
 
 (defmutation add-tag [{:keys [article-id tag]}]
