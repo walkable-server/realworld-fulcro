@@ -4,8 +4,16 @@
     [fulcro.client.dom :as dom]))
 
 (defsc Pagination [this props]
-  {:query [:pagination/count
+  {:query [:pagination/total
            :pagination/last-id]})
+
+(defsc PageItem [this {:keys [page]} {:keys [go-to-page current-page]}]
+  (dom/li :.page-item {:className (when (= current-page page)
+                                    "active")}
+    (dom/a :.page-link {:onClick #(go-to-page page)}
+      page)))
+
+(def ui-page-item (prim/factory PageItem {:keyfn :page}))
 
 (defsc UserTinyPreview [this props]
   {:query [:user/id :user/username :user/name :user/image]
