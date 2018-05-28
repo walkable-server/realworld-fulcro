@@ -7,7 +7,8 @@
    [fulcro.client.dom :as dom]
    [conduit.ui.routes :as routes]))
 
-(defsc ArticlePreviewMeta [this {:article/keys [author created-at liked-by-count]}]
+(defsc ArticlePreviewMeta [this {:article/keys [author created-at liked-by-count liked-by-me]}
+                           {:keys [like unlike]}]
   {:query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
            {:article/author (prim/get-query other/UserPreview)}]
    :ident [:article/by-id :article/id]}
@@ -20,9 +21,13 @@
         (:user/name author))
       (dom/span :.date
         (other/js-date->string created-at)))
-    (dom/button :.btn.btn-outline-primary.btn-sm.pull-xs-right
-      (dom/i :.ion-heart)
-      liked-by-count)))
+    (dom/button :.btn.btn-sm.pull-xs-right
+      (if liked-by-me
+        {:className "btn-primary"
+         :onClick #(unlike)}
+        {:className "btn-outline-primary"
+         :onClick #(like)})
+      (dom/i :.ion-heart) " " liked-by-count)))
 
 (def ui-article-preview-meta (prim/factory ArticlePreviewMeta {:keyfn :article/id}))
 
@@ -34,7 +39,11 @@
   (let [whoami                     (prim/shared this :user/whoami)
         {current-user-id :user/id} whoami]
     (dom/div :.article-preview
-      (ui-article-preview-meta article)
+      (let [like #(if (number? current-user-id)
+                    (prim/transact! this `[(mutations/like {:article/id ~id})])
+                    (js/alert "You must log in first"))
+            unlike #(prim/transact! this `[(mutations/unlike {:article/id ~id})])]
+        (ui-article-preview-meta (prim/computed article {:like like :unlike unlike})))
       (when (= current-user-id author-id)
         (dom/span :.pull-xs-right
           (dom/i :.ion-edit
