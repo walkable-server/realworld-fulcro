@@ -97,10 +97,11 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defrecord FeedPageId [feed page])
+(defn page-ident [feed page]
+  [:article-list/page (other/ArticleListPageId. :home/feed feed page)])
 
 (defsc FeedPage [this {:keys [feed page articles]}]
-  {:ident         (fn [] [:feed/page (FeedPageId. feed page)])
+  {:ident         (fn [] (page-ident feed page))
    :initial-state (fn [params] {:feed     :global
                                 :page     1
                                 :articles []})
@@ -185,7 +186,7 @@
 
 (defn load-page-opts [{:keys [feed page] :or {page 1}}]
   (let [items-per-page 5]
-    {:target [:feed/page (FeedPageId. feed page) :articles]
+    {:target (conj (page-ident feed page) :articles)
      :params {:offset   (* items-per-page (dec page))
               :limit    items-per-page
               :order-by [:article/id :desc]}}))
@@ -197,17 +198,17 @@
   (action [{:keys [state] :as env}]
     (swap! state
       #(-> (update-in % [:screen/feed feed]
-             (fn [x] (or x {:screen       :screen/feed
-                            :feed         feed
-                            :pagination   #:pagination {:total   0
-                                                        :last-id nil}})))
-         (update-in [:feed/page (FeedPageId. feed page)]
+             (fn [x] (or x {:screen     :screen/feed
+                            :feed       feed
+                            :pagination #:pagination {:total   0
+                                                      :last-id nil}})))
+         (update-in (page-ident feed page)
            (fn [x] (or x {:feed     feed
                           :page     page
                           :articles []})))
          (update-in [:screen/feed feed] merge
            {:current-page page
-            :page         [:feed/page (FeedPageId. feed page)]})))
+            :page         (page-ident feed page)})))
     (df/load-action env (if (= feed :personal) :articles/feed :articles/all)
       preview/ArticlePreview (load-page-opts {:feed feed :page page}))
     (df/load-action env (if (= feed :personal) :articles/count-feed :articles/count-all)

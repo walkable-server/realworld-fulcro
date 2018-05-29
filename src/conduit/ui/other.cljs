@@ -15,6 +15,8 @@
 
 (def ui-page-item (prim/factory PageItem {:keyfn :page}))
 
+(defrecord ArticleListPageId [list-type list-id page])
+
 (defsc UserTinyPreview [this props]
   {:query [:user/id :user/username :user/name :user/image]
    :initial-state (fn [params] #:user{:id :guest})
