@@ -1,7 +1,8 @@
 (ns conduit.ui.routes
   (:require
    [fulcro.client.routing :as r]
-   [fulcro.client.primitives :as prim :refer [defsc]]))
+   [fulcro.client.primitives :as prim :refer [defsc]]
+   [conduit.util :as util]))
 
 ;; conduit.ui.account
 
@@ -33,30 +34,19 @@
       :article-to-view]))
 
 ;; conduit.ui.profile
-
-(defn go-to-profile [component {:user/keys [id] :as profile}]
+(defn go-to-profile [component {:keys [list-type user-id page] :or {page 1} :as profile}]
   (prim/transact! component
-    `[(conduit.ui.profile/load-profile-to-screen ~profile)
-      (r/route-to {:handler      :screen.owned-articles/by-user-id
-                   :route-params {:user-id ~id}})]))
-
-(defn go-to-owned-article [component {:user/keys [id] :as profile}]
-  (prim/transact! component
-    `[(conduit.ui.profile/load-owned-articles-to-screen ~profile)
-      (r/route-to {:handler      :screen.owned-articles/by-user-id
-                   :route-params {:user-id ~id}})]))
-
-(defn go-to-liked-article [component {:user/keys [id] :as profile}]
-  (prim/transact! component
-    `[(conduit.ui.profile/load-liked-articles-to-screen ~profile)
-      (r/route-to {:handler      :screen.liked-articles/by-user-id
-                   :route-params {:user-id ~id}})]))
+    `[(conduit.ui.profile/load-profile ~profile)
+      (r/route-to {:handler      :screen.profile/by-user-id
+                   :route-params {:user-id        ~user-id
+                                  :paginated-list ~(util/profile->paginated-list profile)}})]))
 
 ;; conduit.ui.home
-(defn go-to-feed [component {:keys [feed page] :or {page 1}}]
-  (prim/transact! component `[(conduit.ui.home/load-feed {:feed ~feed :page ~page})
-                              (r/route-to {:handler :screen/feed
-                                           :route-params {:feed ~feed :page ~page}})]))
+(defn go-to-feed [component {:keys [feed page] :or {page 1} :as feed-item}]
+  (prim/transact! component
+    `[(conduit.ui.home/load-feed ~feed-item)
+      (r/route-to {:handler      :screen/feed
+                   :route-params {:paginated-list ~(util/feed->paginated-list feed-item)}})]))
 
 ;; conduit.ui.editor
 
