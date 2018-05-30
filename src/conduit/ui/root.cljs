@@ -10,7 +10,9 @@
             [conduit.ui.editor :as editor]
             [conduit.ui.account :as account]
             [conduit.ui.article :as article]
-            [conduit.ui.profile :as profile]))
+            [conduit.ui.profile :as profile]
+            [conduit.ui.pagination :as pagination]
+            [conduit.util :as util]))
 
 (r/defrouter TopRouter :router/top
   (fn [this props]
@@ -25,7 +27,8 @@
                           :screen-id)
           screen-id (get props screen-id-key)]
       [screen-name screen-id]))
-  :screen/home     home/Home
+
+  :screen/feed     home/HomeScreen
   :screen/settings account/SettingScreen
   :screen/editor   editor/EditorScreen
   :screen/log-in   account/LogInScreen
@@ -37,9 +40,6 @@
 
 (def routing-tree
   (r/routing-tree
-    (r/make-route :screen/home
-      [(r/router-instruction :router/top [:screen/home :top])])
-
     (r/make-route :screen/editor
       [(r/router-instruction :router/top [:screen/editor :param/article-id])])
 
@@ -54,15 +54,12 @@
       [(r/router-instruction :router/top [:screen/log-in :top])])
 
     (r/make-route :screen/feed
-      [(r/router-instruction :router/top [:screen/home :top])
-       (r/router-instruction :router/feeds [:screen/feed :param/feed])])
+      [(r/router-instruction :router/top [:screen/feed :top])
+       (r/router-instruction :router/paginated-list [:screen/paginated-list :param/paginated-list])])
 
-    (r/make-route :screen.owned-articles/by-user-id
+    (r/make-route :screen.profile/by-user-id
       [(r/router-instruction :router/top [:screen.profile/by-user-id :param/user-id])
-       (r/router-instruction :router/profile [:screen.owned-articles/by-user-id :param/user-id])])
-    (r/make-route :screen.liked-articles/by-user-id
-      [(r/router-instruction :router/top [:screen.profile/by-user-id :param/user-id])
-       (r/router-instruction :router/profile [:screen.liked-articles/by-user-id :param/user-id])])))
+       (r/router-instruction :router/paginated-list [:screen/paginated-list :param/paginated-list])])))
 
 (defsc Root [this {router :router/top :as props}]
   {:initial-state (fn [params] (merge routing-tree
@@ -86,8 +83,7 @@
     (ui-top router)
     (home/ui-footer)))
 
-(defn started-callback [app]
+(defn started-callback [{:keys [reconciler] :as app}]
   (df/load app :user/whoami other/UserTinyPreview)
-  (df/load app :articles/all preview/ArticlePreview (home/load-page-opts {:feed :global :page 1}))
-  (df/load app :articles/count-all other/Pagination (home/load-pagination-opts {:feed :global}))
-  (df/load app :tags/all home/Tag))
+  (df/load app :tags/all home/Tag)
+  (prim/transact! reconciler `[(conduit.ui.home/load-feed {:feed :global})]))
