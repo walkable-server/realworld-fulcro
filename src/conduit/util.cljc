@@ -27,3 +27,9 @@
       (if (zero? (rem total items-per-page))
         0
         1))))
+
+(defn feed->paginated-list [{:keys [feed page] :or {page 1}}]
+  {:list-type :articles/by-feed :list-id feed :page page})
+
+(defn profile->paginated-list [{:keys [list-type user-id page] :or {page 1}}]
+  {:list-type list-type :list-id user-id :page page})
