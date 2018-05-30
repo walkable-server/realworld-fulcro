@@ -97,7 +97,7 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc FeedSelector [this props]
+(defsc FeedSelector [this routers-table]
   {:query [[r/routers-table '_]]}
   (let [current-feed          (:list-id (pagination/current-paginated-list routers-table))
         whoami        (prim/shared this :user/whoami)
@@ -105,7 +105,7 @@
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (when (or (not not-logged-in)
-                (and not-logged-in (= feed :personal)))
+                (and not-logged-in (= current-feed :personal)))
           (dom/li :.nav-item
             (dom/div :.nav-link
               {:className (if (= current-feed :personal) "active" "disabled")
