@@ -139,9 +139,8 @@
                                [:< :article/id end]
                                (number? start)
                                [:<= :article/id start])])}]
-    (when (or end start)
-      (-> (parser env [`(~query-root ~params)])
-        (get query-root)))))
+    (-> (parser env [`(~query-root ~params)])
+      (get query-root))))
 
 (defn previous-id [env]
   (let [{:pagination/keys [list-type list-id size start end] :or {size 10}} (env/params env)
@@ -165,8 +164,9 @@
                                [:<= end :article/id]
                                (number? start)
                                [:< start :article/id])])}]
-    (-> (parser env [`(~query-root ~params)])
-      (get query-root))))
+    (when (or end start)
+      (-> (parser env [`(~query-root ~params)])
+        (get query-root)))))
 
 (defn fetch-items [env]
   (let [{:pagination/keys [list-type list-id size start end] :or {size 10}} (env/params env)
