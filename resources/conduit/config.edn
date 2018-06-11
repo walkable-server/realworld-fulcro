@@ -64,10 +64,11 @@
             :tag/tag
             :comment/id :comment/created-at :comment/updated-at :comment/body]
 
-  :idents {:user/by-id               :user/id
-           [:users/all :user/whoami] "user"
+  :idents {:user/by-id    :user/id
+           [:user/whoami] "user"
 
-           [:articles/all :articles/count-all :articles/feed :articles/count-feed]
+           [:feed.global/articles :feed.personal/articles
+            :feed.global/next-id :feed.personal/next-id]
            "article"
 
            :article/by-id :article/id}
@@ -92,6 +93,9 @@
   :aggregators {[:article/liked-by-count :user/followed-by-count]
                 [:count-*]
 
+                [:feed.global/next-id :feed.personal/next-id]
+                :article/id
+
                 [:user/followed-by-me :article/liked-by-me]
                 [:< 0 [:count-*]]}
 
@@ -99,7 +103,7 @@
                    :user/like     :article/liked-by
                    :user/articles :article/author}
 
-  :cardinality {:user/whoami    :one
+  :cardinality {:user/whoami :one
 
                 [:user/by-id :article/by-id]
                 :one
