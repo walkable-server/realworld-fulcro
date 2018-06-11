@@ -97,10 +97,9 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc FeedSelector [this routers-table]
-  {:query [[r/routers-table '_]]}
-  (let [current-feed          (:list-id (pagination/current-paginated-list routers-table))
-        whoami        (prim/shared this :user/whoami)
+(defsc FeedSelector [this props {:keys [current-feed]}]
+  {:query []}
+  (let [whoami        (prim/shared this :user/whoami)
         not-logged-in (= :guest (:user/id whoami))]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
@@ -111,52 +110,44 @@
               {:className (if (= current-feed :personal) "active" "disabled")
                :onClick   #(if not-logged-in
                              (js/alert "You must log in first")
-                             (routes/go-to-feed this {:feed :personal}))}
+                             (prim/transact! this `[(load-feed #:pagination{:list-type :articles/by-feed
+                                                                            :list-id :personal
+                                                                            :size 5})]))}
               "Your Feed")))
         (dom/li :.nav-item
           (dom/div :.nav-link
             {:className (if (= current-feed :global) "active" "disabled")
-             :onClick   #(routes/go-to-feed this {:feed :global})}
+             :onClick   #(prim/transact! this `[(load-feed #:pagination{:list-type :articles/by-feed
+                                                                        :list-id :global
+                                                                        :size 5})])}
             "Global Feed"))))))
 
 (def ui-feed-selector (prim/factory FeedSelector))
 
-(defsc HomeScreen [this {tags          :tags/all
-                         router        :paginated-list-router
-                         routers-table :routers-table}]
-  {:initial-state (fn [params] {:screen                :screen/feed
-                                :screen-id             :top
-                                :routers-table         {}
-                                :paginated-list-router (prim/get-initial-state pagination/PaginatedListRouter {})})
+(defsc HomeScreen [this {:keys [current-page] tags :tags/all}]
+  {:initial-state (fn [params] {:screen       :screen/feed
+                                :screen-id    :top
+                                :current-page (prim/get-initial-state pagination/Page {})})
 
    :query [:screen :screen-id
-           {:routers-table (prim/get-query FeedSelector)}
-           {:paginated-list-router (prim/get-query pagination/PaginatedListRouter)}
+           {:current-page (prim/get-query pagination/Page)}
            {[:tags/all '_] (prim/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feed-selector routers-table)
-          (let [current-feed (:list-id (pagination/current-paginated-list routers-table))
-                go-to-page   #(routes/go-to-feed this {:feed current-feed :page %})]
-            (pagination/ui-paginated-list-router
-              (prim/computed router {:go-to-page go-to-page}))))
+          (ui-feed-selector (prim/computed {} {:current-feed (:pagination/list-id current-page)}))
+          (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-feed ~%)])})))
         (ui-tags tags)))))
 
 ;; mutations
 (defmutation load-feed [feed]
   (action [{:keys [state] :as env}]
-    (println "loading feed" (pr-str feed))
-    (let [paginated-list (util/feed->paginated-list feed)]
-      (swap! state #(-> %
-                      (pagination/navigate-to paginated-list)))
-      (df/load-action env (if (= (:feed feed) :personal) :articles/feed :articles/all)
-        preview/ArticlePreview (pagination/load-page-opts paginated-list))
-      (df/load-action env (if (= (:feed feed) :personal) :articles/count-feed :articles/count-all)
-        pagination/Pagination (pagination/load-pagination-opts paginated-list))))
+    (df/load-action env :paginated-list/articles
+      pagination/Page {:params feed
+                       :target [:screen/feed :top :current-page]}))
   (remote [env]
     (df/remote-load env))
   (refresh [env]
-    [:list-type]))
+    [:pagination/list-type]))
