@@ -86,4 +86,8 @@
 (defn started-callback [{:keys [reconciler] :as app}]
   (df/load app :user/whoami other/UserTinyPreview)
   (df/load app :tags/all home/Tag)
-  (prim/transact! reconciler `[(conduit.ui.home/load-feed {:feed :global})]))
+  (prim/transact! reconciler `[(home/load-feed
+                                 #:pagination {:list-type :articles/by-feed :list-id :global
+                                               ;; :list-type :articles/by-tag :list-id "dragons"
+                                               ;; :list-type :owned-articles/by-user-id :list-id 8
+                                               :size 5})]))
