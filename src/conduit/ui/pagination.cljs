@@ -19,11 +19,11 @@
    :initial-state (fn [params]
                     #:pagination{:list-type   :articles/by-feed
                                  :list-id     :global
-                                 :size        10
-                                 :start       0
+                                 :size        5
+                                 :start       :empty
                                  :previous-id nil
                                  :next-id     nil
-                                 :items       []})
+                                 :items       (prim/get-initial-state preview/ArticlePreview {})})
    :query         [:pagination/list-type :pagination/list-id :pagination/size
                    :pagination/start :pagination/end
                    :pagination/next-id  :pagination/previous-id
