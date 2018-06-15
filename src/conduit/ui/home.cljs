@@ -25,7 +25,9 @@
           (dom/li :.nav-item
             (dom/div :.nav-link
               {:className (when (= current-screen :screen/feed) "active")
-               :onClick   #(prim/transact! this `[(r/route-to {:handler :screen/feed})])}
+               :onClick   #(prim/transact! this
+                             `[(r/route-to {:handler :screen/feed
+                                            :params  {:feed-id ~(if logged-in? :personal :global)}})])}
               "Home") )
           (when logged-in?
             (dom/li :.nav-item
@@ -97,39 +99,36 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc FeedSelector [this props {:keys [current-feed]}]
+(defsc FeedSelector [this props {:keys [feed-id]}]
   {:query []}
   (let [whoami        (prim/shared this :user/whoami)
         not-logged-in (= :guest (:user/id whoami))]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (when (or (not not-logged-in)
-                (and not-logged-in (= current-feed :personal)))
+                (and not-logged-in (= feed-id :personal)))
           (dom/li :.nav-item
             (dom/div :.nav-link
-              {:className (if (= current-feed :personal) "active" "disabled")
+              {:className (if (= feed-id :personal) "active" "disabled")
                :onClick   #(if not-logged-in
                              (js/alert "You must log in first")
-                             (prim/transact! this `[(load-feed #:pagination{:list-type :articles/by-feed
-                                                                            :list-id :personal
-                                                                            :size 5})]))}
+                             (routes/go-to-feed this :personal))}
               "Your Feed")))
         (dom/li :.nav-item
           (dom/div :.nav-link
-            {:className (if (= current-feed :global) "active" "disabled")
-             :onClick   #(prim/transact! this `[(load-feed #:pagination{:list-type :articles/by-feed
-                                                                        :list-id :global
-                                                                        :size 5})])}
+            {:className (if (= feed-id :global) "active" "disabled")
+             :onClick   #(routes/go-to-feed this :global)}
             "Global Feed"))))))
 
 (def ui-feed-selector (prim/factory FeedSelector))
 
-(defsc HomeScreen [this {:keys [current-page] tags :tags/all}]
-  {:initial-state (fn [params] {:screen       :screen/feed
-                                :screen-id    :top
+(defsc HomeScreen [this {:keys [feed-id current-page] tags :tags/all}]
+  {:ident [:screen/feed :feed-id]
+   :initial-state (fn [params] {:screen       :screen/feed
+                                :feed-id      :global
                                 :current-page (prim/get-initial-state pagination/Page {})})
 
-   :query [:screen :screen-id
+   :query [:screen :feed-id
            {:current-page (prim/get-query pagination/Page)}
            {[:tags/all '_] (prim/get-query Tag)}]}
   (dom/div :.home-page
@@ -137,17 +136,17 @@
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feed-selector (prim/computed {} {:current-feed (:pagination/list-id current-page)}))
+          (ui-feed-selector (prim/computed {} {:feed-id feed-id}))
           (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-feed ~%)])})))
         (ui-tags tags)))))
 
 ;; mutations
-(defmutation load-feed [feed]
+(defmutation load-feed [{:pagination/keys [list-id] :as feed}]
   (action [{:keys [state] :as env}]
     (df/load-action env :paginated-list/articles
       pagination/Page {:params feed
-                       :target [:screen/feed :top :current-page]}))
+                       :target [:screen/feed list-id :current-page]}))
   (remote [env]
     (df/remote-load env))
   (refresh [env]
-    [:pagination/list-type]))
+    [:pagination/list-type :current-page]))
