@@ -202,7 +202,7 @@
           items (fetch-items env)]
       (merge
         {(if (number? end) :pagination/end :pagination/start)
-         (:article/id (first items))}
+         (or (:article/id (first items)) :no-start)}
         #:pagination{:size        size
                      :list-type   list-type
                      :list-id     list-id
