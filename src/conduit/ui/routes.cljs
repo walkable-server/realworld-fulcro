@@ -34,19 +34,20 @@
       :article-to-view]))
 
 ;; conduit.ui.profile
-(defn go-to-profile [component {:keys [list-type user-id page] :or {page 1} :as profile}]
+(defn go-to-profile [component profile]
   (prim/transact! component
     `[(conduit.ui.profile/load-profile ~profile)
       (r/route-to {:handler      :screen.profile/by-user-id
-                   :route-params {:user-id        ~user-id
-                                  :paginated-list ~(util/profile->paginated-list profile)}})]))
+                   :route-params {:user-id ~(:user/id profile)}})]))
 
 ;; conduit.ui.home
-(defn go-to-feed [component {:keys [feed page] :or {page 1} :as feed-item}]
+(defn go-to-feed [component feed-id]
   (prim/transact! component
-    `[(conduit.ui.home/load-feed ~feed-item)
+    `[(conduit.ui.home/load-feed #:pagination{:list-type :articles/by-feed
+                                              :list-id   ~feed-id
+                                              :size      5})
       (r/route-to {:handler      :screen/feed
-                   :route-params {:paginated-list ~(util/feed->paginated-list feed-item)}})]))
+                   :route-params {:feed-id ~feed-id}})]))
 
 ;; conduit.ui.editor
 
