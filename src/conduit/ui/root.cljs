@@ -12,7 +12,8 @@
             [conduit.ui.article :as article]
             [conduit.ui.profile :as profile]
             [conduit.ui.pagination :as pagination]
-            [conduit.util :as util]))
+            [conduit.util :as util]
+            [conduit.ui.routes :as routes]))
 
 (r/defrouter TopRouter :router/top
   (fn [this props]
@@ -23,6 +24,9 @@
 
                           :screen.profile/by-user-id
                           :user-id
+
+                          :screen/feed
+                          :feed-id
 
                           :screen-id)
           screen-id (get props screen-id-key)]
@@ -81,13 +85,11 @@
   (dom/div
     (home/ui-nav-bar)
     (ui-top router)
+    #_
     (home/ui-footer)))
 
 (defn started-callback [{:keys [reconciler] :as app}]
   (df/load app :user/whoami other/UserTinyPreview)
   (df/load app :tags/all home/Tag)
-  (prim/transact! reconciler `[(home/load-feed
-                                 #:pagination {:list-type :articles/by-feed :list-id :global
-                                               ;; :list-type :articles/by-tag :list-id "dragons"
-                                               ;; :list-type :owned-articles/by-user-id :list-id 8
-                                               :size 5})]))
+  ;;(routes/go-to-profile reconciler #:user{:id 2})
+  (routes/go-to-feed reconciler :global))
