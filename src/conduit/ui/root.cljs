@@ -58,12 +58,10 @@
       [(r/router-instruction :router/top [:screen/log-in :top])])
 
     (r/make-route :screen/feed
-      [(r/router-instruction :router/top [:screen/feed :top])
-       (r/router-instruction :router/paginated-list [:screen/paginated-list :param/paginated-list])])
+      [(r/router-instruction :router/top [:screen/feed :param/feed-id])])
 
     (r/make-route :screen.profile/by-user-id
-      [(r/router-instruction :router/top [:screen.profile/by-user-id :param/user-id])
-       (r/router-instruction :router/paginated-list [:screen/paginated-list :param/paginated-list])])))
+      [(r/router-instruction :router/top [:screen.profile/by-user-id :param/user-id])])))
 
 (defsc Root [this {router :router/top :as props}]
   {:initial-state (fn [params] (merge routing-tree
