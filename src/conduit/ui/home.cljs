@@ -24,11 +24,10 @@
         (dom/ul :.nav.navbar-nav.pull-xs-right
           (dom/li :.nav-item
             (dom/div :.nav-link
-              {:className (when (= current-screen :screen/feed) "active")
-               :onClick   #(prim/transact! this
-                             `[(r/route-to {:handler :screen/feed
-                                            :params  {:feed-id ~(if logged-in? :personal :global)}})])}
-              "Home") )
+              {:className (when-not (#{:screen/editor :screen/log-in :screen/sign-up} current-screen)
+                            "active")
+               :onClick   #(routes/go-to-feed this (if logged-in? :personal :global))}
+              "Home"))
           (when logged-in?
             (dom/li :.nav-item
               (dom/a :.nav-link
