@@ -28,11 +28,15 @@
                           :screen/feed
                           :feed-id
 
+                          :screen/tag
+                          :tag
+
                           :screen-id)
           screen-id (get props screen-id-key)]
       [screen-name screen-id]))
 
   :screen/feed     home/FeedScreen
+  :screen/tag      home/TagScreen
   :screen/settings account/SettingScreen
   :screen/editor   editor/EditorScreen
   :screen/log-in   account/LogInScreen
@@ -41,6 +45,10 @@
   :screen.profile/by-user-id  profile/ProfileScreen)
 
 (def ui-top (prim/factory TopRouter))
+
+(defmethod r/coerce-param :param/tag
+  [k incoming-string-value]
+  incoming-string-value)
 
 (def routing-tree
   (r/routing-tree
@@ -59,6 +67,8 @@
 
     (r/make-route :screen/feed
       [(r/router-instruction :router/top [:screen/feed :param/feed-id])])
+    (r/make-route :screen/tag
+      [(r/router-instruction :router/top [:screen/tag :param/tag])])
 
     (r/make-route :screen.profile/by-user-id
       [(r/router-instruction :router/top [:screen.profile/by-user-id :param/user-id])])))
