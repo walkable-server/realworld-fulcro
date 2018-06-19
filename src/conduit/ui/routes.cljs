@@ -49,6 +49,15 @@
       (r/route-to {:handler      :screen/feed
                    :route-params {:feed-id ~feed-id}})]))
 
+(defn go-to-tag [component tag]
+  (println "going to tag " tag)
+  (prim/transact! component
+    `[(conduit.ui.home/load-tag #:pagination{:list-type :articles/by-tag
+                                             :list-id   ~tag
+                                             :size      5})
+      (r/route-to {:handler      :screen/tag
+                   :route-params {:tag ~tag}})]))
+
 ;; conduit.ui.editor
 
 (defn go-to-new-article [component]
