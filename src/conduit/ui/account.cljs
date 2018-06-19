@@ -23,7 +23,7 @@
         (dom/div :.col-md-6.offset-md-3.col-xs-12
           (dom/h1 :.text-xs-center
             "Your Settings")
-          (dom/form
+          (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))]))}
             (dom/fieldset
               (dom/fieldset :.form-group
                 (dom/input :.form-control
@@ -63,7 +63,7 @@
                   {:placeholder "Password",
                    :type        "password"}))
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                {:onClick #(prim/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))])}
+                {:type "submit" :value "submit"}
                 "Update Settings"))))))))
 
 (def ui-settings-form (prim/factory SettingsForm))
@@ -93,7 +93,7 @@
               #_
               (dom/ul :.error-messages
                 (dom/li "That email is already taken") )
-              (dom/form
+              (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(sign-up ~(merge props state))]))}
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg
                     {:placeholder "Your Name"
@@ -117,7 +117,7 @@
                      :value       (or password "")
                      :onChange    #(prim/set-state! this {:user/password (.. % -target -value)})}) )
                 (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                  {:onClick #(prim/transact! this `[(sign-up ~(merge props state))])}
+                  {:type "submit" :value "submit"}
                   "Sign up")))))))))
 
 (def ui-sign-up-form (prim/factory SignUpForm))
@@ -147,7 +147,7 @@
                 (dom/a {:href    "javascript:void(0)"
                         :onClick #(routes/go-to-sign-up this)}
                   "Don't have an account?"))
-              (dom/form
+              (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(log-in ~credentials)]))}
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg
                     {:placeholder "Email"
@@ -161,7 +161,7 @@
                      :value       (or password "")
                      :onChange    #(prim/update-state! this assoc :user/password (.. % -target -value))}) )
                 (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                  {:onClick #(prim/transact! this `[(log-in ~credentials)])}
+                  {:type "submit" :value "submit"}
                   "Log in")))))))))
 
 (def ui-log-in-form (prim/factory LogInForm))
