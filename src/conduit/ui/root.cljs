@@ -32,7 +32,7 @@
           screen-id (get props screen-id-key)]
       [screen-name screen-id]))
 
-  :screen/feed     home/HomeScreen
+  :screen/feed     home/FeedScreen
   :screen/settings account/SettingScreen
   :screen/editor   editor/EditorScreen
   :screen/log-in   account/LogInScreen

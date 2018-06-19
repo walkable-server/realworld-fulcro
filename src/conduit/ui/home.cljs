@@ -123,7 +123,7 @@
 
 (def ui-feed-selector (prim/factory FeedSelector))
 
-(defsc HomeScreen [this {:keys [feed-id current-page] tags :tags/all}]
+(defsc FeedScreen [this {:keys [feed-id current-page] tags :tags/all}]
   {:ident [:screen/feed :feed-id]
    :initial-state (fn [params] {:screen       :screen/feed
                                 :feed-id      :global
