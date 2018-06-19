@@ -5,7 +5,7 @@
  {:backend :jws
   :secret  #duct/env "JWT_SECRET"}
 
- :duct.module/cljs {:main conduit.intro}
+ :duct.module/cljs {:main conduit.main}
 
  :duct.module.web/site {}
 
