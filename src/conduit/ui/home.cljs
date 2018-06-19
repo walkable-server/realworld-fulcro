@@ -99,24 +99,25 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc FeedSelector [this props {:keys [feed-id]}]
+(defsc FeedSelector [this props {:keys [current-page]}]
   {:query []}
-  (let [whoami        (prim/shared this :user/whoami)
-        not-logged-in (= :guest (:user/id whoami))]
+  (let [whoami                                 (prim/shared this :user/whoami)
+        {:pagination/keys [list-type list-id]} current-page
+        not-logged-in                          (= :guest (:user/id whoami))]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (when (or (not not-logged-in)
-                (and not-logged-in (= feed-id :personal)))
+                (and not-logged-in (= list-id :personal)))
           (dom/li :.nav-item
             (dom/div :.nav-link
-              {:className (if (= feed-id :personal) "active" "disabled")
+              {:className (if (= list-id :personal) "active" "disabled")
                :onClick   #(if not-logged-in
                              (js/alert "You must log in first")
                              (routes/go-to-feed this :personal))}
               "Your Feed")))
         (dom/li :.nav-item
           (dom/div :.nav-link
-            {:className (if (= feed-id :global) "active" "disabled")
+            {:className (if (= list-id :global) "active" "disabled")
              :onClick   #(routes/go-to-feed this :global)}
             "Global Feed"))))))
 
@@ -136,7 +137,7 @@
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feed-selector (prim/computed {} {:feed-id feed-id}))
+          (ui-feed-selector (prim/computed {} {:current-page current-page}))
           (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-feed ~%)])})))
         (ui-tags tags)))))
 
