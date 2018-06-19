@@ -84,9 +84,9 @@
 
 (def ui-banner (prim/factory Banner))
 
-(defsc Tag [this {:tag/keys [tag]}]
+(defsc Tag [this {:tag/keys [tag]} {:keys [go-to-tag]}]
   {:query [:tag/tag :tag/count]}
-  (dom/a  :.tag-pill.tag-default {:href ""} tag))
+  (dom/div :.tag-pill.tag-default {:onClick #(go-to-tag tag)} tag))
 
 (def ui-tag (prim/factory Tag {:keyfn :tag/tag}))
 
@@ -95,7 +95,8 @@
     (dom/div :.sidebar
       (dom/p "Popular Tags")
       (dom/div :.tag-list
-        (mapv ui-tag tags)))))
+        (let [go-to-tag #(routes/go-to-tag this %)]
+          (map (fn [tag] (ui-tag (prim/computed tag {:go-to-tag go-to-tag}))) tags))))))
 
 (def ui-tags (prim/factory Tags))
 
@@ -119,7 +120,11 @@
           (dom/div :.nav-link
             {:className (if (= list-id :global) "active" "disabled")
              :onClick   #(routes/go-to-feed this :global)}
-            "Global Feed"))))))
+            "Global Feed"))
+        (when (= list-type :articles/by-tag)
+          (dom/li :.nav-item
+            (dom/div :.nav-link.active
+              "Tagged with `" list-id "`")))))))
 
 (def ui-feed-selector (prim/factory FeedSelector))
 
@@ -127,7 +132,9 @@
   {:ident [:screen/feed :feed-id]
    :initial-state (fn [params] {:screen       :screen/feed
                                 :feed-id      :global
-                                :current-page (prim/get-initial-state pagination/Page {})})
+                                :current-page (prim/get-initial-state pagination/Page
+                                                #:pagination{:list-type :articles/by-feed
+                                                             :list-id   :global})})
 
    :query [:screen :feed-id
            {:current-page (prim/get-query pagination/Page)}
@@ -141,12 +148,56 @@
           (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-feed ~%)])})))
         (ui-tags tags)))))
 
+(defsc TagScreen [this {:keys [tag current-page] tags :tags/all}]
+  {:ident         [:screen/feed :tag]
+   :initial-state (fn [params] {:screen       :screen/tag
+                                :tag          "fulcro"
+                                :current-page (prim/get-initial-state pagination/Page
+                                                #:pagination{:list-type :articles/by-tag
+                                                             :list-id   "fulcro"})})
+
+   :query [:screen :tag
+           {:current-page (prim/get-query pagination/Page)}
+           {[:tags/all '_] (prim/get-query Tag)}]}
+  (dom/div :.home-page
+    (ui-banner)
+    (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-9
+          (ui-feed-selector (prim/computed {} {:current-page current-page}))
+          (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-tag ~%)])})))
+        (ui-tags tags)))))
+
 ;; mutations
-(defmutation load-feed [{:pagination/keys [list-id] :as feed}]
+(defmutation load-feed [{:pagination/keys [list-id] :as page}]
   (action [{:keys [state] :as env}]
+    (swap! state
+      #(update-in % [:screen/feed list-id]
+         (fn [x] (if x
+                   x
+                   {:screen       :screen/feed
+                    :feed-id      list-id
+                    :current-page {}}))))
     (df/load-action env :paginated-list/articles
-      pagination/Page {:params feed
+      pagination/Page {:params page
                        :target [:screen/feed list-id :current-page]}))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env]
+    [:pagination/list-type :current-page]))
+
+(defmutation load-tag [{:pagination/keys [list-id] :as page}]
+  (action [{:keys [state] :as env}]
+    (swap! state
+      #(update-in % [:screen/tag list-id]
+         (fn [x] (if x
+                   x
+                   {:screen       :screen/tag
+                    :tag          list-id
+                    :current-page {}}))))
+    (df/load-action env :paginated-list/articles
+      pagination/Page {:params page
+                       :target [:screen/tag list-id :current-page]}))
   (remote [env]
     (df/remote-load env))
   (refresh [env]
