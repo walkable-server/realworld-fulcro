@@ -63,13 +63,13 @@
    (fn [{:app/keys [current-user]}]
      {:article/author {:user/followed-by [:= current-user :user/id]}})
 
-   :article/liked-by-me?
+   :article/liked-by-me
    (fn [{:app/keys [current-user]}] [:= current-user :user/id])
 
    :user/whoami
    (fn [{:app/keys [current-user]}] [:= current-user :user/id])
 
-   :user/followed-by-me?
+   :user/followed-by-me
    (fn [{:app/keys [current-user]}] [:= current-user :user/id])})
 
 (defn get-items-subquery [query]
