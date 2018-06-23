@@ -27,7 +27,10 @@
 
 (defmutation submit-settings [diff]
   (action [{:keys [state]}]
-    (swap! state fs/entity->pristine* (util/get-ident diff)))
+    (let [ident (util/get-ident diff)]
+      (swap! state #(-> %
+                      (assoc-in (conj ident :user/password) "")
+                      (fs/entity->pristine* ident)))))
   (remote [env] true))
 
 (defn remove-ref-by-id
