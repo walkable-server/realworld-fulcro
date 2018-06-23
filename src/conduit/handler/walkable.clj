@@ -85,15 +85,6 @@
                  (number? start)
                  [:<= start :article/id])}))
 
-(defn reversed-query-params [env]
-  (let [{:pagination/keys [size start end] :or {size 10}} (env/params env)]
-    {:order-by [:article/id (if (number? end) :desc :asc)]
-     :filters  (cond
-                 (number? end)
-                 [:> :article/id end]
-                 (number? start)
-                 [:> start :article/id])}))
-
 (defn extra-filter [env]
   (let [{:pagination/keys [list-type list-id]} (env/params env)]
     (case list-type
