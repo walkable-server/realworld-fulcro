@@ -12,11 +12,11 @@
 (defsc Settings [this props]
   {:query [:user/image :user/name :user/bio :user/email]})
 
-(defsc SettingsForm [this {:user/keys [id image name bio email] :as props}]
-  {:query       [:user/id :user/image :user/name :user/bio :user/email
+(defsc SettingsForm [this {:user/keys [id image name bio email password] :as props}]
+  {:query       [:user/id :user/image :user/name :user/bio :user/email :user/password
                  fs/form-config-join]
    :ident       [:user/by-id :user/id]
-   :form-fields #{:user/image :user/name :user/bio :user/email}}
+   :form-fields #{:user/image :user/name :user/bio :user/email :user/password}}
   (dom/div :.settings-page
     (dom/div :.container.page
       (dom/div :.row
@@ -57,11 +57,14 @@
                    :onBlur      #(prim/transact! this
                                    `[(fs/mark-complete! {:field :user/email})])
                    :onChange    #(m/set-string! this :user/email :event %)}))
-              #_
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Password",
-                   :type        "password"}))
+                   :type        "password"
+                   :value       (or password "")
+                   :onBlur      #(prim/transact! this
+                                    `[(fs/mark-complete! {:field :user/password})])
+                   :onChange    #(m/set-string! this :user/password :event %)}))
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
                 {:type "submit" :value "submit"}
                 "Update Settings"))))))))
@@ -216,5 +219,6 @@
 (defmutation use-settings-as-form [{:user/keys [id]}]
   (action [{:keys [state] :as env}]
     (swap! state #(-> %
+                    (assoc-in [:user/by-id id :user/password] "")
                     (fs/add-form-config* SettingsForm [:user/by-id id])
                     (assoc-in [:root/settings-form :user] [:user/by-id id])))))
