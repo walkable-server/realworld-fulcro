@@ -90,8 +90,7 @@
               (dom/h1 :.text-xs-center
                 "Sign up")
               (dom/p  :.text-xs-center
-                (dom/a {:href    "javascript:void(0)"
-                        :onClick #(routes/go-to-log-in this)}
+                (dom/a {:href (routes/to-path {:handler :screen/log-in})}
                   "Have an account?"))
               #_
               (dom/ul :.error-messages
@@ -147,8 +146,7 @@
               (dom/h1 :.text-xs-center
                 "Log in")
               (dom/p :.text-xs-center
-                (dom/a {:href    "javascript:void(0)"
-                        :onClick #(routes/go-to-sign-up this)}
+                (dom/a {:href (routes/to-path {:handler :screen/sign-up})}
                   "Don't have an account?"))
               (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(log-in ~credentials)]))}
                 (dom/fieldset :.form-group
