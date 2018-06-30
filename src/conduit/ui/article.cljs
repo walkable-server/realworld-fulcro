@@ -17,10 +17,10 @@
   (let [whoami                     (prim/shared this :user/whoami)
         {current-user-id :user/id} whoami]
     (dom/div :.article-meta
-      (dom/div {:onClick #(routes/go-to-profile this author)}
+      (dom/a {:href (routes/profile-url author)}
         (dom/img {:src (:user/image author)}))
       (dom/div :.info
-        (dom/div :.author {:onClick #(routes/go-to-profile this author)}
+        (dom/a :.author {:href (routes/profile-url author)}
           (:user/name author))
         (dom/span :.date
           (other/js-date->string created-at)))
