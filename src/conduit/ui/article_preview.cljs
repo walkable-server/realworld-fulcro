@@ -13,11 +13,10 @@
            {:article/author (prim/get-query other/UserPreview)}]
    :ident [:article/by-id :article/id]}
   (dom/div :.article-meta
-    (dom/div {:onClick #(routes/go-to-profile this author)}
+    (dom/a {:href (routes/profile-url author)}
       (dom/img {:src (:user/image author)}))
     (dom/div :.info
-      (dom/div :.author
-        {:onClick #(routes/go-to-profile this author)}
+      (dom/a :.author {:href (routes/profile-url author)}
         (:user/name author))
       (dom/span :.date
         (other/js-date->string created-at)))
@@ -32,7 +31,7 @@
 (def ui-article-preview-meta (prim/factory ArticlePreviewMeta {:keyfn :article/id}))
 
 (defsc ArticlePreview [this {:article/keys [id author-id slug title description] :keys [ph/article]}
-                       {:keys [on-delete on-edit]}]
+                       {:keys [on-delete]}]
   {:ident [:article/by-id :article/id]
    :query [:article/id :article/author-id :article/slug :article/title :article/description :article/body
            {:ph/article (prim/get-query ArticlePreviewMeta)}]}
@@ -46,13 +45,15 @@
         (ui-article-preview-meta (prim/computed article {:like like :unlike unlike})))
       (when (= current-user-id author-id)
         (dom/span :.pull-xs-right
-          (dom/i :.ion-edit
-            {:onClick #(on-edit {:article/id id})} " ")
+          (dom/a {:href (routes/to-path {:handler :screen/editor
+                                         :route-params {:article-id id}})}
+            (dom/i :.ion-edit " "))
           (dom/i :.ion-trash-a
             {:onClick #(on-delete {:article/id id})} " ")))
-      (dom/div :.preview-link
-        (dom/h1 {:onClick #(routes/go-to-article this {:article/id id})}
-          title)
+      (dom/a :.preview-link
+        {:href (routes/to-path {:handler :screen/article
+                                :route-params {:article-id id :slug slug}})}
+        (dom/h1 title)
         (dom/p description)
         (dom/span "Read more...")))))
 
@@ -60,13 +61,10 @@
 
 (defn article-list
   [component articles msg-when-empty]
-  (let [edit-article   (fn [{:article/keys [id] :as article}]
-                         (routes/edit-article component article))
-        delete-article (fn [{:article/keys [id] :as article}]
+  (let [delete-article (fn [{:article/keys [id] :as article}]
                          (prim/transact! component `[(mutations/delete-article ~article)]))]
     (dom/div
       (if (seq articles)
-        (map (fn [a] (ui-article-preview (prim/computed a {:on-delete delete-article
-                                                           :on-edit   edit-article})))
+        (map (fn [a] (ui-article-preview (prim/computed a {:on-delete delete-article})))
           articles)
         msg-when-empty))))
