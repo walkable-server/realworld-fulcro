@@ -100,8 +100,8 @@
 (def ui-article-editor (prim/factory ArticleEditor))
 
 (defsc EditorScreen [this {:keys [screen article-to-edit article-id]}]
-  {:ident         (fn [] [screen article-id])
-   :initial-state (fn [params] {:screen          :screen/editor
+  {:ident         [:screen :article-id]
+   :initial-state (fn [params] {:screen          :screen/new
                                 :article-id      :current-temp-article
                                 :article-to-edit (prim/get-initial-state ArticleEditor #:article{:id :none})})
    :query         (fn [] [:screen :article-id
@@ -110,7 +110,7 @@
 
 (defn create-temp-article-if-not-found
   [tempid-fn state]
-  (if (tempid? (get-in state [:screen/editor :current-temp-article :article-to-edit 1]))
+  (if (tempid? (get-in state [:screen/new :current-temp-article :article-to-edit 1]))
     state
     (let [tempid              (tempid-fn)
           current-user        (:user/whoami state)
@@ -124,10 +124,8 @@
                               :author      current-user
                               :tags        []}]
       (-> (assoc-in state [:article/by-id tempid] new-item)
-        (update-in [:user/by-id current-user-id :user/articles]
-          (fnil conj []) [:article/by-id tempid])
-        (assoc-in [:screen/editor :current-temp-article]
-          {:screen          :screen/editor
+        (assoc-in [:screen/new :current-temp-article]
+          {:screen          :screen/new
            :article-id      :current-temp-article
            :article-to-edit [:article/by-id tempid]})))))
 
@@ -137,7 +135,7 @@
 
 (defmutation use-current-temp-article-as-form [_]
   (action [{:keys [state]}]
-    (swap! state #(let [temp-ident (get-in % [:screen/editor :current-temp-article :article-to-edit])]
+    (swap! state #(let [temp-ident (get-in % [:screen/new :current-temp-article :article-to-edit])]
                     (fs/add-form-config* % ArticleEditor temp-ident)))))
 
 (defmutation load-article-to-editor [{:keys [article-id]}]
