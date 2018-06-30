@@ -75,6 +75,15 @@
 
 (def ui-footer (prim/factory Footer))
 
+(defsc NotFound [this props]
+  {:ident [:screen :screen-id]
+   :initial-state (fn [params] {:screen :screen/not-found :screen-id :top})
+   :query [:screen :screen-id]}
+  (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-9
+          (dom/div "Not found")))))
+
 (defsc Banner [this _]
   (dom/div :.banner
     (dom/div :.container
