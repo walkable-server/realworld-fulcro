@@ -1,6 +1,6 @@
 CREATE TABLE "article" (
  id SERIAL PRIMARY KEY,
- slug TEXT UNIQUE,
+ slug TEXT,
  title TEXT,
  description TEXT,
  image TEXT,
