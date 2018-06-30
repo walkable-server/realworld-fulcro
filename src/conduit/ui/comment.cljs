@@ -64,10 +64,10 @@
         (dom/p :.card-text
           body))
       (dom/div :.card-footer
-        (dom/div :.comment-author {:onClick #(routes/go-to-profile this author)}
+        (dom/a :.comment-author {:href (routes/profile-url author)}
           (dom/img :.comment-author-img
             {:src (:user/image author)}))
-        (dom/div :.comment-author {:onClick #(routes/go-to-profile this author)}
+        (dom/a :.comment-author {:href (routes/profile-url author)}
           (:user/name author))
         (dom/span :.date-posted
           (other/js-date->string created-at))
