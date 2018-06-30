@@ -3,6 +3,7 @@
   :url "http://example.com/FIXME"
   :min-lein-version "2.0.0"
   :dependencies [[org.clojure/clojure "1.9.0"]
+                 [org.clojure/spec.alpha "0.1.143"]
                  [duct/core "0.6.2"]
                  [duct/module.logging "0.3.1"]
                  [duct/module.web "0.6.4"]
@@ -10,6 +11,12 @@
                  [duct/module.ataraxy "0.2.0"]
                  [duct/module.sql "0.4.2"]
                  [duct/module.cljs "0.3.2" :exclusions [org.clojure/clojurescript]]
+                 ;; this version of clojurescript doesn't cause compiling error to specter
+                 ;; it's used by specter itself
+                 [org.clojure/clojurescript "1.10.126"]
+                 [com.rpl/specter "1.1.1"]
+                 [metosin/reitit "0.1.3"]
+                 [kibu/pushy "0.3.8"]
                  [duct/handler.sql "0.3.1"]
                  [buddy/buddy-hashers "1.3.0"]
                  [fulcrologic/fulcro "2.5.3"]
