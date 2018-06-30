@@ -102,11 +102,15 @@
   (dom/div
     (home/ui-nav-bar)
     (ui-top router)
-    #_
     (home/ui-footer)))
 
 (defn started-callback [{:keys [reconciler] :as app}]
+  (let [history (pushy/pushy
+                  (fn [routing-data]
+                    (routes/nav-to! reconciler routing-data))
+                  (fn [url]
+                    (or (routes/from-path url)
+                      {:handler      :screen/not-found})))]
+    (pushy/start! history))
   (df/load app :user/whoami other/UserTinyPreview)
-  (df/load app :tags/all home/Tag)
-  ;;(routes/go-to-profile reconciler #:user{:id 2})
-  (routes/go-to-feed reconciler :global))
+  (df/load app :tags/all home/Tag))
