@@ -214,9 +214,10 @@
   (remote [env]
     (df/remote-load env)))
 
-(defmutation use-settings-as-form [{:user/keys [id]}]
+(defmutation use-settings-as-form [_]
   (action [{:keys [state] :as env}]
-    (swap! state #(-> %
-                    (assoc-in [:user/by-id id :user/password] "")
-                    (fs/add-form-config* SettingsForm [:user/by-id id])
-                    (assoc-in [:root/settings-form :user] [:user/by-id id])))))
+    (swap! state #(let [id (-> % :user/whoami second)]
+                    (-> %
+                      (assoc-in [:user/by-id id :user/password] "")
+                      (fs/add-form-config* SettingsForm [:user/by-id id])
+                      (assoc-in [:root/settings-form :user] [:user/by-id id]))))))
