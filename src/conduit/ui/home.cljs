@@ -23,37 +23,37 @@
           "conduit")
         (dom/ul :.nav.navbar-nav.pull-xs-right
           (dom/li :.nav-item
-            (dom/div :.nav-link
+            (dom/a :.nav-link
               {:className (when-not (#{:screen/editor :screen/log-in :screen/sign-up} current-screen)
                             "active")
-               :onClick   #(routes/go-to-feed this (if logged-in? :personal :global))}
+               :href      (routes/feed-url (if logged-in? :personal :global))}
               "Home"))
           (when logged-in?
             (dom/li :.nav-item
               (dom/a :.nav-link
-                {:className (when (= current-screen :screen/editor) "active")
-                 :onClick   #(routes/go-to-new-article this)}
+                {:className (when (= current-screen :screen/new) "active")
+                 :href      (routes/to-path {:handler :screen/new})}
                 (dom/i :.ion-compose)
                 "New Post")))
           (when logged-in?
             (dom/li :.nav-item
-              (dom/div :.nav-link
+              (dom/a :.nav-link
                 {:className (when (= current-screen :screen/settings) "active")
-                 :onClick   #(routes/go-to-settings this {:user/id current-user-id})}
+                 :href      (routes/to-path {:handler :screen/settings})}
                 (dom/i :.ion-gear-a)
                 "Settings")))
           (when-not logged-in?
             (dom/li :.nav-item
-              (dom/div :.nav-link
+              (dom/a :.nav-link
                 {:className (when (= current-screen :screen/log-in) "active")
-                 :onClick   #(routes/go-to-log-in this)}
+                 :href      (routes/to-path {:handler :screen/log-in})}
                 "Login")))
 
           (when-not logged-in?
             (dom/li :.nav-item
-              (dom/div :.nav-link
+              (dom/a :.nav-link
                 {:className (when (= current-screen :screen/sign-up) "active")
-                 :onClick   #(routes/go-to-sign-up this)}
+                 :href      (routes/to-path {:handler :screen/sign-up})}
                 "Sign up")))
 
           (when logged-in?
@@ -83,9 +83,9 @@
 
 (def ui-banner (prim/factory Banner))
 
-(defsc Tag [this {:tag/keys [tag]} {:keys [go-to-tag]}]
+(defsc Tag [this {:tag/keys [tag]}]
   {:query [:tag/tag :tag/count]}
-  (dom/div :.tag-pill.tag-default {:onClick #(go-to-tag tag)} tag))
+  (dom/a :.tag-pill.tag-default {:href (routes/to-path {:handler :screen/tag :route-params {:tag tag}})} tag))
 
 (def ui-tag (prim/factory Tag {:keyfn :tag/tag}))
 
@@ -94,8 +94,7 @@
     (dom/div :.sidebar
       (dom/p "Popular Tags")
       (dom/div :.tag-list
-        (let [go-to-tag #(routes/go-to-tag this %)]
-          (map (fn [tag] (ui-tag (prim/computed tag {:go-to-tag go-to-tag}))) tags))))))
+        (map ui-tag tags)))))
 
 (def ui-tags (prim/factory Tags))
 
@@ -109,16 +108,16 @@
         (when (or (not not-logged-in)
                 (and not-logged-in (= list-id :personal)))
           (dom/li :.nav-item
-            (dom/div :.nav-link
-              {:className (if (= list-id :personal) "active" "disabled")
-               :onClick   #(if not-logged-in
-                             (js/alert "You must log in first")
-                             (routes/go-to-feed this :personal))}
+            (dom/a :.nav-link
+              (merge {:className (if (= list-id :personal) "active" "disabled")
+                      :href      (routes/feed-url :personal)}
+                (when not-logged-in
+                  {:onClick #(js/alert "You must log in first")}))
               "Your Feed")))
         (dom/li :.nav-item
-          (dom/div :.nav-link
+          (dom/a :.nav-link
             {:className (if (= list-id :global) "active" "disabled")
-             :onClick   #(routes/go-to-feed this :global)}
+             :href      (routes/feed-url :global)}
             "Global Feed"))
         (when (= list-type :articles/by-tag)
           (dom/li :.nav-item
