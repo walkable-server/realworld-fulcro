@@ -140,19 +140,19 @@
     (swap! state #(let [temp-ident (get-in % [:screen/editor :current-temp-article :article-to-edit])]
                     (fs/add-form-config* % ArticleEditor temp-ident)))))
 
-(defmutation load-article-to-editor [{:article/keys [id]}]
+(defmutation load-article-to-editor [{:keys [article-id]}]
   (action [{:keys [state] :as env}]
-    (df/load-action env [:article/by-id id] ArticleEditor*))
+    (df/load-action env [:article/by-id article-id] ArticleEditor*))
   (remote [env]
     (df/remote-load env))
   (refresh [env] [:screen]))
 
-(defmutation use-article-as-form [{:article/keys [id]}]
+(defmutation use-article-as-form [{:keys [article-id]}]
   (action [{:keys [state]}]
     (swap! state #(-> %
-                    (fs/add-form-config* ArticleEditor [:article/by-id id])
-                    (assoc-in [:screen/editor id]
+                    (fs/add-form-config* ArticleEditor [:article/by-id article-id])
+                    (assoc-in [:screen/editor article-id]
                       {:screen          :screen/editor
-                       :article-id      id
-                       :article-to-edit [:article/by-id id]}))))
+                       :article-id      article-id
+                       :article-to-edit [:article/by-id article-id]}))))
   (refresh [env] [:screen]))
