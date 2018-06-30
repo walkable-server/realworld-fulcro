@@ -104,15 +104,15 @@
                           {:article-to-view (prim/get-query Article)}])}
   (ui-article article-to-view))
 
-(defmutation load-article-to-screen [{:article/keys [id]}]
+(defmutation load-article-to-screen [{:keys [article-id]}]
   (action [{:keys [state] :as env}]
-    (df/load-action env [:article/by-id id] Article)
+    (df/load-action env [:article/by-id article-id] Article)
     (swap! state
-      #(update-in % [:screen/article id]
+      #(update-in % [:screen/article article-id]
          (fn [x] (or x
                    {:screen          :screen/article
-                    :article-id      id
-                    :article-to-view [:article/by-id id]})))))
+                    :article-id      article-id
+                    :article-to-view [:article/by-id article-id]})))))
   (remote [env]
     (df/remote-load env))
   (refresh [env] [:screen :article-to-view]))
