@@ -1,5 +1,6 @@
 (ns conduit.ui.root
   (:require [fulcro.client.routing :as r]
+            [pushy.core :as pushy]
             [conduit.ui.article-preview :as preview]
             [conduit.ui.other :as other]
             [conduit.handler.mutations :as mutations]
@@ -13,13 +14,14 @@
             [conduit.ui.profile :as profile]
             [conduit.ui.pagination :as pagination]
             [conduit.util :as util]
+            [fulcro.inspect.preload]
             [conduit.ui.routes :as routes]))
 
 (r/defrouter TopRouter :router/top
   (fn [this props]
     (let [screen-name   (:screen props)
           screen-id-key (case screen-name
-                          (:screen/editor :screen/article)
+                          (:screen/new :screen/editor :screen/article)
                           :article-id
 
                           :screen.profile/by-user-id
@@ -35,9 +37,12 @@
           screen-id (get props screen-id-key)]
       [screen-name screen-id]))
 
+  :screen/not-found home/NotFound
+
   :screen/feed     home/FeedScreen
   :screen/tag      home/TagScreen
   :screen/settings account/SettingScreen
+  :screen/new      editor/EditorScreen
   :screen/editor   editor/EditorScreen
   :screen/log-in   account/LogInScreen
   :screen/sign-up  account/SignUpScreen
@@ -52,12 +57,16 @@
 
 (def routing-tree
   (r/routing-tree
+    (r/make-route :screen/new
+      [(r/router-instruction :router/top [:screen/new :current-temp-article])])
     (r/make-route :screen/editor
       [(r/router-instruction :router/top [:screen/editor :param/article-id])])
 
     (r/make-route :screen/article
       [(r/router-instruction :router/top [:screen/article :param/article-id])])
 
+    (r/make-route :screen/not-found
+      [(r/router-instruction :router/top [:screen/not-found :top])])
     (r/make-route :screen/settings
       [(r/router-instruction :router/top [:screen/settings :top])])
     (r/make-route :screen/sign-up
