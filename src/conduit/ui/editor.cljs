@@ -39,7 +39,7 @@
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-10.offset-md-1.col-xs-12
-          (dom/form {:onClick #(do (.preventDefault %) (prim/transact! this `[(mutations/submit-article ~(fs/dirty-fields props false))]))}
+          (dom/div
             (dom/fieldset
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
@@ -91,8 +91,8 @@
                 (dom/div :.tag-list
                   (let [on-delete-tag #(prim/transact! this `[(mutations/remove-tag {:article-id ~id :tag ~%})])]
                     (map #(ui-tag-item (prim/computed % {:on-delete on-delete-tag})) tags))))
-              (dom/button :.btn.btn-lg.pull-xs-right.btn-primary
-                {:type "submit" :value "submit"}
+              (dom/div :.btn.btn-lg.pull-xs-right.btn-primary
+                {:onClick #(prim/transact! this `[(mutations/submit-article ~(fs/dirty-fields props false))])}
                 (if (tempid? id)
                   "Publish Article"
                   "Update Article")))))))))
