@@ -9,7 +9,9 @@
    [conduit.ui.article-preview :as preview]
    [fulcro.client.mutations :as m :refer [defmutation]]
    [fulcro.client.data-fetch :as df]
-   [fulcro.client.dom :as dom]))
+   [fulcro.client.dom :as dom]
+   [conduit.ui.routes :as routes]
+   [fulcro.client.routing :as r]))
 
 (defsc TagItem [this {:tag/keys [tag]} {:keys [on-delete]}]
   {:query [:tag/tag]}
