@@ -101,7 +101,7 @@
 (def ui-article-editor (prim/factory ArticleEditor))
 
 (defsc EditorScreen [this {:keys [screen article-to-edit article-id]}]
-  {:ident         [:screen :article-id]
+  {:ident         (fn [] [screen article-id])
    :initial-state (fn [params] {:screen          :screen/new
                                 :article-id      :current-temp-article
                                 :article-to-edit (prim/get-initial-state ArticleEditor #:article{:id :none})})
