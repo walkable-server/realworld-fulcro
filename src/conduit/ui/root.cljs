@@ -106,10 +106,13 @@
 (defn started-callback [{:keys [reconciler] :as app}]
   (let [history (pushy/pushy
                   (fn [routing-data]
-                    (routes/nav-to! reconciler routing-data))
+                    (routes/nav-to* reconciler routing-data))
                   (fn [url]
                     (or (routes/from-path url)
                       {:handler      :screen/not-found})))]
-    (pushy/start! history))
+    (reset! routes/navigator [history reconciler])
+    (pushy/start! history)
+    (when (= "/" (pushy/get-token history))
+      (routes/nav-to! {:handler :screen/feed :route-params {:feed-id :global}})))
   (df/load app :user/whoami other/UserTinyPreview)
   (df/load app :tags/all home/Tag))
