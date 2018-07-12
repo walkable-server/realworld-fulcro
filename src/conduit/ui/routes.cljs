@@ -5,7 +5,8 @@
    [reitit.coercion.spec]
    [reitit.coercion :as coercion]
    [fulcro.client.primitives :as prim :refer [defsc]]
-   [conduit.util :as util]))
+   [conduit.util :as util]
+   [pushy.core :as pushy]))
 
 (def router
   (rr/router
@@ -72,9 +73,20 @@
     ;; default
     []))
 
-(defn nav-to! [component routing-data]
+(defonce navigator (atom []))
+
+(defn nav-to* [component routing-data]
   (prim/transact! component `[~@(pre-route-transaction routing-data)
                               (r/route-to ~routing-data)]))
+
+(defn nav-to!
+  ([routing-data]
+   (nav-to! routing-data true))
+  ([routing-data update-route?]
+   (let [[history reconciler] @navigator]
+     (pushy/set-token! history (to-path routing-data))
+     (when update-route?
+       (nav-to* reconciler routing-data)))))
 
 (defn log-out [component]
   (prim/transact! component `[(conduit.ui.account/log-out)]))
