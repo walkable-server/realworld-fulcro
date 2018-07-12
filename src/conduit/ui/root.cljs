@@ -33,7 +33,7 @@
                           :tag
 
                           :screen-id)
-          screen-id (get props screen-id-key)]
+          screen-id (get props screen-id-key :top)]
       [screen-name screen-id]))
 
   :screen/not-found home/NotFound
