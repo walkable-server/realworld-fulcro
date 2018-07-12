@@ -139,6 +139,13 @@
     (swap! state #(let [temp-ident (get-in % [:screen/new :current-temp-article :article-to-edit])]
                     (fs/add-form-config* % ArticleEditor temp-ident)))))
 
+(defmutation switch-to-saved-article [{:keys [article-id]}]
+  (action [{:keys [state]}]
+    (swap! state #(let [new-screen    (get-in % [:screen/new :current-temp-article])
+                        editor-screen (merge new-screen {:article-id article-id
+                                                         :screen     :screen/editor})]
+                    (assoc-in % [:screen/editor article-id] editor-screen)))))
+
 (defmutation load-article-to-editor [{:keys [article-id]}]
   (action [{:keys [state] :as env}]
     (df/load-action env [:article/by-id article-id] ArticleEditor*))
