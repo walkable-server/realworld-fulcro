@@ -14,7 +14,6 @@
             [conduit.ui.profile :as profile]
             [conduit.ui.pagination :as pagination]
             [conduit.util :as util]
-            [fulcro.inspect.preload]
             [conduit.ui.routes :as routes]))
 
 (r/defrouter TopRouter :router/top
