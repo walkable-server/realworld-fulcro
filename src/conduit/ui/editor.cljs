@@ -47,7 +47,7 @@
                   {:placeholder "Article Title",
                    :type        "text"
                    :name        "title"
-                   :value       title
+                   :value       (or title "")
                    :onBlur      #(prim/transact! this
                                    `[(fs/mark-complete! {:field :article/title})])
                    :onChange    #(m/set-string! this :article/title :event %)}))
@@ -56,7 +56,7 @@
                   {:placeholder "What's this article about?",
                    :type        "text"
                    :name        "description"
-                   :value       description
+                   :value       (or description "")
                    :onBlur      #(prim/transact! this
                                    `[(fs/mark-complete! {:field :article/description})])
                    :onChange    #(m/set-string! this :article/description :event %)}))
@@ -65,7 +65,7 @@
                   {:placeholder "Slug",
                    :type        "text"
                    :name        "slug"
-                   :value       slug
+                   :value       (or slug "")
                    :onBlur      #(prim/transact! this
                                    `[(fs/mark-complete! {:field :article/slug})])
                    :onChange    #(m/set-string! this :article/slug :event %)}))
@@ -73,7 +73,7 @@
                 (dom/textarea :.form-control
                   {:rows     "8", :placeholder "Write your article (in markdown)"
                    :name     "body"
-                   :value    body
+                   :value    (or body "")
                    :onBlur   #(prim/transact! this
                                 `[(fs/mark-complete! {:field :article/body})])
                    :onChange #(m/set-string! this :article/body :event %)}))
