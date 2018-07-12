@@ -35,7 +35,18 @@
                    fs/form-config-join]
    :ident         [:article/by-id :article/id]
    :form-fields   #{:article/slug  :article/title
-                    :article/description :article/body :article/tags}}
+                    :article/description :article/body :article/tags}
+
+   :componentDidUpdate (fn [prev-props _]
+                         (when (and (tempid? (:article/id prev-props))
+                                 (number? (:article/id (prim/props this))))
+                           (let [article-params {:article-id (:article/id (prim/props this))}
+                                 routing-data {:handler      :screen/editor
+                                               :route-params article-params}]
+                             (prim/transact! this `[(switch-to-saved-article ~article-params)
+                                                    (r/route-to ~routing-data)
+                                                    :screen])
+                             (routes/nav-to! routing-data false))))}
   (dom/div :.editor-page
     (dom/div :.container.page
       (dom/div :.row
