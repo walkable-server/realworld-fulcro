@@ -170,7 +170,8 @@
 (defsc SignUpScreen [this {user :new-user}]
   {:initial-state (fn [params] {:screen    :screen/sign-up
                                 :screen-id :top
-                                :new-user  #:user{:name "" :email ""}})
+                                :new-user  #:user {:name "" :email ""}})
+   :ident         (fn [] [:screen/sign-up :top])
    :query         [:screen :screen-id
                    {:new-user (prim/get-query SignUpForm)}]}
   (ui-sign-up-form user))
@@ -178,6 +179,7 @@
 (defsc LogInScreen [this props]
   {:initial-state (fn [params] {:screen    :screen/log-in
                                 :screen-id :top})
+   :ident         (fn [] [:screen/log-in :top])
    :query         [:screen :screen-id]}
   (ui-log-in-form {}))
 
