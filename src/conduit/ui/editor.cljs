@@ -25,8 +25,7 @@
 (defsc ArticleEditor* [this {:article/keys [id slug title description body tags] :as props}]
   {:initial-state (fn [{:article/keys [id]}] #:article{:id :none :body "" :title "" :description "" :slug ""})
    :query         [:article/id :article/slug  :article/title :article/description :article/body
-                   {:article/tags [:tag/tag]}
-                   fs/form-config-join]
+                   {:article/tags [:tag/tag]}]
    :ident         [:article/by-id :article/id]})
 
 (defsc ArticleEditor [this {:article/keys [id slug title description body tags] :as props}]
