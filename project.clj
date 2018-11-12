@@ -20,7 +20,7 @@
                  [duct/handler.sql "0.3.1"]
                  [buddy/buddy-hashers "1.3.0"]
                  [fulcrologic/fulcro "2.5.3"]
-                 [walkable "1.0.0-SNAPSHOT"]
+                 [walkable "1.1.0-SNAPSHOT"]
                  [org.clojure/core.async "0.4.474"]
                  [org.postgresql/postgresql "42.1.4"]]
   :plugins [[duct/lein-duct "0.10.6"]]
@@ -39,9 +39,11 @@
                   :resource-paths ["dev/resources"]
                   :dependencies   [ ;; cljs
                                    [duct/server.figwheel "0.2.1" :exclusions [org.clojure/clojurescript]]
+                                   [org.clojure/test.check "0.10.0-alpha3"]
                                    [devcards "0.2.4" :exclusions [org.clojure/clojurescript]]
 
                                    [fulcrologic/fulcro-inspect "2.1.0" :exclusions [fulcrologic/fulcro-css]]
+
                                    [integrant/repl "0.2.0"]
                                    [eftest "0.4.1"]
                                    [kerodon "0.9.0"]]}})
