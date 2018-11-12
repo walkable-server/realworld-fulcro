@@ -1,5 +1,7 @@
 (ns conduit.handler.walkable
   (:require [walkable.sql-query-builder :as sqb]
+            [walkable.sql-query-builder.emitter :as emitter]
+            [walkable.sql-query-builder.floor-plan :as floor-plan]
             [walkable.sql-query-builder.pathom-env :as env]
             [integrant.core :as ig]
             [clojure.set :refer [rename-keys]]
@@ -8,7 +10,8 @@
             [clojure.java.jdbc :as jdbc]
             [conduit.handler.mutations :as mutations]
             [fulcro.server :as server :refer [server-mutate]]
-            [com.wsscode.pathom.core :as p]))
+            [com.wsscode.pathom.core :as p]
+            [clojure.spec.alpha :as s]))
 
 (defn find-user-in-params [db params]
   (cond
@@ -130,7 +133,7 @@
                                [:< :article/id end]
                                (number? start)
                                [:<= :article/id start])])}]
-    (-> (parser env [`(~query-root ~params)])
+    (-> (parser env [(list query-root params)])
       (get query-root))))
 
 (defn previous-id [env]
@@ -156,7 +159,7 @@
                                (number? start)
                                [:< start :article/id])])}]
     (when (or end start)
-      (-> (parser env [`(~query-root ~params)])
+      (-> (parser env [(list query-root params)])
         (get query-root)))))
 
 (defn fetch-items [env]
@@ -181,7 +184,7 @@
                                     [:<= end :article/id]
                                     (number? start)
                                     [:<= :article/id start])])}
-        items-query [{`(~query-root ~params) (get-items-subquery query)}]]
+        items-query [{(list query-root params) (get-items-subquery query)}]]
     (-> (parser env items-query)
       (get query-root))))
 
@@ -224,11 +227,11 @@
          [paginated-list-resolver sqb/pull-entities p/map-reader p/env-placeholder-reader
           tag-resolver]})]}))
 
-(defmethod ig/init-key ::compile-schema [_ schema]
-  (-> schema
-    (assoc :quote-marks sqb/quotation-marks
+(defmethod ig/init-key ::floor-plan [_ floor-plan]
+  (-> floor-plan
+    (assoc :emitter emitter/postgres-emitter
       :extra-conditions extra-conditions)
-    sqb/compile-schema))
+    floor-plan/compile-floor-plan))
 
 (defmethod ig/init-key ::resolver [_ {:app/keys [db] :as env}]
   (fn [{current-user :identity
