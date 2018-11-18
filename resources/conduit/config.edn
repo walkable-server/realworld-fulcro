@@ -57,7 +57,7 @@
  {:up   [#duct/resource "migrations/create-table-comment-2018-04-23.sql"]
   :down [#duct/resource "migrations/drop-table-comment-2018-04-23.sql"]}
 
- :conduit.handler.walkable/compile-schema
+ :conduit.handler.walkable/floor-plan
  {:columns [:user/email :user/name :user/username :user/bio :user/image
             :article/slug :article/title :article/description :article/body :article/image
             :article/created-at :article/updated-at
@@ -123,4 +123,4 @@
                                :duct/logger                                  #ig/ref :duct/logger
                                :app/jwt-secret                               #duct/env "JWT_SECRET"
                                :app/db                                       #ig/ref :duct.database/sql
-                               :sql-schema                                   #ig/ref :conduit.handler.walkable/compile-schema}}
+                               :floor-plan                                   #ig/ref :conduit.handler.walkable/floor-plan}}
