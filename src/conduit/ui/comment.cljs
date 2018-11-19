@@ -17,6 +17,20 @@
   (let [state  (prim/get-state this)
         whoami (prim/shared this :user/whoami)]
     (dom/form :.card.comment-form
+      {:onSubmit
+       #(do (.preventDefault %)
+          (if (= :guest (:user/id whoami))
+            (js/alert "You must log in first")
+            (when (and (seq (:comment/body state))
+                    (not= (:comment/body state) body))
+              (prim/transact! this
+                `[(mutations/submit-comment
+                    {:article-id ~article-id
+                     :diff       {[:comment/by-id ~(if (= :none id) (prim/tempid) id)]
+                                  ~state}})])
+              (if (= :none id)
+                (prim/set-state! this {})
+                (set-editing-comment-id :none)))))}
       (dom/div :.card-block
         (dom/textarea :.form-control
           {:placeholder "Write a comment..."
@@ -27,21 +41,8 @@
       (dom/div :.card-footer
         (dom/img :.comment-author-img
           {:src (:user/image whoami)})
-        (dom/button :.btn.btn-sm
-          {:className "btn-primary"
-           :onClick
-           #(if (= :guest (:user/id whoami))
-              (js/alert "You must log in first")
-              (when (and (seq (:comment/body state))
-                      (not= (:comment/body state) body))
-                (prim/transact! this
-                  `[(mutations/submit-comment
-                      {:article-id ~article-id
-                       :diff       {[:comment/by-id ~(if (= :none id) (prim/tempid) id)]
-                                    ~state}})])
-                (if (= :none id)
-                  (prim/set-state! this {})
-                  (set-editing-comment-id :none))))}
+        (dom/button :.btn.btn-sm.btn-primary
+          {:type "submit" :value "submit"}
           (if (number? id)
             "Update Comment"
             "Post Comment"))))))
@@ -64,10 +65,10 @@
         (dom/p :.card-text
           body))
       (dom/div :.card-footer
-        (dom/div :.comment-author {:onClick #(routes/go-to-profile this author)}
+        (dom/a :.comment-author {:href (routes/profile-url author)}
           (dom/img :.comment-author-img
             {:src (:user/image author)}))
-        (dom/div :.comment-author {:onClick #(routes/go-to-profile this author)}
+        (dom/a :.comment-author {:href (routes/profile-url author)}
           (:user/name author))
         (dom/span :.date-posted
           (other/js-date->string created-at))

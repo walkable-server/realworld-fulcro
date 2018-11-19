@@ -16,7 +16,10 @@
 
 (defmethod ig/init-key ::devcards [_ {build-id :build-id :or {build-id 0}}]
   {:req #{:duct.server/figwheel}
-   :fn  #(assoc-in % [:duct.server/figwheel :builds build-id :build-options :devcards] true)})
+   :fn  #(update-in % [:duct.server/figwheel :builds build-id :build-options]
+           merge {:preloads '[fulcro.inspect.preload]
+                  :devcards false})})
+
 
 (duct/load-hierarchy)
 

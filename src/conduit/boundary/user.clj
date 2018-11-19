@@ -12,6 +12,13 @@
   (follow [db follower-id followee-id])
   (unfollow [db follower-id followee-id]))
 
+(defn hash-password [user]
+  (if (contains? user :password)
+    (if (seq (:password user))
+      (update user :password hashers/derive)
+      (dissoc user :password))
+    user))
+
 (extend-protocol User
   duct.database.sql.Boundary
   (create-user [{db :spec} {:keys [password] :as user}]
@@ -22,7 +29,7 @@
       (-> results first (dissoc :password))))
   (update-user [db user-id user]
     (jdbc/update! (:spec db) "\"user\""
-      (-> user (select-keys [:username :name :email :bio :image]))
+      (-> user (select-keys [:username :name :email :bio :image :password]) hash-password)
       ["id = ?" user-id]))
   (by-id [{db :spec} id]
     (when-let [user (first (jdbc/find-by-keys db "\"user\"" {:id id}))]

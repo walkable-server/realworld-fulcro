@@ -12,18 +12,18 @@
 (defsc Settings [this props]
   {:query [:user/image :user/name :user/bio :user/email]})
 
-(defsc SettingsForm [this {:user/keys [id image name bio email] :as props}]
-  {:query       [:user/id :user/image :user/name :user/bio :user/email
+(defsc SettingsForm [this {:user/keys [id image name bio email password] :as props}]
+  {:query       [:user/id :user/image :user/name :user/bio :user/email :user/password
                  fs/form-config-join]
    :ident       [:user/by-id :user/id]
-   :form-fields #{:user/image :user/name :user/bio :user/email}}
+   :form-fields #{:user/image :user/name :user/bio :user/email :user/password}}
   (dom/div :.settings-page
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-6.offset-md-3.col-xs-12
           (dom/h1 :.text-xs-center
             "Your Settings")
-          (dom/form
+          (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))]))}
             (dom/fieldset
               (dom/fieldset :.form-group
                 (dom/input :.form-control
@@ -57,13 +57,16 @@
                    :onBlur      #(prim/transact! this
                                    `[(fs/mark-complete! {:field :user/email})])
                    :onChange    #(m/set-string! this :user/email :event %)}))
-              #_
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Password",
-                   :type        "password"}))
+                   :type        "password"
+                   :value       (or password "")
+                   :onBlur      #(prim/transact! this
+                                    `[(fs/mark-complete! {:field :user/password})])
+                   :onChange    #(m/set-string! this :user/password :event %)}))
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                {:onClick #(prim/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))])}
+                {:type "submit" :value "submit"}
                 "Update Settings"))))))))
 
 (def ui-settings-form (prim/factory SettingsForm))
@@ -87,13 +90,12 @@
               (dom/h1 :.text-xs-center
                 "Sign up")
               (dom/p  :.text-xs-center
-                (dom/a {:href    "javascript:void(0)"
-                        :onClick #(routes/go-to-log-in this)}
+                (dom/a {:href (routes/to-path {:handler :screen/log-in})}
                   "Have an account?"))
               #_
               (dom/ul :.error-messages
                 (dom/li "That email is already taken") )
-              (dom/form
+              (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(sign-up ~(merge props state))]))}
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg
                     {:placeholder "Your Name"
@@ -117,7 +119,7 @@
                      :value       (or password "")
                      :onChange    #(prim/set-state! this {:user/password (.. % -target -value)})}) )
                 (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                  {:onClick #(prim/transact! this `[(sign-up ~(merge props state))])}
+                  {:type "submit" :value "submit"}
                   "Sign up")))))))))
 
 (def ui-sign-up-form (prim/factory SignUpForm))
@@ -144,10 +146,9 @@
               (dom/h1 :.text-xs-center
                 "Log in")
               (dom/p :.text-xs-center
-                (dom/a {:href    "javascript:void(0)"
-                        :onClick #(routes/go-to-sign-up this)}
+                (dom/a {:href (routes/to-path {:handler :screen/sign-up})}
                   "Don't have an account?"))
-              (dom/form
+              (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(log-in ~credentials)]))}
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg
                     {:placeholder "Email"
@@ -161,7 +162,7 @@
                      :value       (or password "")
                      :onChange    #(prim/update-state! this assoc :user/password (.. % -target -value))}) )
                 (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
-                  {:onClick #(prim/transact! this `[(log-in ~credentials)])}
+                  {:type "submit" :value "submit"}
                   "Log in")))))))))
 
 (def ui-log-in-form (prim/factory LogInForm))
@@ -169,7 +170,8 @@
 (defsc SignUpScreen [this {user :new-user}]
   {:initial-state (fn [params] {:screen    :screen/sign-up
                                 :screen-id :top
-                                :new-user  #:user{:name "" :email ""}})
+                                :new-user  #:user {:name "" :email ""}})
+   :ident         (fn [] [:screen/sign-up :top])
    :query         [:screen :screen-id
                    {:new-user (prim/get-query SignUpForm)}]}
   (ui-sign-up-form user))
@@ -177,6 +179,7 @@
 (defsc LogInScreen [this props]
   {:initial-state (fn [params] {:screen    :screen/log-in
                                 :screen-id :top})
+   :ident         (fn [] [:screen/log-in :top])
    :query         [:screen :screen-id]}
   (ui-log-in-form {}))
 
@@ -213,8 +216,10 @@
   (remote [env]
     (df/remote-load env)))
 
-(defmutation use-settings-as-form [{:user/keys [id]}]
+(defmutation use-settings-as-form [_]
   (action [{:keys [state] :as env}]
-    (swap! state #(-> %
-                    (fs/add-form-config* SettingsForm [:user/by-id id])
-                    (assoc-in [:root/settings-form :user] [:user/by-id id])))))
+    (swap! state #(let [id (-> % :user/whoami second)]
+                    (-> %
+                      (assoc-in [:user/by-id id :user/password] "")
+                      (fs/add-form-config* SettingsForm [:user/by-id id])
+                      (assoc-in [:root/settings-form :user] [:user/by-id id]))))))

@@ -23,38 +23,37 @@
           "conduit")
         (dom/ul :.nav.navbar-nav.pull-xs-right
           (dom/li :.nav-item
-            (dom/div :.nav-link
-              {:className (when (= current-screen :screen/feed) "active")
-               :onClick   #(prim/transact! this
-                             `[(r/route-to {:handler :screen/feed
-                                            :params  {:feed-id ~(if logged-in? :personal :global)}})])}
-              "Home") )
+            (dom/a :.nav-link
+              {:className (when-not (#{:screen/editor :screen/log-in :screen/sign-up} current-screen)
+                            "active")
+               :href      (routes/feed-url (if logged-in? :personal :global))}
+              "Home"))
           (when logged-in?
             (dom/li :.nav-item
               (dom/a :.nav-link
-                {:className (when (= current-screen :screen/editor) "active")
-                 :onClick   #(routes/go-to-new-article this)}
+                {:className (when (= current-screen :screen/new) "active")
+                 :href      (routes/to-path {:handler :screen/new})}
                 (dom/i :.ion-compose)
                 "New Post")))
           (when logged-in?
             (dom/li :.nav-item
-              (dom/div :.nav-link
+              (dom/a :.nav-link
                 {:className (when (= current-screen :screen/settings) "active")
-                 :onClick   #(routes/go-to-settings this {:user/id current-user-id})}
+                 :href      (routes/to-path {:handler :screen/settings})}
                 (dom/i :.ion-gear-a)
                 "Settings")))
           (when-not logged-in?
             (dom/li :.nav-item
-              (dom/div :.nav-link
+              (dom/a :.nav-link
                 {:className (when (= current-screen :screen/log-in) "active")
-                 :onClick   #(routes/go-to-log-in this)}
+                 :href      (routes/to-path {:handler :screen/log-in})}
                 "Login")))
 
           (when-not logged-in?
             (dom/li :.nav-item
-              (dom/div :.nav-link
+              (dom/a :.nav-link
                 {:className (when (= current-screen :screen/sign-up) "active")
-                 :onClick   #(routes/go-to-sign-up this)}
+                 :href      (routes/to-path {:handler :screen/sign-up})}
                 "Sign up")))
 
           (when logged-in?
@@ -76,6 +75,15 @@
 
 (def ui-footer (prim/factory Footer))
 
+(defsc NotFound [this props]
+  {:ident [:screen :screen-id]
+   :initial-state (fn [params] {:screen :screen/not-found :screen-id :top})
+   :query [:screen :screen-id]}
+  (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-9
+          (dom/div "Not found")))))
+
 (defsc Banner [this _]
   (dom/div :.banner
     (dom/div :.container
@@ -86,7 +94,7 @@
 
 (defsc Tag [this {:tag/keys [tag]}]
   {:query [:tag/tag :tag/count]}
-  (dom/a  :.tag-pill.tag-default {:href ""} tag))
+  (dom/a :.tag-pill.tag-default {:href (routes/to-path {:handler :screen/tag :route-params {:tag tag}})} tag))
 
 (def ui-tag (prim/factory Tag {:keyfn :tag/tag}))
 
@@ -95,38 +103,45 @@
     (dom/div :.sidebar
       (dom/p "Popular Tags")
       (dom/div :.tag-list
-        (mapv ui-tag tags)))))
+        (map ui-tag tags)))))
 
 (def ui-tags (prim/factory Tags))
 
-(defsc FeedSelector [this props {:keys [feed-id]}]
+(defsc FeedSelector [this props {:keys [current-page]}]
   {:query []}
-  (let [whoami        (prim/shared this :user/whoami)
-        not-logged-in (= :guest (:user/id whoami))]
+  (let [whoami                                 (prim/shared this :user/whoami)
+        {:pagination/keys [list-type list-id]} current-page
+        not-logged-in                          (= :guest (:user/id whoami))]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (when (or (not not-logged-in)
-                (and not-logged-in (= feed-id :personal)))
+                (and not-logged-in (= list-id :personal)))
           (dom/li :.nav-item
-            (dom/div :.nav-link
-              {:className (if (= feed-id :personal) "active" "disabled")
-               :onClick   #(if not-logged-in
-                             (js/alert "You must log in first")
-                             (routes/go-to-feed this :personal))}
+            (dom/a :.nav-link
+              (merge {:className (if (= list-id :personal) "active" "disabled")
+                      :href      (routes/feed-url :personal)}
+                (when not-logged-in
+                  {:onClick #(js/alert "You must log in first")}))
               "Your Feed")))
         (dom/li :.nav-item
-          (dom/div :.nav-link
-            {:className (if (= feed-id :global) "active" "disabled")
-             :onClick   #(routes/go-to-feed this :global)}
-            "Global Feed"))))))
+          (dom/a :.nav-link
+            {:className (if (= list-id :global) "active" "disabled")
+             :href      (routes/feed-url :global)}
+            "Global Feed"))
+        (when (= list-type :articles/by-tag)
+          (dom/li :.nav-item
+            (dom/div :.nav-link.active
+              "Tagged with `" list-id "`")))))))
 
 (def ui-feed-selector (prim/factory FeedSelector))
 
-(defsc HomeScreen [this {:keys [feed-id current-page] tags :tags/all}]
+(defsc FeedScreen [this {:keys [feed-id current-page] tags :tags/all}]
   {:ident [:screen/feed :feed-id]
    :initial-state (fn [params] {:screen       :screen/feed
                                 :feed-id      :global
-                                :current-page (prim/get-initial-state pagination/Page {})})
+                                :current-page (prim/get-initial-state pagination/Page
+                                                #:pagination{:list-type :articles/by-feed
+                                                             :list-id   :global})})
 
    :query [:screen :feed-id
            {:current-page (prim/get-query pagination/Page)}
@@ -136,16 +151,60 @@
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feed-selector (prim/computed {} {:feed-id feed-id}))
+          (ui-feed-selector (prim/computed {} {:current-page current-page}))
           (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-feed ~%)])})))
         (ui-tags tags)))))
 
+(defsc TagScreen [this {:keys [tag current-page] tags :tags/all}]
+  {:ident         [:screen/feed :tag]
+   :initial-state (fn [params] {:screen       :screen/tag
+                                :tag          "fulcro"
+                                :current-page (prim/get-initial-state pagination/Page
+                                                #:pagination{:list-type :articles/by-tag
+                                                             :list-id   "fulcro"})})
+
+   :query [:screen :tag
+           {:current-page (prim/get-query pagination/Page)}
+           {[:tags/all '_] (prim/get-query Tag)}]}
+  (dom/div :.home-page
+    (ui-banner)
+    (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-9
+          (ui-feed-selector (prim/computed {} {:current-page current-page}))
+          (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-tag ~%)])})))
+        (ui-tags tags)))))
+
 ;; mutations
-(defmutation load-feed [{:pagination/keys [list-id] :as feed}]
+(defmutation load-feed [{:pagination/keys [list-id] :as page}]
   (action [{:keys [state] :as env}]
+    (swap! state
+      #(update-in % [:screen/feed list-id]
+         (fn [x] (if x
+                   x
+                   {:screen       :screen/feed
+                    :feed-id      list-id
+                    :current-page {}}))))
     (df/load-action env :paginated-list/articles
-      pagination/Page {:params feed
+      pagination/Page {:params page
                        :target [:screen/feed list-id :current-page]}))
+  (remote [env]
+    (df/remote-load env))
+  (refresh [env]
+    [:pagination/list-type :current-page]))
+
+(defmutation load-tag [{:pagination/keys [list-id] :as page}]
+  (action [{:keys [state] :as env}]
+    (swap! state
+      #(update-in % [:screen/tag list-id]
+         (fn [x] (if x
+                   x
+                   {:screen       :screen/tag
+                    :tag          list-id
+                    :current-page {}}))))
+    (df/load-action env :paginated-list/articles
+      pagination/Page {:params page
+                       :target [:screen/tag list-id :current-page]}))
   (remote [env]
     (df/remote-load env))
   (refresh [env]

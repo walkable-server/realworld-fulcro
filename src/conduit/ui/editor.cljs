@@ -9,7 +9,9 @@
    [conduit.ui.article-preview :as preview]
    [fulcro.client.mutations :as m :refer [defmutation]]
    [fulcro.client.data-fetch :as df]
-   [fulcro.client.dom :as dom]))
+   [fulcro.client.dom :as dom]
+   [conduit.ui.routes :as routes]
+   [fulcro.client.routing :as r]))
 
 (defsc TagItem [this {:tag/keys [tag]} {:keys [on-delete]}]
   {:query [:tag/tag]}
@@ -23,8 +25,7 @@
 (defsc ArticleEditor* [this {:article/keys [id slug title description body tags] :as props}]
   {:initial-state (fn [{:article/keys [id]}] #:article{:id :none :body "" :title "" :description "" :slug ""})
    :query         [:article/id :article/slug  :article/title :article/description :article/body
-                   {:article/tags [:tag/tag]}
-                   fs/form-config-join]
+                   {:article/tags [:tag/tag]}]
    :ident         [:article/by-id :article/id]})
 
 (defsc ArticleEditor [this {:article/keys [id slug title description body tags] :as props}]
@@ -34,19 +35,30 @@
                    fs/form-config-join]
    :ident         [:article/by-id :article/id]
    :form-fields   #{:article/slug  :article/title
-                    :article/description :article/body :article/tags}}
+                    :article/description :article/body :article/tags}
+
+   :componentDidUpdate (fn [prev-props _]
+                         (when (and (tempid? (:article/id prev-props))
+                                 (number? (:article/id (prim/props this))))
+                           (let [article-params {:article-id (:article/id (prim/props this))}
+                                 routing-data {:handler      :screen/editor
+                                               :route-params article-params}]
+                             (prim/transact! this `[(switch-to-saved-article ~article-params)
+                                                    (r/route-to ~routing-data)
+                                                    :screen])
+                             (routes/nav-to! routing-data false))))}
   (dom/div :.editor-page
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-10.offset-md-1.col-xs-12
-          (dom/form
+          (dom/div
             (dom/fieldset
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Article Title",
                    :type        "text"
                    :name        "title"
-                   :value       title
+                   :value       (or title "")
                    :onBlur      #(prim/transact! this
                                    `[(fs/mark-complete! {:field :article/title})])
                    :onChange    #(m/set-string! this :article/title :event %)}))
@@ -55,7 +67,7 @@
                   {:placeholder "What's this article about?",
                    :type        "text"
                    :name        "description"
-                   :value       description
+                   :value       (or description "")
                    :onBlur      #(prim/transact! this
                                    `[(fs/mark-complete! {:field :article/description})])
                    :onChange    #(m/set-string! this :article/description :event %)}))
@@ -64,7 +76,7 @@
                   {:placeholder "Slug",
                    :type        "text"
                    :name        "slug"
-                   :value       slug
+                   :value       (or slug "")
                    :onBlur      #(prim/transact! this
                                    `[(fs/mark-complete! {:field :article/slug})])
                    :onChange    #(m/set-string! this :article/slug :event %)}))
@@ -72,7 +84,7 @@
                 (dom/textarea :.form-control
                   {:rows     "8", :placeholder "Write your article (in markdown)"
                    :name     "body"
-                   :value    body
+                   :value    (or body "")
                    :onBlur   #(prim/transact! this
                                 `[(fs/mark-complete! {:field :article/body})])
                    :onChange #(m/set-string! this :article/body :event %)}))
@@ -91,9 +103,8 @@
                 (dom/div :.tag-list
                   (let [on-delete-tag #(prim/transact! this `[(mutations/remove-tag {:article-id ~id :tag ~%})])]
                     (map #(ui-tag-item (prim/computed % {:on-delete on-delete-tag})) tags))))
-              (dom/button :.btn.btn-lg.pull-xs-right.btn-primary
-                {:type    "button"
-                 :onClick #(prim/transact! this `[(mutations/submit-article ~(fs/dirty-fields props false))])}
+              (dom/div :.btn.btn-lg.pull-xs-right.btn-primary
+                {:onClick #(prim/transact! this `[(mutations/submit-article ~(fs/dirty-fields props false))])}
                 (if (tempid? id)
                   "Publish Article"
                   "Update Article")))))))))
@@ -102,7 +113,7 @@
 
 (defsc EditorScreen [this {:keys [screen article-to-edit article-id]}]
   {:ident         (fn [] [screen article-id])
-   :initial-state (fn [params] {:screen          :screen/editor
+   :initial-state (fn [params] {:screen          :screen/new
                                 :article-id      :current-temp-article
                                 :article-to-edit (prim/get-initial-state ArticleEditor #:article{:id :none})})
    :query         (fn [] [:screen :article-id
@@ -111,7 +122,7 @@
 
 (defn create-temp-article-if-not-found
   [tempid-fn state]
-  (if (tempid? (get-in state [:screen/editor :current-temp-article :article-to-edit 1]))
+  (if (tempid? (get-in state [:screen/new :current-temp-article :article-to-edit 1]))
     state
     (let [tempid              (tempid-fn)
           current-user        (:user/whoami state)
@@ -125,10 +136,8 @@
                               :author      current-user
                               :tags        []}]
       (-> (assoc-in state [:article/by-id tempid] new-item)
-        (update-in [:user/by-id current-user-id :user/articles]
-          (fnil conj []) [:article/by-id tempid])
-        (assoc-in [:screen/editor :current-temp-article]
-          {:screen          :screen/editor
+        (assoc-in [:screen/new :current-temp-article]
+          {:screen          :screen/new
            :article-id      :current-temp-article
            :article-to-edit [:article/by-id tempid]})))))
 
@@ -138,22 +147,29 @@
 
 (defmutation use-current-temp-article-as-form [_]
   (action [{:keys [state]}]
-    (swap! state #(let [temp-ident (get-in % [:screen/editor :current-temp-article :article-to-edit])]
+    (swap! state #(let [temp-ident (get-in % [:screen/new :current-temp-article :article-to-edit])]
                     (fs/add-form-config* % ArticleEditor temp-ident)))))
 
-(defmutation load-article-to-editor [{:article/keys [id]}]
+(defmutation switch-to-saved-article [{:keys [article-id]}]
+  (action [{:keys [state]}]
+    (swap! state #(let [new-screen    (get-in % [:screen/new :current-temp-article])
+                        editor-screen (merge new-screen {:article-id article-id
+                                                         :screen     :screen/editor})]
+                    (assoc-in % [:screen/editor article-id] editor-screen)))))
+
+(defmutation load-article-to-editor [{:keys [article-id]}]
   (action [{:keys [state] :as env}]
-    (df/load-action env [:article/by-id id] ArticleEditor*))
+    (df/load-action env [:article/by-id article-id] ArticleEditor*))
   (remote [env]
     (df/remote-load env))
   (refresh [env] [:screen]))
 
-(defmutation use-article-as-form [{:article/keys [id]}]
+(defmutation use-article-as-form [{:keys [article-id]}]
   (action [{:keys [state]}]
     (swap! state #(-> %
-                    (fs/add-form-config* ArticleEditor [:article/by-id id])
-                    (assoc-in [:screen/editor id]
+                    (fs/add-form-config* ArticleEditor [:article/by-id article-id])
+                    (assoc-in [:screen/editor article-id]
                       {:screen          :screen/editor
-                       :article-id      id
-                       :article-to-edit [:article/by-id id]}))))
+                       :article-id      article-id
+                       :article-to-edit [:article/by-id article-id]}))))
   (refresh [env] [:screen]))

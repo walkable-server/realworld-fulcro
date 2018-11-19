@@ -83,22 +83,22 @@
                                                :current-user-name (:user/name profile-to-view)}))
           (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-page ~%)])})))))))
 
-(defmutation load-profile [{:user/keys [id]}]
+(defmutation load-profile [{:keys [user-id]}]
   (action [{:keys [state] :as env}]
     (swap! state
-      #(update-in % [:screen.profile/by-user-id id]
+      #(update-in % [:screen.profile/by-user-id user-id]
          (fn [x] (if x
                    x
                    {:screen          :screen.profile/by-user-id
-                    :user-id         id
+                    :user-id         user-id
                     :current-page    {}
-                    :profile-to-view [:user/by-id id]}))))
-    (df/load-action env [:user/by-id id] Profile)
+                    :profile-to-view [:user/by-id user-id]}))))
+    (df/load-action env [:user/by-id user-id] Profile)
     (df/load-action env :paginated-list/articles
       pagination/Page {:params #:pagination{:list-type :owned-articles/by-user-id
-                                            :list-id id
+                                            :list-id user-id
                                             :size 5}
-                       :target [:screen.profile/by-user-id id :current-page]}))
+                       :target [:screen.profile/by-user-id user-id :current-page]}))
   (remote [env]
     (df/remote-load env))
   (refresh [env] [:screen :profile-to-view]))
