@@ -58,11 +58,12 @@
   :down [#duct/resource "migrations/drop-table-comment-2018-04-23.sql"]}
 
  :conduit.handler.walkable/floor-plan
- {:columns [:user/email :user/name :user/username :user/bio :user/image
-            :article/slug :article/title :article/description :article/body :article/image
-            :article/created-at :article/updated-at
-            :tag/tag
-            :comment/id :comment/created-at :comment/updated-at :comment/body]
+ {:true-columns
+  [:user/email :user/name :user/username :user/bio :user/image
+   :article/slug :article/title :article/description :article/body :article/image
+   :article/created-at :article/updated-at
+   :tag/tag
+   :comment/id :comment/created-at :comment/updated-at :comment/body]
 
   :idents {:user/by-id    :user/id
            :article/by-id :article/id
@@ -104,6 +105,19 @@
   :reversed-joins {:user/follows  :user/followed-by
                    :user/like     :article/liked-by
                    :user/articles :article/author}
+
+  :extra-conditions
+  {[:feed.personal/articles :feed.personal/next-id]
+   {:article/author {:user/followed-by [:= app/current-user :user/id]}}
+
+   :article/liked-by-me
+   [:= app/current-user :user/id]
+
+   :user/whoami
+   [:= app/current-user :user/id]
+
+   :user/followed-by-me
+   [:= app/current-user :user/id]}
 
   :cardinality {:user/whoami :one
 

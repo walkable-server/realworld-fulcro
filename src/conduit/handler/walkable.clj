@@ -61,20 +61,6 @@
    ORDER BY \"tag/count\" DESC
    LIMIT 20")
 
-(def extra-conditions
-  {[:feed.personal/articles :feed.personal/next-id]
-   (fn [{:app/keys [current-user]}]
-     {:article/author {:user/followed-by [:= current-user :user/id]}})
-
-   :article/liked-by-me
-   (fn [{:app/keys [current-user]}] [:= current-user :user/id])
-
-   :user/whoami
-   (fn [{:app/keys [current-user]}] [:= current-user :user/id])
-
-   :user/followed-by-me
-   (fn [{:app/keys [current-user]}] [:= current-user :user/id])})
-
 (defn get-items-subquery [query]
   (->> query
     (some #(and (map? %) (get % :pagination/items)))))
@@ -224,13 +210,18 @@
      [pre-processing-login
       (p/env-plugin
         {::p/reader
-         [paginated-list-resolver sqb/pull-entities p/map-reader p/env-placeholder-reader
+         [paginated-list-resolver
+          sqb/pull-entities
+          p/map-reader
+          p/env-placeholder-reader
           tag-resolver]})]}))
 
 (defmethod ig/init-key ::floor-plan [_ floor-plan]
   (-> floor-plan
     (assoc :emitter emitter/postgres-emitter
-      :extra-conditions extra-conditions)
+      :variable-getters [{:key     'app/current-user
+                          :fn      (fn [env] (:app/current-user env))
+                          :cached? true}])
     floor-plan/compile-floor-plan))
 
 (defmethod ig/init-key ::resolver [_ {:app/keys [db] :as env}]
