@@ -1,6 +1,8 @@
 (ns conduit.handler.transit-format
   (:require [muuntaja.format.transit :as mt]
-            [integrant.core :as ig])
+            [integrant.core :as ig]
+            [fulcro.tempid]
+            [fulcro.transit])
   (:import  [fulcro.tempid TempId]
             [com.cognitect.transit ReadHandler]
             [fulcro.transit TempIdHandler]))
