@@ -14,18 +14,16 @@
 
 (duct/load-hierarchy)
 
-(derive ::devcards :duct/module)
-
-(defmethod ig/prep-key ::devcards [_ opts]
-  (assoc opts ::requires (ig/ref :duct.server/figwheel)))
-
-(defmethod ig/init-key ::devcards [_ {build-id :build-id :or {build-id 0}}]
+(defmethod ig/init-key :fulcro.module/cljs-build-options
+  [_ {build-id :build-id :or {build-id 0}}]
   (fn [config]
-    (-> config
-      (update-in [:duct.server/figwheel :builds build-id :build-options :preloads]
-        conj 'fulcro.inspect.preload)
-      (assoc-in [:duct.server/figwheel :builds build-id :build-options :devcards]
-        false))))
+    (update-in config
+      [:duct.server/figwheel :builds build-id :build-options]
+      duct/merge-configs
+      (:fulcro/cljs-build-options config))))
+
+(defmethod ig/init-key :fulcro/cljs-build-options [_ _]
+  identity)
 
 (defn read-config []
   (duct/read-config (io/resource "conduit/config.edn")))

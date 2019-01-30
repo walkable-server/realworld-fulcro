@@ -138,6 +138,8 @@
 
  :duct.module/cljs {:main conduit.main}
 
+ :fulcro.module/cljs-build-options {}
+
  :duct.module.web/site {}
 
  :duct.module/logging {}
