@@ -1,5 +1,4 @@
-{:duct.core/environment :development
- :duct.core/include ["conduit/config"]
- :dev/devcards {}
- :duct.module/sql
- {:database-url "jdbc:postgresql://localhost/conduit?user=conduit"}}
+{:dev/devcards {}
+
+ :duct.database/sql
+ {:connection-uri "jdbc:postgresql://localhost/conduit?user=conduit"}}
