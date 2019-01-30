@@ -45,7 +45,7 @@
                                    [org.clojure/test.check "0.10.0-alpha3"]
                                    [devcards "0.2.4" :exclusions [org.clojure/clojurescript]]
 
-                                   [fulcrologic/fulcro-inspect "2.1.0" :exclusions [fulcrologic/fulcro-css]]
+                                   [fulcrologic/fulcro-inspect "2.2.5" :exclusions [fulcrologic/fulcro-css]]
 
                                    [integrant/repl "0.3.1"]
                                    [eftest "0.5.4"]
