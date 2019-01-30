@@ -12,26 +12,31 @@
             [integrant.repl :refer [clear halt go init prep reset]]
             [integrant.repl.state :refer [config system]]))
 
-(derive ::devcards :duct/module)
-
-(defmethod ig/init-key ::devcards [_ {build-id :build-id :or {build-id 0}}]
-  {:req #{:duct.server/figwheel}
-   :fn  #(update-in % [:duct.server/figwheel :builds build-id :build-options]
-           merge {:preloads '[fulcro.inspect.preload]
-                  :devcards false})})
-
-
 (duct/load-hierarchy)
 
+(derive ::devcards :duct/module)
+
+(defmethod ig/prep-key ::devcards [_ opts]
+  (assoc opts ::requires (ig/ref :duct.server/figwheel)))
+
+(defmethod ig/init-key ::devcards [_ {build-id :build-id :or {build-id 0}}]
+  (fn [config]
+    (update-in config [:duct.server/figwheel :builds build-id :build-options]
+      merge {:preloads '[fulcro.inspect.preload]
+             :devcards false})))
+
 (defn read-config []
-  (duct/read-config (io/resource "dev.edn")))
+  (duct/read-config (io/resource "conduit/config.edn")))
 
 (defn test []
   (eftest/run-tests (eftest/find-tests "test")))
+
+(def profiles
+  [:duct.profile/dev :duct.profile/local])
 
 (clojure.tools.namespace.repl/set-refresh-dirs "dev/src" "src" "test")
 
 (when (io/resource "local.clj")
   (load "local"))
 
-(integrant.repl/set-prep! (comp duct/prep read-config))
+(integrant.repl/set-prep! #(duct/prep-config (read-config) profiles))
