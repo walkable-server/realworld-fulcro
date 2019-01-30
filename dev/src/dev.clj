@@ -21,9 +21,11 @@
 
 (defmethod ig/init-key ::devcards [_ {build-id :build-id :or {build-id 0}}]
   (fn [config]
-    (update-in config [:duct.server/figwheel :builds build-id :build-options]
-      merge {:preloads '[fulcro.inspect.preload]
-             :devcards false})))
+    (-> config
+      (update-in [:duct.server/figwheel :builds build-id :build-options :preloads]
+        conj 'fulcro.inspect.preload)
+      (assoc-in [:duct.server/figwheel :builds build-id :build-options :devcards]
+        false))))
 
 (defn read-config []
   (duct/read-config (io/resource "conduit/config.edn")))
