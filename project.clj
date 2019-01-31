@@ -35,12 +35,13 @@
    :repl {:prep-tasks   ^:replace ["javac" "compile"]
           :repl-options {:init-ns user
                          :timeout          120000
-                         :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
+                         :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}}
    :uberjar {:aot :all}
    :profiles/dev {}
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
                   :dependencies   [ ;; cljs
+                                   [cider/piggieback "0.3.10"]
                                    [duct/server.figwheel "0.3.0" :exclusions [org.clojure/clojurescript]]
                                    [org.clojure/test.check "0.10.0-alpha3"]
                                    [devcards "0.2.4" :exclusions [org.clojure/clojurescript]]
