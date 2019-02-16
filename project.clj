@@ -41,7 +41,7 @@
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
                   :dependencies   [ ;; cljs
-                                   [cider/piggieback "0.3.10"]
+                                   [cider/piggieback "0.4.0"]
                                    [duct/server.figwheel "0.3.0" :exclusions [org.clojure/clojurescript]]
                                    [org.clojure/test.check "0.10.0-alpha3"]
                                    [devcards "0.2.4" :exclusions [org.clojure/clojurescript]]
