@@ -1,7 +1,7 @@
 (defproject conduit "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
-  :min-lein-version "2.0.0"
+  :min-lein-version "2.8.2"
   :dependencies [[org.clojure/clojure "1.10.0"]
 
                  [duct/core "0.7.0"]
