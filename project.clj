@@ -1,7 +1,7 @@
 (defproject conduit "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
-  :min-lein-version "2.0.0"
+  :min-lein-version "2.8.2"
   :dependencies [[org.clojure/clojure "1.10.0"]
 
                  [duct/core "0.7.0"]
@@ -35,12 +35,13 @@
    :repl {:prep-tasks   ^:replace ["javac" "compile"]
           :repl-options {:init-ns user
                          :timeout          120000
-                         :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
+                         :nrepl-middleware [cider.piggieback/wrap-cljs-repl]}}
    :uberjar {:aot :all}
    :profiles/dev {}
    :project/dev  {:source-paths   ["dev/src"]
                   :resource-paths ["dev/resources"]
                   :dependencies   [ ;; cljs
+                                   [cider/piggieback "0.4.0"]
                                    [duct/server.figwheel "0.3.0" :exclusions [org.clojure/clojurescript]]
                                    [org.clojure/test.check "0.10.0-alpha3"]
                                    [devcards "0.2.4" :exclusions [org.clojure/clojurescript]]
