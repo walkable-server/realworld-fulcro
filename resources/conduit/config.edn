@@ -50,7 +50,15 @@
             [:feed.global/articles :feed.global/next-id
              :feed.personal/articles :feed.personal/next-id]
             "article"
+
+            :tags/all
+            "tag"
             }
+   :grouping {:tags/all {:group-by [:tag/tag]}}
+
+   :pagination-fallbacks {:tags/all
+                          {:order-by {:default [:tag/count :desc]}
+                           :limit    {:default 20}}}
 
    :joins {[:user/followed-by :user/followed-by-me :user/followed-by-count]
            [:user/id :follow/followee-id :follow/follower-id :user/id]
@@ -69,7 +77,7 @@
    :pseudo-columns {:pagination/total   [:count-*]
                     :pagination/last-id [:max :article/id]}
 
-   :aggregators {[:article/liked-by-count :user/followed-by-count]
+   :aggregators {[:article/liked-by-count :user/followed-by-count :tag/count]
                  [:count-*]
 
                  [:feed.global/next-id :feed.personal/next-id]
