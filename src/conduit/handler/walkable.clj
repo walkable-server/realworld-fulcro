@@ -26,7 +26,6 @@
 (def guest-user
   #:user{:id        :guest
          :name      "Guest"
-         :image     "https://static.productionready.io/images/smiley-cyrus.jpg"
          :email     "non@exist"
          :app/token "No token"})
 
