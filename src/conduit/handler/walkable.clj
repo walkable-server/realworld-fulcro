@@ -52,14 +52,6 @@
                guest-user)))
          (reader env))))})
 
-(def query-top-tags
-  "SELECT \"tag\" AS \"tag/tag\",
-   COUNT (*) AS \"tag/count\"
-   FROM \"tag\"
-   GROUP BY \"tag\"
-   ORDER BY \"tag/count\" DESC
-   LIMIT 20")
-
 (defn get-items-subquery [query]
   (->> query
     (some #(and (map? %) (get % :pagination/items)))))
@@ -197,11 +189,6 @@
                                                  :end       p})
                      :items       items}))))
 
-(def tag-resolver
-  {:tags/all (fn [{::sqb/keys [run-query sql-db]}]
-               ;; todo: cache this!
-               (into [] (run-query sql-db [query-top-tags])))})
-
 (def pathom-parser
   (p/parser
     {:mutate server-mutate
@@ -212,8 +199,7 @@
          [paginated-list-resolver
           sqb/pull-entities
           p/map-reader
-          p/env-placeholder-reader
-          tag-resolver]})]}))
+          p/env-placeholder-reader]})]}))
 
 (defmethod ig/init-key ::floor-plan [_ floor-plan]
   (-> floor-plan
