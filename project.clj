@@ -15,16 +15,17 @@
 
                  ;; this version of clojurescript doesn't cause compiling error to specter
                  ;; it's used by specter itself
-                 [org.clojure/clojurescript "1.10.439"]
-                 [com.rpl/specter "1.1.1"]
-                 [metosin/reitit "0.1.3"]
+                 [org.clojure/clojurescript "1.10.520"]
+                 [com.rpl/specter "1.1.2"]
+                 [metosin/reitit "0.2.13"]
                  [kibu/pushy "0.3.8"]
-                 [duct/handler.sql "0.3.1"]
+                 [cheshire "5.8.1"]
+                 [duct/handler.sql "0.4.0"]
                  [buddy/buddy-hashers "1.3.0"]
-                 [fulcrologic/fulcro "2.5.3"]
+                 [fulcrologic/fulcro "2.8.3"]
                  [walkable "1.2.0-SNAPSHOT"]
-                 [org.clojure/core.async "0.4.474"]
-                 [org.postgresql/postgresql "42.1.4"]]
+                 [org.clojure/core.async "0.4.490"]
+                 [org.postgresql/postgresql "42.2.5"]]
   :middleware [lein-duct.plugin/middleware]
   :plugins [[duct/lein-duct "0.11.2"]]
   :main ^:skip-aot conduit.main
@@ -44,10 +45,10 @@
                                    [cider/piggieback "0.4.0"]
                                    [duct/server.figwheel "0.3.0" :exclusions [org.clojure/clojurescript]]
                                    [org.clojure/test.check "0.10.0-alpha3"]
-                                   [devcards "0.2.4" :exclusions [org.clojure/clojurescript]]
+                                   [devcards "0.2.6" :exclusions [org.clojure/clojurescript]]
 
                                    [fulcrologic/fulcro-inspect "2.2.5" :exclusions [fulcrologic/fulcro-css]]
 
                                    [integrant/repl "0.3.1"]
-                                   [eftest "0.5.4"]
+                                   [eftest "0.5.7"]
                                    [kerodon "0.9.0"]]}})
