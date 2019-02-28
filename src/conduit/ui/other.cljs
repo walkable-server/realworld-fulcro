@@ -3,6 +3,9 @@
     [fulcro.client.primitives :as prim :refer [defsc]]
     [fulcro.client.dom :as dom]))
 
+(def default-user-image
+  "https://static.productionready.io/images/smiley-cyrus.jpg")
+
 (defsc UserTinyPreview [this props]
   {:query [:user/id :user/username :user/name :user/image]
    :initial-state (fn [params] #:user{:id :guest})
