@@ -4,6 +4,7 @@
    [conduit.handler.mutations :as mutations]
    [conduit.ui.comment :as comment]
    [conduit.ui.routes :as routes]
+   [conduit.ui.other :as other]
    [fulcro.client.mutations :as m :refer [defmutation]]
    [fulcro.client.data-fetch :as df]
    [fulcro.client.routing :as r]
@@ -21,7 +22,7 @@
     (dom/div :.container
       (dom/div :.row
         (dom/div :.col-xs-12.col-md-10.offset-md-1
-          (dom/img :.user-img {:src image})
+          (dom/img :.user-img {:src (or image other/default-user-image)})
           (dom/h4 name)
           (dom/p bio)
           (let [current-user-id (-> (prim/shared this :user/whoami) :user/id)]

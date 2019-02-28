@@ -14,7 +14,7 @@
    :ident [:article/by-id :article/id]}
   (dom/div :.article-meta
     (dom/a {:href (routes/profile-url author)}
-      (dom/img {:src (:user/image author)}))
+      (dom/img {:src (:user/image author other/default-user-image)}))
     (dom/div :.info
       (dom/a :.author {:href (routes/profile-url author)}
         (:user/name author))

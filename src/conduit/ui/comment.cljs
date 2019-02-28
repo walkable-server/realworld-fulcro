@@ -40,7 +40,7 @@
            :onChange    #(prim/set-state! this {:comment/body (.. % -target -value)})}))
       (dom/div :.card-footer
         (dom/img :.comment-author-img
-          {:src (:user/image whoami)})
+          {:src (:user/image whoami other/default-user-image)})
         (dom/button :.btn.btn-sm.btn-primary
           {:type "submit" :value "submit"}
           (if (number? id)
@@ -67,7 +67,7 @@
       (dom/div :.card-footer
         (dom/a :.comment-author {:href (routes/profile-url author)}
           (dom/img :.comment-author-img
-            {:src (:user/image author)}))
+            {:src (:user/image author other/default-user-image)}))
         (dom/a :.comment-author {:href (routes/profile-url author)}
           (:user/name author))
         (dom/span :.date-posted
