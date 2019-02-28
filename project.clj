@@ -43,7 +43,7 @@
                   :resource-paths ["dev/resources"]
                   :dependencies   [ ;; cljs
                                    [cider/piggieback "0.4.0"]
-                                   [duct/server.figwheel "0.3.0" :exclusions [org.clojure/clojurescript]]
+                                   [walkable/duct.server.figwheel "0.4.0-SNAPSHOT" :exclusions [org.clojure/clojurescript]]
                                    [org.clojure/test.check "0.10.0-alpha3"]
                                    [devcards "0.2.6" :exclusions [org.clojure/clojurescript]]
 
