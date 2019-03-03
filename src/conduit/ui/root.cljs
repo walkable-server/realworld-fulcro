@@ -16,37 +16,39 @@
             [conduit.util :as util]
             [conduit.ui.routes :as routes]))
 
-(r/defrouter TopRouter :router/top
-  (fn [this props]
-    (let [screen-name   (:screen props)
-          screen-id-key (case screen-name
-                          (:screen/new :screen/editor :screen/article)
-                          :article-id
+(defn top-router-ident [props]
+  (let [screen-name   (:screen props)
+        screen-id-key (case screen-name
+                        (:screen/new :screen/editor :screen/article)
+                        :article-id
 
-                          :screen.profile/by-user-id
-                          :user-id
+                        :screen.profile/by-user-id
+                        :user-id
 
-                          :screen/feed
-                          :feed-id
+                        :screen/feed
+                        :feed-id
 
-                          :screen/tag
-                          :tag
+                        :screen/tag
+                        :tag
 
-                          :screen-id)
-          screen-id (get props screen-id-key :top)]
-      [screen-name screen-id]))
+                        :screen-id)
+        screen-id (get props screen-id-key :top)]
+    [screen-name screen-id]))
 
-  :screen/not-found home/NotFound
-
-  :screen/feed     home/FeedScreen
-  :screen/tag      home/TagScreen
-  :screen/settings account/SettingScreen
-  :screen/new      editor/EditorScreen
-  :screen/editor   editor/EditorScreen
-  :screen/log-in   account/LogInScreen
-  :screen/sign-up  account/SignUpScreen
-  :screen/article  article/ArticleScreen
-  :screen.profile/by-user-id  profile/ProfileScreen)
+(r/defsc-router TopRouter [this props]
+  {:router-id      :router/top
+   :ident          (fn [] (top-router-ident props))
+   :default-route  home/FeedScreen
+   :router-targets {:screen/feed               home/FeedScreen
+                    :screen/tag                home/TagScreen
+                    :screen/settings           account/SettingScreen
+                    :screen/new                editor/EditorScreen
+                    :screen/editor             editor/EditorScreen
+                    :screen/log-in             account/LogInScreen
+                    :screen/sign-up            account/SignUpScreen
+                    :screen/article            article/ArticleScreen
+                    :screen.profile/by-user-id profile/ProfileScreen}}
+  (dom/div "Not found!"))
 
 (def ui-top (prim/factory TopRouter))
 
