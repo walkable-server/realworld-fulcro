@@ -52,8 +52,11 @@
 
 (def ui-page (prim/factory Page))
 
-(r/defrouter PageRouter :router/page
-  (fn [this props] (page-ident props))
-  :pagination/page Page)
+(r/defsc-router PageRouter [this props]
+  {:router-id      :router/page
+   :ident          (fn [] (page-ident props))
+   :default-route  Page
+   :router-targets {:pagination/page Page}}
+  (dom/div "Bad route!"))
 
 (def ui-page-router (prim/factory PageRouter))
