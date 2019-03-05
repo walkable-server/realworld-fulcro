@@ -177,16 +177,18 @@
         #:pagination{:size        size
                      :list-type   list-type
                      :list-id     list-id
-                     :next-id     (when-let [n (next-id env)]
-                                    #:pagination{:list-type list-type
-                                                 :list-id   list-id
-                                                 :size      size
-                                                 :start     n})
-                     :previous-id (when-let [p (previous-id env)]
-                                    #:pagination{:list-type list-type
-                                                 :list-id   list-id
-                                                 :size      size
-                                                 :end       p})
+                     :next-id     (let [n (next-id env)]
+                                    (when (number? n)
+                                      #:pagination{:list-type list-type
+                                                   :list-id   list-id
+                                                   :size      size
+                                                   :start     n}))
+                     :previous-id (let [p (previous-id env)]
+                                    (when (number? p)
+                                      #:pagination{:list-type list-type
+                                                   :list-id   list-id
+                                                   :size      size
+                                                   :end       p}))
                      :items       items}))))
 
 (def pathom-parser
