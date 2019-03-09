@@ -201,6 +201,18 @@
   (remote [{:keys [ast state]}]
     (m/returning ast state LogInSubmission)))
 
+(defmutation finish-log-in [_]
+  (action [{:keys [state reconciler]}]
+    (when (= :ok (get-in @state [:submission/by-id :app/log-in
+                                 :submission/status]))
+      (when-let [current-user
+                 (get-in @state [:submission/by-id :app/log-in
+                                 :submission/result])]
+        (let [new-token (get-in @state (conj current-user :user/token))]
+          (reset! other/token-store (str "Token " new-token)))
+        (swap! state assoc :user/whoami current-user)
+        (prim/transact! reconciler `[(mutations/rerender-root)])))))
+
 (defmutation log-out [_]
   (action [{:keys [state] :as env}]
     (df/load-action env :user/whoami other/UserTinyPreview
