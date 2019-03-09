@@ -148,7 +148,9 @@
               (dom/p :.text-xs-center
                 (dom/a {:href (routes/to-path {:handler :screen/sign-up})}
                   "Don't have an account?"))
-              (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(log-in ~credentials)]))}
+              (dom/form {:onSubmit #(do (.preventDefault %)
+                                        (prim/ptransact! this `[(log-in ~credentials)
+                                                                (finish-log-in {})]))}
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg
                     {:placeholder "Email"
