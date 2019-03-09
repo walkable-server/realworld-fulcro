@@ -5,7 +5,9 @@
             [fulcro.client.network :as net]))
 
 (defn wrap-with-token [req]
-  (assoc-in req [:headers "Authorization"] @token-store))
+  (if-let [token @token-store]
+    (assoc-in req [:headers "Authorization"] token)
+    req))
 
 (def remote
   (net/fulcro-http-remote
