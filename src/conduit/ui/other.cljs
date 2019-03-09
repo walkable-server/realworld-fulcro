@@ -3,6 +3,8 @@
     [fulcro.client.primitives :as prim :refer [defsc]]
     [fulcro.client.dom :as dom]))
 
+(def token-store (atom nil))
+
 (def default-user-image
   "https://static.productionready.io/images/smiley-cyrus.jpg")
 
