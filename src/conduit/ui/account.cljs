@@ -198,13 +198,8 @@
    :ident         (fn [] [:submission/by-id :app/log-in])})
 
 (defmutation log-in [credentials]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami SettingsForm
-      {:params        {:login credentials}
-       :without       #{:fulcro.ui.form-state/config :user/password}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
+  (remote [{:keys [ast state]}]
+    (m/returning ast state LogInSubmission)))
 
 (defmutation log-out [_]
   (action [{:keys [state] :as env}]
