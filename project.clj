@@ -22,7 +22,7 @@
                  [cheshire "5.8.1"]
                  [duct/handler.sql "0.4.0"]
                  [buddy/buddy-hashers "1.3.0"]
-                 [fulcrologic/fulcro "2.8.3"]
+                 [fulcrologic/fulcro "2.8.4"]
                  [walkable "1.2.0-SNAPSHOT"]
                  [org.clojure/core.async "0.4.490"]
                  [org.postgresql/postgresql "42.2.5"]]
