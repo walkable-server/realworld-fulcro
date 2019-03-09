@@ -190,6 +190,13 @@
                    {[:root/settings-form :user] (prim/get-query SettingsForm)}]}
   (ui-settings-form user))
 
+(defsc LogInSubmission [this props]
+  {:query         [:submission/id
+                   :submission/status
+                   :submission/errors
+                   {:submission/result (prim/get-query other/UserTinyPreview)}]
+   :ident         (fn [] [:submission/by-id :app/log-in])})
+
 (defmutation log-in [credentials]
   (action [{:keys [state] :as env}]
     (df/load-action env :user/whoami SettingsForm
