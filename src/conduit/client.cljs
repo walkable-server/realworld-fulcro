@@ -1,9 +1,8 @@
 (ns conduit.client
   (:require [fulcro.client :as fc]
             [conduit.ui.root :as root]
+            [conduit.ui.other :refer [token-store]]
             [fulcro.client.network :as net]))
-
-(def token-store (atom "No token"))
 
 (defn wrap-remember-token [res]
   (when-let [new-token (-> (:body res) (get :user/whoami) :app/token)]
