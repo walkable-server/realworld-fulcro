@@ -28,11 +28,16 @@
 (extend-protocol User
   duct.database.sql.Boundary
   (create-user [{db :spec} {:keys [password] :as user}]
-    (let [pw-hash (hashers/derive password)
-          results (jdbc/insert! db "\"user\""
-                    (-> user (select-keys [:username :name :email :bio :image])
-                      (assoc :password pw-hash)))]
-      (-> results first (dissoc :password))))
+    (let [pw-hash (hashers/derive password)]
+      (try
+        (-> (jdbc/insert! db "\"user\""
+              (-> user (select-keys [:name :email :bio :image])
+                (assoc :password pw-hash)))
+          first (dissoc :password)
+          return/result)
+        (catch org.postgresql.util.PSQLException e
+          (let [msg (.getMessage e)]
+            (return/errors (user-error-message msg)))))))
   (update-user [db user-id user]
     (jdbc/update! (:spec db) "\"user\""
       (-> user (select-keys [:username :name :email :bio :image :password]) hash-password)
