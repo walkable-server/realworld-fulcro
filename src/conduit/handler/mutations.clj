@@ -40,6 +40,11 @@
     (let [return (user/find-login db email password)]
       (pull-user env return))))
 
+(defmutation conduit.ui.account/sign-up [{:user/keys [name email password] :as new-user}]
+  (action [{:app/keys [db] :as env}]
+    (let [return (user/create-user db (rename-keys new-user remove-user-namespace))]
+      (pull-user env return))))
+
 (defmutation submit-article [diff]
   (action [{:keys [duct/logger] :app/keys [db current-user]}]
     ;;(log logger :info :article diff)
