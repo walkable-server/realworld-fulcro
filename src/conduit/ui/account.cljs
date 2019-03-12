@@ -185,12 +185,13 @@
                    {:new-user (prim/get-query SignUpForm)}]}
   (ui-sign-up-form user))
 
-(defsc LogInScreen [this props]
+(defsc LogInScreen [this {log-in-status [:submission/by-id :app/log-in]}]
   {:initial-state (fn [params] {:screen    :screen/log-in
                                 :screen-id :top})
    :ident         (fn [] [:screen/log-in :top])
-   :query         [:screen :screen-id]}
-  (ui-log-in-form {}))
+   :query         [:screen :screen-id
+                   {[:submission/by-id :app/log-in] (prim/get-query LogInSubmission)}]}
+  (ui-log-in-form log-in-status))
 
 (defsc SettingScreen [this {user [:root/settings-form :user]}]
   {:initial-state (fn [params] {:screen             :screen/settings
