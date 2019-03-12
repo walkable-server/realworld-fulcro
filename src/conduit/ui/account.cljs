@@ -227,13 +227,8 @@
     (df/remote-load env)))
 
 (defmutation sign-up [new-user]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami SettingsForm
-      {:params        {:sign-up new-user}
-       :without       #{:fulcro.ui.form-state/config :user/password}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
+  (remote [{:keys [ast state]}]
+    (m/returning ast state SignUpSubmission)))
 
 (defmutation use-settings-as-form [_]
   (action [{:keys [state] :as env}]
