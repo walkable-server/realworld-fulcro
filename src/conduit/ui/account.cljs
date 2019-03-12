@@ -78,7 +78,8 @@
    :ident (fn [] [:submission/by-id :app/sign-up])})
 
 (defsc SignUpForm [this {:user/keys [name email] :as props}]
-  {:query         [:user/name :user/email fs/form-config-join]
+  {:query         [:user/name :user/email fs/form-config-join
+                   {[:submission/by-id :app/sign-up] (prim/get-query SignUpSubmission)}]
    :initial-state (fn [params] #:user{:name "" :email ""})
    :ident         (fn [] [:root/sign-up-form :new-user])
    :form-fields   #{:user/name :user/email}}
