@@ -130,6 +130,13 @@
       #(fs/add-form-config* % SignUpForm [:root/sign-up-form :new-user])))
   (refresh [env] [:screen]))
 
+(defsc LogInSubmission [this props]
+  {:query [:submission/id
+           :submission/status
+           :submission/errors
+           {:submission/result (prim/get-query other/UserTinyPreview)}]
+   :ident (fn [] [:submission/by-id :app/log-in])})
+
 (defsc LogInForm [this props]
   (let [{:user/keys [email password] :as credentials} (prim/get-state this)
 
@@ -191,13 +198,6 @@
    :query         [:screen :screen-id
                    {[:root/settings-form :user] (prim/get-query SettingsForm)}]}
   (ui-settings-form user))
-
-(defsc LogInSubmission [this props]
-  {:query         [:submission/id
-                   :submission/status
-                   :submission/errors
-                   {:submission/result (prim/get-query other/UserTinyPreview)}]
-   :ident         (fn [] [:submission/by-id :app/log-in])})
 
 (defmutation log-in [credentials]
   (remote [{:keys [ast state]}]
