@@ -84,8 +84,11 @@
    :ident         (fn [] [:root/sign-up-form :new-user])
    :form-fields   #{:user/name :user/email}}
   (let [{:user/keys [password] :as state} (prim/get-state this)
-        whoami                     (prim/shared this :user/whoami)
-        logged-in?                 (number? (:user/id whoami))]
+        whoami                            (prim/shared this :user/whoami)
+        logged-in?                        (number? (:user/id whoami))
+
+        {:submission/keys [status result errors]}
+        (get props [:submission/by-id :app/sign-up])]
     (dom/div :.auth-page
       (dom/div :.container.page
         (dom/div :.row
