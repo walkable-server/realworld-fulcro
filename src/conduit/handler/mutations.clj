@@ -24,17 +24,21 @@
       (parser [{ident child-query}])
       (get ident))))
 
+(defn pull-user
+  [{:keys [duct/logger] :app/keys [jwt-secret] :as env} return]
+  (if (= :ok (return/status return))
+    (let [{user-id :id} (return/unbox-result return)
+          token         (jwt/sign {:user/id user-id} jwt-secret)
+          ident         [:user/by-id user-id]
+          full-result   (-> (query-ident env ident)
+                          (assoc :user/token token))]
+      (return/update-result return (constantly full-result)))
+    return))
+
 (defmutation conduit.ui.account/log-in [{:user/keys [email password] :as cr}]
-  (action [{:keys [parser ast duct/logger] :app/keys [db jwt-secret] :as env}]
-    (if-let [{user-id :id} (user/find-login db email password)]
-      (let [token  (jwt/sign {:user/id user-id} jwt-secret)
-            ident  [:user/by-id user-id]
-            result (get-result ident env)]
-        #:submission{:id     :app/log-in
-                     :status :ok
-                     :result (assoc result :user/token token)})
-      #:submission{:id     :app/log-in
-                   :status :failed})))
+  (action [{:app/keys [db] :as env}]
+    (let [return (user/find-login db email password)]
+      (pull-user env return))))
 
 (defmutation submit-article [diff]
   (action [{:keys [duct/logger] :app/keys [db current-user]}]
