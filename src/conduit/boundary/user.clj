@@ -43,9 +43,10 @@
       (-> user (select-keys [:username :name :email :bio :image :password]) hash-password)
       ["id = ?" user-id]))
   (find-login [{db :spec} email password]
-    (when-let [user (first (jdbc/find-by-keys db "\"user\"" {:email email}))]
-      (when (hashers/check password (:password user))
-        (dissoc user :password))))
+    (let [user (first (jdbc/find-by-keys db "\"user\"" {:email email}))]
+      (if (and user (hashers/check password (:password user)))
+        (return/result (dissoc user :password))
+        (return/errors {errors/other-category [errors/can-not-log-in]}))))
   (follow [db follower-id followee-id]
     (jdbc/execute! (:spec db)
       [(str "INSERT INTO \"follow\" (follower_id, followee_id)"
