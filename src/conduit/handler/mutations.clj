@@ -18,11 +18,6 @@
 (def remove-comment-namespace
   (util/remove-namespace "comment" [:body]))
 
-(defn submisison-data-query [ast]
-  (->> (:children ast)
-    (some #(when (= (:dispatch-key %) :submission/result) %))
-    :query))
-
 (defn get-result [ident {:keys [parser ast] :as env}]
   (when-let [child-query (submisison-data-query ast)]
     (-> env
