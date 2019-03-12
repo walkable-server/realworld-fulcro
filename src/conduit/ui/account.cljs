@@ -71,6 +71,12 @@
 
 (def ui-settings-form (prim/factory SettingsForm))
 
+(defsc SignUpSubmission [this props]
+  {:query [:submission/status
+           :submission/errors
+           {:submission/result (prim/get-query other/UserTinyPreview)}]
+   :ident (fn [] [:submission/by-id :app/sign-up])})
+
 (defsc SignUpForm [this {:user/keys [name email] :as props}]
   {:query         [:user/name :user/email fs/form-config-join]
    :initial-state (fn [params] #:user{:name "" :email ""})
