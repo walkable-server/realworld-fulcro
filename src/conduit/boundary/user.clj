@@ -1,6 +1,8 @@
 (ns conduit.boundary.user
   (:require [buddy.hashers :as hashers]
             [clojure.java.jdbc :as jdbc]
+            [conduit.ui.errors :as errors]
+            [conduit.ui.return :as return]
             [duct.database.sql]))
 
 (defprotocol User
