@@ -18,8 +18,8 @@
 (def remove-comment-namespace
   (util/remove-namespace "comment" [:body]))
 
-(defn get-result [ident {:keys [parser ast] :as env}]
-  (when-let [child-query (submisison-data-query ast)]
+(defn query-ident [{:keys [parser ast] :as env} ident]
+  (when-let [child-query (return/ast->result-query ast)]
     (-> env
       (parser [{ident child-query}])
       (get ident))))
