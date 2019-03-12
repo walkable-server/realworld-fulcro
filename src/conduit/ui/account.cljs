@@ -137,7 +137,7 @@
            {:submission/result (prim/get-query other/UserTinyPreview)}]
    :ident (fn [] [:submission/by-id :app/log-in])})
 
-(defsc LogInForm [this props]
+(defsc LogInForm [this {:submission/keys [status result]}]
   (let [{:user/keys [email password] :as credentials} (prim/get-state this)
 
         whoami     (prim/shared this :user/whoami)
@@ -155,6 +155,9 @@
               (dom/p :.text-xs-center
                 (dom/a {:href (routes/to-path {:handler :screen/sign-up})}
                   "Don't have an account?"))
+              (when (= status :failed)
+                (dom/ul :.error-messages
+                  (dom/li "Incorrect username or password!")))
               (dom/form {:onSubmit #(do (.preventDefault %)
                                         (prim/ptransact! this `[(log-in ~credentials)
                                                                 (finish-log-in {})]))}
