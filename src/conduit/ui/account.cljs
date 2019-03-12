@@ -131,8 +131,7 @@
   (refresh [env] [:screen]))
 
 (defsc LogInSubmission [this props]
-  {:query [:submission/id
-           :submission/status
+  {:query [:submission/status
            :submission/errors
            {:submission/result (prim/get-query other/UserTinyPreview)}]
    :ident (fn [] [:submission/by-id :app/log-in])})
