@@ -19,6 +19,12 @@
       (dissoc user :password))
     user))
 
+(defn user-error-message [msg]
+  (condp re-find msg
+    #"ERROR: duplicate key value violates unique constraint \"user_email_key\""
+    {:user/email [errors/email-taken]}
+    {errors/other-category [errors/unknown]}))
+
 (extend-protocol User
   duct.database.sql.Boundary
   (create-user [{db :spec} {:keys [password] :as user}]
