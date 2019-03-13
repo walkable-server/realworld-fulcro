@@ -115,28 +115,36 @@
               (dom/p  :.text-xs-center
                 (dom/a {:href (routes/to-path {:handler :screen/log-in})}
                   "Have an account?"))
-              #_
-              (dom/ul :.error-messages
-                (dom/li "That email is already taken") )
-              (dom/form {:onSubmit #(do (.preventDefault %) (prim/transact! this `[(sign-up ~(merge props state))]))}
+              (when (= :failed status)
+                (dom/ul :.error-messages
+                  (mapv ui-sign-up-error (get errors :user/email))
+                  (mapv ui-sign-up-error (get errors errors/other-category))))
+
+              (dom/form {:onSubmit #(do (.preventDefault %)
+                                        (prim/ptransact! this `[(sign-up ~(merge props state))
+                                                                (finish-sign-up {})]))}
+
                 (dom/fieldset :.form-group
-                  (dom/input :.form-control.form-control-lg
+                  (dom/input :.form-control.form-control-lg.form-control-success.form-control-warning.form-control-danger
                     {:placeholder "Your Name"
                      :type        "text"
                      :value       name
                      :onBlur      #(prim/transact! this
                                      `[(fs/mark-complete! {:field :user/name})])
                      :onChange    #(m/set-string! this :user/name :event %)}))
-                (dom/fieldset :.form-group
-                  (dom/input :.form-control.form-control-lg
+                (dom/fieldset {:classes ["form-group"
+                                         (when (and (= :failed status) (seq (get errors :user/email)))
+                                           "has-danger has-feedback")]}
+                  (dom/input :.form-control.form-control-lg.form-control-success.form-control-warning.form-control-danger
                     {:placeholder "Email"
                      :type        "text"
                      :value       email
                      :onBlur      #(prim/transact! this
                                      `[(fs/mark-complete! {:field :user/email})])
                      :onChange    #(m/set-string! this :user/email :event %)}))
+
                 (dom/fieldset :.form-group
-                  (dom/input :.form-control.form-control-lg
+                  (dom/input :.form-control.form-control-lg.form-control-success.form-control-warning.form-control-danger
                     {:placeholder "Password"
                      :type        "password"
                      :value       (or password "")
