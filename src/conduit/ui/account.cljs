@@ -78,6 +78,16 @@
            {:submission/result (prim/get-query other/UserTinyPreview)}]
    :ident (fn [] [:submission/by-id :app/sign-up])})
 
+(defsc SignUpError [this error]
+  (dom/li
+    (str
+      (condp = error
+        errors/email-taken
+        "That email is already taken"
+        "Unknown error"))))
+
+(def ui-sign-up-error (prim/factory SignUpError {:keyfn identity}))
+
 (defsc SignUpForm [this {:user/keys [name email] :as props}]
   {:query         [:user/name :user/email fs/form-config-join
                    {[:submission/by-id :app/sign-up] (prim/get-query SignUpSubmission)}]
