@@ -2,6 +2,7 @@
   (:require
    [fulcro.client.primitives :as prim :refer [defsc]]
    [conduit.ui.other :as other]
+   [conduit.ui.errors :as errors]
    [fulcro.ui.form-state :as fs]
    [conduit.handler.mutations :as mutations]
    [fulcro.client.mutations :as m :refer [defmutation]]
