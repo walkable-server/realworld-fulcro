@@ -243,6 +243,10 @@
   (action [env]
     (finish-log-in-or-sign-up :app/log-in env)))
 
+(defmutation finish-sign-up [_]
+  (action [env]
+    (finish-log-in-or-sign-up :app/sign-up env)))
+
 (defmutation log-out [_]
   (action [{:keys [state] :as env}]
     (df/load-action env :user/whoami other/UserTinyPreview
