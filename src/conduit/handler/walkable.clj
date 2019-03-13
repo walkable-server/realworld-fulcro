@@ -13,45 +13,6 @@
             [com.wsscode.pathom.core :as p]
             [clojure.spec.alpha :as s]))
 
-(defn find-user-in-params [db params]
-  (cond
-    (:login params)
-    (let [{:user/keys [email password]} (:login params)]
-      (user/find-login db email password))
-
-    (:sign-up params)
-    (let [new-user (:sign-up params)]
-      (user/create-user db (rename-keys new-user mutations/remove-user-namespace)))))
-
-(def guest-user
-  #:user{:id        :guest
-         :name      "Guest"
-         :email     "non@exist"
-         :app/token "No token"})
-
-(def pre-processing-login
-  {::p/wrap-read
-   (fn [reader]
-     (fn [env]
-       (if (= (-> env :ast :dispatch-key) :user/whoami)
-         (if (map? (-> env :ast :params))
-           (let [params                      (-> env :ast :params)
-                 {:app/keys [db jwt-secret]} env]
-             (when-not (:logout params)
-               guest-user
-               (if-let [{user-id :id} (find-user-in-params db params)]
-                 (let [token (jwt/sign {:user/id user-id} jwt-secret)]
-                   (-> env
-                     (assoc :app/current-user user-id)
-                     reader
-                     (assoc :app/token token)))
-                 guest-user)))
-           (let [result (reader env)]
-             (if (seq result)
-               result
-               guest-user)))
-         (reader env))))})
-
 (defn get-items-subquery [query]
   (->> query
     (some #(and (map? %) (get % :pagination/items)))))
@@ -195,8 +156,7 @@
   (p/parser
     {:mutate server-mutate
      ::p/plugins
-     [pre-processing-login
-      (p/env-plugin
+     [(p/env-plugin
         {::p/reader
          [paginated-list-resolver
           sqb/pull-entities
