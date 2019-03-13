@@ -106,7 +106,9 @@
           (if logged-in?
             (dom/div :.col-md-6.offset-md-3.col-xs-12
               (dom/p :.text-xs-center
-                "You have logged in as " (:user/name whoami)))
+                (if (= :ok status)
+                  (str "You have successfully signed up as " (:user/name result))
+                  (str "You have logged in as " (:user/name whoami)))))
             (dom/div :.col-md-6.offset-md-3.col-xs-12
               (dom/h1 :.text-xs-center
                 "Sign up")
