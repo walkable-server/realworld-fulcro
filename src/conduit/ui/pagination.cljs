@@ -6,6 +6,26 @@
    [fulcro.client.routing :as r]
    [conduit.util :as util]))
 
+(defn list-ident-value
+  [{:app.article.list/keys [list-type list-id direction size]
+    :or                    {list-type :app.articles.list/feed
+                            list-id   :global
+                            direction :forward
+                            size      5}}]
+  #:app.articles.list{:list-type list-type
+                      :list-id   list-id
+                      :direction direction
+                      :size      size})
+
+(defn list-ident
+  [props]
+  [:app.articles/list (list-ident-value props)])
+
+(defn page-ident
+  [{:app.article.list.page/keys [start end] :as props}]
+  [:app.articles.list/page
+   (merge (list-ident-value props)
+     #:app.articles.list.page{:start start :end end})])
 (defsc Page
   [this {:app.articles.page/keys [start end items]
          :app.articles.list/keys [list-type list-id]
