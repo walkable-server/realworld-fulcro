@@ -6,12 +6,6 @@
    [fulcro.client.routing :as r]
    [conduit.util :as util]))
 
-(defn page-ident [props]
-  [:pagination/page
-   (select-keys props [:pagination/list-type :pagination/list-id :pagination/size
-                       (if (number? (:pagination/end props))
-                         :pagination/end
-                         :pagination/start)])])
 
 (defsc Page [this {:pagination/keys [list-type list-id size start end previous-id next-id items] :as props}
              {:keys [load-page]}]
