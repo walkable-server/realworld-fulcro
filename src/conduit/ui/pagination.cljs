@@ -58,22 +58,22 @@
                    {:app.articles.list.page/items (prim/get-query preview/ArticlePreview)}]}
   (dom/div
     (preview/article-list this
-      (if (number? end) (reverse items) items)
+      (if (= :forward direction) items (reverse items))
       (cond
-        (and (= list-type :articles/by-feed) (= list-id :personal))
-        "You have no article!"
+        (and (= list-type :app.articles.list/on-feed) (= list-id :personal))
+        "You have no article! Try to follow more people."
 
         :default
         "No article!"))
     (dom/div
       (dom/button :.btn.btn-sm
-        (if previous-id
-          {:onClick #(load-page previous-id) :className "action-btn btn-outline-primary"}
+        (if (has-previous-page? article-list props)
+          {:onClick #(previous-page props) :className "action-btn btn-outline-primary"}
           {:className "btn-outline-secondary"})
         "Previous")
       (dom/button :.btn.btn-sm
-        (if next-id
-          {:onClick #(load-page next-id) :className "action-btn btn-outline-primary"}
+        (if (has-next-page? article-list props)
+          {:onClick #(next-page props) :className "action-btn btn-outline-primary"}
           {:className "btn-outline-secondary"})
         "Next"))))
 
