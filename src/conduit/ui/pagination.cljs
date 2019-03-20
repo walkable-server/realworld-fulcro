@@ -49,10 +49,13 @@
                                              :end   :none
                                              :items (prim/get-initial-state preview/ArticlePreview {})}
                       params))
-   :query         [:pagination/list-type :pagination/list-id :pagination/size
-                   :pagination/start :pagination/end
-                   :pagination/next-id  :pagination/previous-id
-                   {:pagination/items (prim/get-query preview/ArticlePreview)}]}
+   :query         [:app.articles.list/list-type
+                   :app.articles.list/list-id
+                   :app.articles.list/direction
+                   :app.articles.list/size
+                   :app.articles.list.page/start
+                   :app.articles.list.page/end
+                   {:app.articles.list.page/items (prim/get-query preview/ArticlePreview)}]}
   (dom/div
     (preview/article-list this
       (if (number? end) (reverse items) items)
