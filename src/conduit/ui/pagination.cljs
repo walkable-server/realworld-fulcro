@@ -6,9 +6,11 @@
    [fulcro.client.routing :as r]
    [conduit.util :as util]))
 
-
-(defsc Page [this {:pagination/keys [list-type list-id size start end previous-id next-id items] :as props}
-             {:keys [load-page]}]
+(defsc Page
+  [this {:app.articles.page/keys [start end items]
+         :app.articles.list/keys [list-type list-id]
+         :as                     props}
+   {:keys [article-list]}]
   {:ident         (fn [] (page-ident props))
    :initial-state (fn [params]
                     (merge #:pagination{:list-type   :articles/by-feed
