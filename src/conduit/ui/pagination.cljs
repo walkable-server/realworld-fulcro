@@ -28,14 +28,14 @@
      #:app.articles.list.page{:start start :end end})])
 
 (defn has-previous-page?
-  [article-list {:app.article.list.page/keys [start]}]
-  (and (not (nil? start))
-    (= start (:app.articles.list/first-item-id article-list))))
+  [{:app.article.list/keys [current-page first-item-id] :as article-list}]
+  (and (not (nil? first-item-id))
+    (= first-item-id (:app.articles.list.page/start current-page))))
 
 (defn has-next-page?
-  [article-list {:app.article.list.page/keys [end]}]
-  (and (not (nil? end))
-    (= start (:app.articles.list/last-item-id article-list))))
+  [{:app.article.list/keys [current-page last-item-id] :as article-list}]
+  (and (not (nil? last-item-id))
+    (= last-item-id (:app.articles.list.page/end current-page))))
 
 (defsc Page
   [this {:app.articles.page/keys [start end items]
