@@ -26,6 +26,17 @@
   [:app.articles.list/page
    (merge (list-ident-value props)
      #:app.articles.list.page{:start start :end end})])
+
+(defn has-previous-page?
+  [article-list {:app.article.list.page/keys [start]}]
+  (and (not (nil? start))
+    (= start (:app.articles.list/first-item-id article-list))))
+
+(defn has-next-page?
+  [article-list {:app.article.list.page/keys [end]}]
+  (and (not (nil? end))
+    (= start (:app.articles.list/last-item-id article-list))))
+
 (defsc Page
   [this {:app.articles.page/keys [start end items]
          :app.articles.list/keys [list-type list-id]
