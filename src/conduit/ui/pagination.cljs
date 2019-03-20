@@ -8,7 +8,7 @@
 
 (defn list-ident-value
   [{:app.article.list/keys [list-type list-id direction size]
-    :or                    {list-type :app.articles.list/feed
+    :or                    {list-type :app.articles/on-feed
                             list-id   :global
                             direction :forward
                             size      5}}]
@@ -59,7 +59,7 @@
   (preview/article-list this
     (if (= :forward direction) items (reverse items))
     (cond
-      (and (= list-type :app.articles.list/on-feed) (= list-id :personal))
+      (and (= list-type :app.articles/on-feed) (= list-id :personal))
       "You have no article! Try to follow more people."
 
       :default
