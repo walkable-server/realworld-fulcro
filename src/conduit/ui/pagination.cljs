@@ -79,6 +79,32 @@
 
 (def ui-page (prim/factory Page))
 
+(defsc List
+  [this {:app.articles.list/keys [list-type list-id direction size current-page]
+         :as                     props}]
+  {:ident         (fn [] (list-ident props))
+   :initial-state (fn [params]
+                    (merge (list-ident-value params)
+                      #:app.articles.list{:first-item-id nil
+                                          :last-item-id  nil
+                                          :total-items   0
+                                          :streak        []
+                                          :current-page  (prim/get-initial-state Page params)}
+                      params))
+   :query         [:app.articles.list/list-type
+                   :app.articles.list/list-id
+                   :app.articles.list/direction
+                   :app.articles.list/size
+                   :app.articles.list/first-item-id
+                   :app.articles.list/last-item-id
+                   :app.articles.list/total-items
+                   {:app.articles.list/current-page (prim/get-query Page)}]}
+  (if current-page
+    (dom/div "No article")
+    (ui-page (prim/computed current-page {:article-list props}))))
+
+(def ui-list (prim/factory List))
+
 (r/defsc-router PageRouter [this props]
   {:router-id      :router/page
    :ident          (fn [] (page-ident props))
