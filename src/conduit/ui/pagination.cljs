@@ -109,7 +109,7 @@
   {:router-id      :router/page
    :ident          (fn [] (page-ident props))
    :default-route  Page
-   :router-targets {:pagination/page Page}}
+   :router-targets {:app.articles.list/page Page}}
   (dom/div "Bad route!"))
 
 (def ui-page-router (prim/factory PageRouter))
