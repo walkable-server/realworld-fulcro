@@ -56,26 +56,14 @@
                    :app.articles.list.page/start
                    :app.articles.list.page/end
                    {:app.articles.list.page/items (prim/get-query preview/ArticlePreview)}]}
-  (dom/div
-    (preview/article-list this
-      (if (= :forward direction) items (reverse items))
-      (cond
-        (and (= list-type :app.articles.list/on-feed) (= list-id :personal))
-        "You have no article! Try to follow more people."
+  (preview/article-list this
+    (if (= :forward direction) items (reverse items))
+    (cond
+      (and (= list-type :app.articles.list/on-feed) (= list-id :personal))
+      "You have no article! Try to follow more people."
 
-        :default
-        "No article!"))
-    (dom/div
-      (dom/button :.btn.btn-sm
-        (if (has-previous-page? article-list props)
-          {:onClick #(previous-page props) :className "action-btn btn-outline-primary"}
-          {:className "btn-outline-secondary"})
-        "Previous")
-      (dom/button :.btn.btn-sm
-        (if (has-next-page? article-list props)
-          {:onClick #(next-page props) :className "action-btn btn-outline-primary"}
-          {:className "btn-outline-secondary"})
-        "Next"))))
+      :default
+      "No article!")))
 
 (def ui-page (prim/factory Page))
 
@@ -101,7 +89,19 @@
                    {:app.articles.list/current-page (prim/get-query Page)}]}
   (if current-page
     (dom/div "No article")
-    (ui-page (prim/computed current-page {:article-list props}))))
+    (dom/div
+      (ui-page current-page)
+      (dom/div
+        (dom/button :.btn.btn-sm
+          (if (has-previous-page? props)
+            {:onClick #(previous-page props) :className "action-btn btn-outline-primary"}
+            {:className "btn-outline-secondary"})
+          "Previous")
+        (dom/button :.btn.btn-sm
+          (if (has-next-page? props)
+            {:onClick #(next-page props) :className "action-btn btn-outline-primary"}
+            {:className "btn-outline-secondary"})
+          "Next")))))
 
 (def ui-list (prim/factory List))
 
