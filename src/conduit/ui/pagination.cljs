@@ -16,12 +16,12 @@
 (defn has-previous-page?
   [{:app.articles.list/keys [current-page first-item-id] :as article-list}]
   (and (not (nil? first-item-id))
-    (= first-item-id (:app.articles.list.page/start current-page))))
+    (not= first-item-id (:app.articles.list.page/start current-page))))
 
 (defn has-next-page?
   [{:app.articles.list/keys [current-page last-item-id] :as article-list}]
   (and (not (nil? last-item-id))
-    (= last-item-id (:app.articles.list.page/end current-page))))
+    (not= last-item-id (:app.articles.list.page/end current-page))))
 
 (defsc Page
   [this {:app.articles.list/keys      [list-type list-id direction]
