@@ -11,6 +11,7 @@
             [conduit.handler.mutations :as mutations]
             [fulcro.server :as server :refer [server-mutate]]
             [com.wsscode.pathom.core :as p]
+            [conduit.util :as util :refer [list-ident list-ident-value]]
             [clojure.spec.alpha :as s]))
 
 (defn get-items-subquery [query]
@@ -74,21 +75,6 @@
     (-> (parser env query)
       (get query-root)
       first)))
-
-(defn list-ident-value
-  [{:app.articles.list/keys [list-type list-id direction size]
-    :or                     {list-type :app.articles/on-feed
-                             list-id   :global
-                             direction :forward
-                             size      5}}]
-  #:app.articles.list{:list-type list-type
-                      :list-id   list-id
-                      :direction direction
-                      :size      size})
-
-(defn list-ident
-  [props]
-  [:app.articles/list (list-ident-value props)])
 
 (defn article-list-resolver [env]
   (if (not= :app.articles/list (env/dispatch-key env))

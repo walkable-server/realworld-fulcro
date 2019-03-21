@@ -5,22 +5,7 @@
    [fulcro.client.dom :as dom]
    [conduit.ui.article-preview :as preview]
    [fulcro.client.routing :as r]
-   [conduit.util :as util]))
-
-(defn list-ident-value
-  [{:app.articles.list/keys [list-type list-id direction size]
-    :or                     {list-type :app.articles/on-feed
-                             list-id   :global
-                             direction :forward
-                             size      5}}]
-  #:app.articles.list{:list-type list-type
-                      :list-id   list-id
-                      :direction direction
-                      :size      size})
-
-(defn list-ident
-  [props]
-  [:app.articles/list (list-ident-value props)])
+   [conduit.util :as util :refer [list-ident list-ident-value]]))
 
 (defn page-ident
   [{:app.articles.list.page/keys [start end] :as props}]
