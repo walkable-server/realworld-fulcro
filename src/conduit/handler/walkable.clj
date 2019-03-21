@@ -110,6 +110,16 @@
                                      :start (-> items first :article/id)
                                      :end   (-> items last :article/id)})}))))
 
+(defn whoami-resolver [env]
+  (if (not= :user/whoami (env/dispatch-key env))
+    ::p/continue
+    (if-let [user-id (:app/current-user env)]
+      (let [{:keys [parser query]} env
+            ident [:user/by-id user-id]]
+        (-> (parser env [{ident query}])
+          (get ident)))
+      #:user {:id :guest :email "non@exist"})))
+
 (def pathom-parser
   (p/parser
     {:mutate server-mutate
@@ -117,6 +127,7 @@
      [(p/env-plugin
         {::p/reader
          [article-list-resolver
+          whoami-resolver
           sqb/pull-entities
           p/map-reader
           p/env-placeholder-reader]})]}))
