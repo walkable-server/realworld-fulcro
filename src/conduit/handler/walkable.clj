@@ -15,31 +15,32 @@
 
 (defn get-items-subquery [query]
   (->> query
-    (some #(and (map? %) (get % :pagination/items)))))
+    (some #(and (map? %) (get % :app.articles.list/current-page)))
+    (some #(and (map? %) (get % :app.articles.list.page/items)))))
 
-(defn query-params [env]
-  (let [{:pagination/keys [size start end] :or {size 10}} (env/params env)]
-    {:order-by [:article/id (if-not (number? end) :desc :asc)]
-     :filters  (cond
-                 (number? end)
-                 [:<= :article/id end]
-                 (number? start)
-                 [:<= start :article/id])}))
+(defn page-filters [{:app.articles.list/keys [direction]
+                     :app.articles.list.page/keys [start end]}]
+  (when (every? number? [start end])
+    (if (= :forward direction)
+      [:<= end :article/id start]
+      [:<= start :article/id end])))
 
-(defn extra-filter [env]
-  (let [{:pagination/keys [list-type list-id]} (env/params env)]
-    (case list-type
-      :liked-articles/by-user-id
-      {:article/liked-by [:= :user/id list-id]}
+(defn order-by [direction]
+  [:article/id (if (= direction :forward) :desc :asc)])
 
-      :owned-articles/by-user-id
-      [:= :article/author-id list-id]
+(defn list-filters [{:app.articles.list/keys [list-type list-id]}]
+  (case list-type
+    :app.articles/liked-by-user
+    {:article/liked-by [:= :user/id list-id]}
 
-      :articles/by-tag
-      {:article/tags [:= :tag/tag list-id]}
+    :app.articles/owned-by-user
+    [:= :article/author-id list-id]
 
-      ;; default
-      nil)))
+    :app.articles/with-tag
+    {:article/tags [:= :tag/tag list-id]}
+
+    ;; default
+    nil))
 
 (defn merge-filters [xs]
   (let [xs (remove nil? xs)]
@@ -48,109 +49,66 @@
         (first xs)
         (into [:and] xs)))))
 
-(defn next-id [env]
-  (let [{:pagination/keys [list-type list-id size start end] :or {size 10}} (env/params env)
-
-        {:keys [parser query]} env
-
-        query-root
-        (cond
-          (= [list-type list-id] [:articles/by-feed :personal])
-          :feed.personal/next-id
-
-          :default
-          :feed.global/next-id)
-
-        params {:order-by [:article/id :desc]
-                :limit    1
-                :offset   (when-not (number? end) size)
-                :filters  (merge-filters
-                            [(extra-filter env)
-                             (cond
-                               (number? end)
-                               [:< :article/id end]
-                               (number? start)
-                               [:<= :article/id start])])}]
-    (-> (parser env [(list query-root params)])
-      (get query-root))))
-
-(defn previous-id [env]
-  (let [{:pagination/keys [list-type list-id size start end] :or {size 10}} (env/params env)
-
-        {:keys [parser query]} env
-        query-root
-        (cond
-          (= [list-type list-id] [:articles/by-feed :personal])
-          :feed.personal/next-id
-
-          :default
-          :feed.global/next-id)
-
-        params {:order-by [:article/id :asc]
-                :limit    1
-                :offset   (when (number? end) size)
-                :filters  (merge-filters
-                            [(extra-filter env)
-                             (cond
-                               (number? end)
-                               [:<= end :article/id]
-                               (number? start)
-                               [:< start :article/id])])}]
-    (when (or end start)
-      (-> (parser env [(list query-root params)])
-        (get query-root)))))
-
-(defn fetch-items [env]
-  (let [{:pagination/keys [list-type list-id size start end] :or {size 10}} (env/params env)
-
-        {:keys [parser query]} env
-
-        query-root
-        (cond
-          (= [list-type list-id] [:articles/by-feed :personal])
-          :feed.personal/articles
-
-          :default
-          :feed.global/articles)
-
-        params      {:order-by [:article/id (if (number? end) :asc :desc)]
-                     :limit    size
-                     :filters  (merge-filters
-                                 [(extra-filter env)
-                                  (cond
-                                    (number? end)
-                                    [:<= end :article/id]
-                                    (number? start)
-                                    [:<= :article/id start])])}
-        items-query [{(list query-root params) (get-items-subquery query)}]]
+(defn fetch-items
+  [query-root params {:keys [parser query] :as env}]
+  (let [items-query
+        [{(list query-root params) (get-items-subquery query)}]]
     (-> (parser env items-query)
       (get query-root))))
 
-(defn paginated-list-resolver [env]
-  (if (not= :paginated-list/articles (env/dispatch-key env))
-    ::p/continue
-    (let [{:pagination/keys [list-type list-id size start end] :or {size 10}} (env/params env)
+(defn query-root
+  [{:app.articles.list/keys [list-type list-id]}]
+  (cond
+    (= [list-type list-id] [:app.articles/on-feed :personal])
+    :feed.personal/articles
 
-          items (fetch-items env)]
-      (merge
-        {(if (number? end) :pagination/end :pagination/start)
-         (or (:article/id (first items)) :no-start)}
-        #:pagination{:size        size
-                     :list-type   list-type
-                     :list-id     list-id
-                     :next-id     (let [n (next-id env)]
-                                    (when (number? n)
-                                      #:pagination{:list-type list-type
-                                                   :list-id   list-id
-                                                   :size      size
-                                                   :start     n}))
-                     :previous-id (let [p (previous-id env)]
-                                    (when (number? p)
-                                      #:pagination{:list-type list-type
-                                                   :list-id   list-id
-                                                   :size      size
-                                                   :end       p}))
-                     :items       items}))))
+    :default
+    :feed.global/articles))
+
+(defn fetch-list-stats
+  [query-root list-filters {:keys [parser] :as env}]
+  (let [query [{(list query-root {:filters list-filters})
+                [:app.articles.list/first-item-id
+                 :app.articles.list/last-item-id
+                 :app.articles.list/total-items]}]]
+    (-> (parser env query)
+      (get query-root)
+      first)))
+
+(defn list-ident-value
+  [{:app.articles.list/keys [list-type list-id direction size]
+    :or                     {list-type :app.articles/on-feed
+                             list-id   :global
+                             direction :forward
+                             size      5}}]
+  #:app.articles.list{:list-type list-type
+                      :list-id   list-id
+                      :direction direction
+                      :size      size})
+
+(defn list-ident
+  [props]
+  [:app.articles/list (list-ident-value props)])
+
+(defn article-list-resolver [env]
+  (if (not= :app.articles/list (env/dispatch-key env))
+    ::p/continue
+    (let [page        (env/ident-value env)
+          ident-value (list-ident-value page)
+          qr          (query-root ident-value)
+          lf          (list-filters ident-value)
+          stats       (fetch-list-stats qr lf env)
+          items       (fetch-items qr
+                        {:order-by (order-by ident-value)
+                         :limit    (:app.articles.list/size ident-value)
+                         :filters  (merge-filters [lf (page-filters page)])}
+                        env)]
+      (merge ident-value stats
+        {:app.articles.list/current-page
+         (merge ident-value
+           #:app.articles.list.page {:items items
+                                     :start (-> items first :article/id)
+                                     :end   (-> items last :article/id)})}))))
 
 (def pathom-parser
   (p/parser
@@ -158,7 +116,7 @@
      ::p/plugins
      [(p/env-plugin
         {::p/reader
-         [paginated-list-resolver
+         [article-list-resolver
           sqb/pull-entities
           p/map-reader
           p/env-placeholder-reader]})]}))
