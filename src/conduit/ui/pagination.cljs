@@ -88,7 +88,7 @@
                    :app.articles.list/last-item-id
                    :app.articles.list/total-items
                    {:app.articles.list/current-page (prim/get-query Page)}]}
-  (if current-page
+  (if-not current-page
     (dom/div "No article")
     (dom/div
       (ui-page current-page)
