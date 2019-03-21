@@ -175,36 +175,25 @@
         (ui-tags tags)))))
 
 ;; mutations
-(defmutation load-feed [{:pagination/keys [list-id] :as page}]
+(defmutation load-list [{:app.articles.list/keys [list-type list-id] :as article-list}]
   (action [{:keys [state] :as env}]
-    (swap! state
-      #(update-in % [:screen/feed list-id]
-         (fn [x] (if x
-                   x
-                   {:screen       :screen/feed
-                    :feed-id      list-id
-                    :current-page {}}))))
-    (df/load-action env :paginated-list/articles
-      pagination/Page {:params page
-                       :target [:screen/feed list-id :current-page]}))
-  (remote [env]
-    (df/remote-load env))
-  (refresh [env]
-    [:pagination/list-type :current-page]))
+    (let [[screen-table screen-id-key]
+          (case list-type
+            :app.articles/on-feed
+            [:screen/feed :feed-id]
 
-(defmutation load-tag [{:pagination/keys [list-id] :as page}]
-  (action [{:keys [state] :as env}]
-    (swap! state
-      #(update-in % [:screen/tag list-id]
-         (fn [x] (if x
-                   x
-                   {:screen       :screen/tag
-                    :tag          list-id
-                    :current-page {}}))))
-    (df/load-action env :paginated-list/articles
-      pagination/Page {:params page
-                       :target [:screen/tag list-id :current-page]}))
+            :app.articles/with-tag
+            [:screen/tag :tag])]
+      (swap! state
+        #(update-in % [screen-table list-id]
+           (fn [x] (if x
+                     x
+                     {:screen       screen-table
+                      screen-id-key list-id
+                      :article-list {}}))))
+      (df/load-action env [:app.articles/list article-list]
+        pagination/List {:target [screen-table list-id :article-list]})))
   (remote [env]
     (df/remote-load env))
   (refresh [env]
-    [:pagination/list-type :current-page]))
+    [:app.articles.list/list-type :article-list]))
