@@ -154,24 +154,24 @@
           (pagination/ui-list article-list))
         (ui-tags tags)))))
 
-(defsc TagScreen [this {:keys [tag current-page] tags :tags/all}]
-  {:ident         [:screen/feed :tag]
+(defsc TagScreen [this {:keys [tag article-list] tags :tags/all}]
+  {:ident         [:screen/tag :tag]
    :initial-state (fn [params] {:screen       :screen/tag
-                                :tag          "fulcro"
-                                :current-page (prim/get-initial-state pagination/Page
-                                                #:pagination{:list-type :articles/by-tag
-                                                             :list-id   "fulcro"})})
+                                :tag    "fulcro"
+                                :article-list (prim/get-initial-state pagination/List
+                                                #:app.articles.list{:list-type :app.articles/with-tag
+                                                                    :list-id   "fulcro"})})
 
    :query [:screen :tag
-           {:current-page (prim/get-query pagination/Page)}
+           {:article-list (prim/get-query pagination/List)}
            {[:tags/all '_] (prim/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feed-selector (prim/computed {} {:current-page current-page}))
-          (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-tag ~%)])})))
+          (ui-feed-selector article-list)
+          (pagination/ui-list article-list))
         (ui-tags tags)))))
 
 ;; mutations
