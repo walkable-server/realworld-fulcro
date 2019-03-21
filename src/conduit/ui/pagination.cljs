@@ -68,6 +68,9 @@
 
 (def ui-page (prim/factory Page))
 
+(defn previous-page [x])
+(defn next-page [x])
+
 (defsc List
   [this {:app.articles.list/keys [list-type list-id direction size current-page]
          :as                     props}]
