@@ -107,11 +107,10 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc FeedSelector [this props {:keys [current-page]}]
-  {:query []}
-  (let [whoami                                 (prim/shared this :user/whoami)
-        {:pagination/keys [list-type list-id]} current-page
-        not-logged-in                          (= :guest (:user/id whoami))]
+(defsc FeedSelector [this article-list]
+  (let [whoami                                        (prim/shared this :user/whoami)
+        {:app.articles.list/keys [list-type list-id]} article-list
+        not-logged-in                                 (= :guest (:user/id whoami))]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (when (or (not not-logged-in)
