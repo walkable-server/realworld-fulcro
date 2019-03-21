@@ -127,7 +127,7 @@
             {:className (if (= list-id :global) "active" "disabled")
              :href      (routes/feed-url :global)}
             "Global Feed"))
-        (when (= list-type :articles/by-tag)
+        (when (= list-type :app.articles/with-tag)
           (dom/li :.nav-item
             (dom/div :.nav-link.active
               "Tagged with `" list-id "`")))))))
