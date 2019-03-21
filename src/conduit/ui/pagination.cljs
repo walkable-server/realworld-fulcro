@@ -8,11 +8,11 @@
    [conduit.util :as util]))
 
 (defn list-ident-value
-  [{:app.article.list/keys [list-type list-id direction size]
-    :or                    {list-type :app.articles/on-feed
-                            list-id   :global
-                            direction :forward
-                            size      5}}]
+  [{:app.articles.list/keys [list-type list-id direction size]
+    :or                     {list-type :app.articles/on-feed
+                             list-id   :global
+                             direction :forward
+                             size      5}}]
   #:app.articles.list{:list-type list-type
                       :list-id   list-id
                       :direction direction
