@@ -23,32 +23,32 @@
   [:app.articles/list (list-ident-value props)])
 
 (defn page-ident
-  [{:app.article.list.page/keys [start end] :as props}]
+  [{:app.articles.list.page/keys [start end] :as props}]
   [:app.articles.list/page
    (merge (list-ident-value props)
      #:app.articles.list.page{:start start :end end})])
 
 (defn has-previous-page?
-  [{:app.article.list/keys [current-page first-item-id] :as article-list}]
+  [{:app.articles.list/keys [current-page first-item-id] :as article-list}]
   (and (not (nil? first-item-id))
     (= first-item-id (:app.articles.list.page/start current-page))))
 
 (defn has-next-page?
-  [{:app.article.list/keys [current-page last-item-id] :as article-list}]
+  [{:app.articles.list/keys [current-page last-item-id] :as article-list}]
   (and (not (nil? last-item-id))
     (= last-item-id (:app.articles.list.page/end current-page))))
 
 (defsc Page
-  [this {:app.articles.page/keys [start end items]
-         :app.articles.list/keys [list-type list-id]
-         :as                     props}
+  [this {:app.articles.list/keys      [list-type list-id direction]
+         :app.articles.list.page/keys [start end items]
+         :as                          props}
    {:keys [article-list]}]
   {:ident         (fn [] (page-ident props))
    :initial-state (fn [params]
                     (merge (list-ident-value params)
-                      #:app.articles.by-page{:start :none
-                                             :end   :none
-                                             :items (prim/get-initial-state preview/ArticlePreview {})}
+                      #:app.articles.list.page{:start :none
+                                               :end   :none
+                                               :items (prim/get-initial-state preview/ArticlePreview {})}
                       params))
    :query         [:app.articles.list/list-type
                    :app.articles.list/list-id
