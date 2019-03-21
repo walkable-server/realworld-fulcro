@@ -134,24 +134,24 @@
 
 (def ui-feed-selector (prim/factory FeedSelector))
 
-(defsc FeedScreen [this {:keys [feed-id current-page] tags :tags/all}]
-  {:ident [:screen/feed :feed-id]
+(defsc FeedScreen [this {:keys [feed-id article-list] tags :tags/all}]
+  {:ident         [:screen/feed :feed-id]
    :initial-state (fn [params] {:screen       :screen/feed
                                 :feed-id      :global
-                                :current-page (prim/get-initial-state pagination/Page
-                                                #:pagination{:list-type :articles/by-feed
-                                                             :list-id   :global})})
+                                :article-list (prim/get-initial-state pagination/List
+                                                #:app.articles.list{:list-type :app.articles/on-feed
+                                                                    :list-id   :global})})
 
    :query [:screen :feed-id
-           {:current-page (prim/get-query pagination/Page)}
+           {:article-list (prim/get-query pagination/List)}
            {[:tags/all '_] (prim/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feed-selector (prim/computed {} {:current-page current-page}))
-          (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-feed ~%)])})))
+          (ui-feed-selector article-list)
+          (pagination/ui-list article-list))
         (ui-tags tags)))))
 
 (defsc TagScreen [this {:keys [tag current-page] tags :tags/all}]
