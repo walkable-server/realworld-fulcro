@@ -4,6 +4,7 @@
    [fulcro.client.primitives :as prim :refer [defsc]]
    [fulcro.client.dom :as dom]
    [conduit.ui.article-preview :as preview]
+   [fulcro.client.mutations :as m :refer [defmutation returning]]
    [fulcro.client.routing :as r]
    [conduit.util :as util :refer [list-ident list-ident-value]]))
 
@@ -103,3 +104,16 @@
   (dom/div "Bad route!"))
 
 (def ui-page-router (prim/factory PageRouter))
+
+(defmutation next-page [page-ident]
+  #_
+  (action [{:keys [state] :as env}])
+  (remote [{:keys [ast state]}]
+    (returning ast state List)))
+
+(defmutation previous-page [page-ident]
+  #_
+  (action [{:keys [state] :as env}])
+  (remote [{:keys [ast state]}]
+    (returning ast state List)))
+
