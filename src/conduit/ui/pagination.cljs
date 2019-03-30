@@ -7,11 +7,15 @@
    [fulcro.client.routing :as r]
    [conduit.util :as util :refer [list-ident list-ident-value]]))
 
-(defn page-ident
+(defn page-ident-value
   [{:app.articles.list.page/keys [start end] :as props}]
+  (merge (list-ident-value props)
+    #:app.articles.list.page{:start start :end end}))
+
+(defn page-ident
+  [props]
   [:app.articles.list/page
-   (merge (list-ident-value props)
-     #:app.articles.list.page{:start start :end end})])
+   (page-ident-value props)])
 
 (defn has-previous-page?
   [{:app.articles.list/keys [current-page first-item-id] :as article-list}]
