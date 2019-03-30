@@ -102,6 +102,7 @@
     ::p/continue
     (let [page        (env/ident-value env)
           ident-value (list-ident-value page)
+          direction   (:app.articles.list/direction ident-value)
           qr          (query-root ident-value)
           lf          (list-filters ident-value)
           stats       (fetch-list-stats qr lf env)
@@ -110,7 +111,12 @@
                          :limit    (:app.articles.list/size ident-value)
                          :filters  (merge-filters [lf (page-filters page)])}
                         env)]
-      (merge ident-value stats
+      (merge ident-value
+        (clojure.set/rename-keys stats (when (= :forward direction)
+                                         {:app.articles.list/first-item-id
+                                          :app.articles.list/last-item-id
+                                          :app.articles.list/last-item-id
+                                          :app.articles.list/first-item-id}))
         {:app.articles.list/current-page
          (merge ident-value
            #:app.articles.list.page {:items items
