@@ -47,8 +47,11 @@
       ;; else
       nil)))
 
-(defn order-by [{:app.articles.list/keys [direction]}]
-  [:article/id (if (= direction :forward) :desc :asc)])
+(defn order-by [{:app.articles.list/keys [direction]
+                 :app.articles.list.page/keys [operation]}]
+  [:article/id (if (and (= direction :forward) (not= operation :previous))
+                 :desc
+                 :asc)])
 
 (defn list-filters [{:app.articles.list/keys [list-type list-id]}]
   (case list-type
