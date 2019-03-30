@@ -20,13 +20,34 @@
     (some #(and (map? %) (get % :app.articles.list.page/items)))))
 
 (defn page-filters [{:app.articles.list/keys [direction]
-                     :app.articles.list.page/keys [start end]}]
-  (when (every? number? [start end])
-    (if (= :forward direction)
-      [:<= end :article/id start]
-      [:<= start :article/id end])))
+                     :app.articles.list.page/keys [operation start end]}]
+  (if (= :forward direction)
+    (case operation
+      :current
+      [:>= start :article/id end]
 
-(defn order-by [direction]
+      :next
+      [:> end :article/id]
+
+      :previous
+      [:> :article/id start]
+
+      ;; else
+      nil)
+    (case operation
+      :current
+      [:<= start :article/id end]
+
+      :next
+      [:< end :article/id]
+
+      :previous
+      [:< :article/id start]
+
+      ;; else
+      nil)))
+
+(defn order-by [{:app.articles.list/keys [direction]}]
   [:article/id (if (= direction :forward) :desc :asc)])
 
 (defn list-filters [{:app.articles.list/keys [list-type list-id]}]
