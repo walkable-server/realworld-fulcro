@@ -85,12 +85,14 @@
       (dom/div
         (dom/button :.btn.btn-sm
           (if (has-previous-page? props)
-            {:onClick #(previous-page props) :className "action-btn btn-outline-primary"}
+            {:onClick #(prim/ptransact! this `[(previous-page ~(page-ident-value current-page))])
+             :className "action-btn btn-outline-primary"}
             {:className "btn-outline-secondary"})
           "Previous")
         (dom/button :.btn.btn-sm
           (if (has-next-page? props)
-            {:onClick #(next-page props) :className "action-btn btn-outline-primary"}
+            {:onClick #(prim/ptransact! this `[(next-page ~(page-ident-value current-page))])
+             :className "action-btn btn-outline-primary"}
             {:className "btn-outline-secondary"})
           "Next")))))
 
