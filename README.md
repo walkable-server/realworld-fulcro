@@ -5,7 +5,15 @@ app](https://github.com/gothinkster/realworld) using full-stack
 Fulcro. Backend uses Duct framework, Buddy, Walkable SQL library, JDBC
 and Postgresql.
 
-Documentation:
+## Quickstart
+
+1. Configure Postgres connection string in `dev/resources/dev.edn`
+2. `lein repl`
+3. `user=> (dev)`
+4. `dev=> (go)`
+5. Visit http://localhost:3000/index.html
+
+## Documentation
 
 [Fulcro](http://book.fulcrologic.com/)
 
