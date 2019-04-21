@@ -8,7 +8,7 @@
                  [duct/module.logging "0.4.0"]
                  [duct/module.web "0.7.0"]
                  [duct/module.ataraxy "0.3.0"]
-                 [duct/module.cljs "0.4.0" :exclusions [org.clojure/clojurescript]]
+                 [duct/module.cljs "0.4.1" :exclusions [org.clojure/clojurescript]]
                  [duct/module.sql "0.5.0"]
 
                  [duct/middleware.buddy "0.1.0"]
@@ -27,7 +27,7 @@
                  [org.clojure/core.async "0.4.490"]
                  [org.postgresql/postgresql "42.2.5"]]
   :middleware [lein-duct.plugin/middleware]
-  :plugins [[duct/lein-duct "0.11.2"]]
+  :plugins [[duct/lein-duct "0.12.0"]]
   :main ^:skip-aot conduit.main
   :resource-paths ["resources" "target/resources"]
   :prep-tasks     ["javac" "compile" ["run" ":duct/compiler"]]
@@ -43,7 +43,7 @@
                   :resource-paths ["dev/resources"]
                   :dependencies   [ ;; cljs
                                    [cider/piggieback "0.4.0"]
-                                   [walkable/duct.server.figwheel "0.4.0-SNAPSHOT" :exclusions [org.clojure/clojurescript]]
+                                   [duct/server.figwheel "0.3.1" :exclusions [org.clojure/clojurescript]]
                                    [org.clojure/test.check "0.10.0-alpha3"]
                                    [devcards "0.2.6" :exclusions [org.clojure/clojurescript]]
 

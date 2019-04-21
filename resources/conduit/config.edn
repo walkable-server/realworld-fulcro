@@ -47,8 +47,7 @@
             :user/whoami
             "user"
 
-            [:feed.global/articles :feed.global/next-id
-             :feed.personal/articles :feed.personal/next-id]
+            [:feed.global/articles :feed.personal/articles]
             "article"
 
             :tags/all
@@ -74,14 +73,19 @@
 
            :comment/author [:comment/author-id :user/id]}
 
-   :pseudo-columns {:pagination/total   [:count-*]
-                    :pagination/last-id [:max :article/id]}
+   :pseudo-columns {}
 
    :aggregators {[:article/liked-by-count :user/followed-by-count :tag/count]
                  [:count-*]
 
-                 [:feed.global/next-id :feed.personal/next-id]
-                 :article/id
+                 :app.articles.list/total-items
+                 [:count-*]
+
+                 :app.articles.list/first-item-id
+                 [:min :article/id]
+
+                 :app.articles.list/last-item-id
+                 [:max :article/id]
 
                  [:user/followed-by-me :article/liked-by-me]
                  [:< 0 [:count-*]]}
@@ -91,7 +95,7 @@
                     :user/articles :article/author}
 
    :extra-conditions
-   {[:feed.personal/articles :feed.personal/next-id]
+   {[:feed.personal/articles]
     {:article/author {:user/followed-by [:= app/current-user :user/id]}}
 
     :article/liked-by-me

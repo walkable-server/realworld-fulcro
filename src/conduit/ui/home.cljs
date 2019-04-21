@@ -107,11 +107,10 @@
 
 (def ui-tags (prim/factory Tags))
 
-(defsc FeedSelector [this props {:keys [current-page]}]
-  {:query []}
-  (let [whoami                                 (prim/shared this :user/whoami)
-        {:pagination/keys [list-type list-id]} current-page
-        not-logged-in                          (= :guest (:user/id whoami))]
+(defsc FeedSelector [this article-list]
+  (let [whoami                                        (prim/shared this :user/whoami)
+        {:app.articles.list/keys [list-type list-id]} article-list
+        not-logged-in                                 (= :guest (:user/id whoami))]
     (dom/div :.feed-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (when (or (not not-logged-in)
@@ -128,84 +127,73 @@
             {:className (if (= list-id :global) "active" "disabled")
              :href      (routes/feed-url :global)}
             "Global Feed"))
-        (when (= list-type :articles/by-tag)
+        (when (= list-type :app.articles/with-tag)
           (dom/li :.nav-item
             (dom/div :.nav-link.active
               "Tagged with `" list-id "`")))))))
 
 (def ui-feed-selector (prim/factory FeedSelector))
 
-(defsc FeedScreen [this {:keys [feed-id current-page] tags :tags/all}]
-  {:ident [:screen/feed :feed-id]
+(defsc FeedScreen [this {:keys [feed-id article-list] tags :tags/all}]
+  {:ident         [:screen/feed :feed-id]
    :initial-state (fn [params] {:screen       :screen/feed
                                 :feed-id      :global
-                                :current-page (prim/get-initial-state pagination/Page
-                                                #:pagination{:list-type :articles/by-feed
-                                                             :list-id   :global})})
+                                :article-list (prim/get-initial-state pagination/List
+                                                #:app.articles.list{:list-type :app.articles/on-feed
+                                                                    :list-id   :global})})
 
    :query [:screen :feed-id
-           {:current-page (prim/get-query pagination/Page)}
+           {:article-list (prim/get-query pagination/List)}
            {[:tags/all '_] (prim/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feed-selector (prim/computed {} {:current-page current-page}))
-          (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-feed ~%)])})))
+          (ui-feed-selector article-list)
+          (pagination/ui-list article-list))
         (ui-tags tags)))))
 
-(defsc TagScreen [this {:keys [tag current-page] tags :tags/all}]
-  {:ident         [:screen/feed :tag]
+(defsc TagScreen [this {:keys [tag article-list] tags :tags/all}]
+  {:ident         [:screen/tag :tag]
    :initial-state (fn [params] {:screen       :screen/tag
-                                :tag          "fulcro"
-                                :current-page (prim/get-initial-state pagination/Page
-                                                #:pagination{:list-type :articles/by-tag
-                                                             :list-id   "fulcro"})})
+                                :tag    "fulcro"
+                                :article-list (prim/get-initial-state pagination/List
+                                                #:app.articles.list{:list-type :app.articles/with-tag
+                                                                    :list-id   "fulcro"})})
 
    :query [:screen :tag
-           {:current-page (prim/get-query pagination/Page)}
+           {:article-list (prim/get-query pagination/List)}
            {[:tags/all '_] (prim/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
     (dom/div :.container.page
       (dom/div :.row
         (dom/div :.col-md-9
-          (ui-feed-selector (prim/computed {} {:current-page current-page}))
-          (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-tag ~%)])})))
+          (ui-feed-selector article-list)
+          (pagination/ui-list article-list))
         (ui-tags tags)))))
 
 ;; mutations
-(defmutation load-feed [{:pagination/keys [list-id] :as page}]
+(defmutation load-list [{:app.articles.list/keys [list-type list-id] :as article-list}]
   (action [{:keys [state] :as env}]
-    (swap! state
-      #(update-in % [:screen/feed list-id]
-         (fn [x] (if x
-                   x
-                   {:screen       :screen/feed
-                    :feed-id      list-id
-                    :current-page {}}))))
-    (df/load-action env :paginated-list/articles
-      pagination/Page {:params page
-                       :target [:screen/feed list-id :current-page]}))
-  (remote [env]
-    (df/remote-load env))
-  (refresh [env]
-    [:pagination/list-type :current-page]))
+    (let [[screen-table screen-id-key]
+          (case list-type
+            :app.articles/on-feed
+            [:screen/feed :feed-id]
 
-(defmutation load-tag [{:pagination/keys [list-id] :as page}]
-  (action [{:keys [state] :as env}]
-    (swap! state
-      #(update-in % [:screen/tag list-id]
-         (fn [x] (if x
-                   x
-                   {:screen       :screen/tag
-                    :tag          list-id
-                    :current-page {}}))))
-    (df/load-action env :paginated-list/articles
-      pagination/Page {:params page
-                       :target [:screen/tag list-id :current-page]}))
+            :app.articles/with-tag
+            [:screen/tag :tag])]
+      (swap! state
+        #(update-in % [screen-table list-id]
+           (fn [x] (if x
+                     x
+                     {:screen       screen-table
+                      screen-id-key list-id
+                      :article-list {}}))))
+      (df/load-action env [:app.articles/list article-list]
+        pagination/List {:target [screen-table list-id :article-list]})))
   (remote [env]
     (df/remote-load env))
   (refresh [env]
-    [:pagination/list-type :current-page]))
+    [:app.articles.list/list-type :article-list]))

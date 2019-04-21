@@ -27,3 +27,18 @@
       (if (zero? (rem total items-per-page))
         0
         1))))
+
+(defn list-ident-value
+  [{:app.articles.list/keys [list-type list-id direction size]
+    :or                     {list-type :app.articles/on-feed
+                             list-id   :global
+                             direction :forward
+                             size      5}}]
+  #:app.articles.list{:list-type list-type
+                      :list-id   list-id
+                      :direction direction
+                      :size      size})
+
+(defn list-ident
+  [props]
+  [:app.articles/list (list-ident-value props)])

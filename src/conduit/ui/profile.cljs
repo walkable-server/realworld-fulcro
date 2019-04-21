@@ -18,71 +18,75 @@
    :initial-state (fn [params] #:user {:id :guest})
    :query         [:user/id :user/name :user/username :user/image :user/bio
                    :user/followed-by-me :user/followed-by-count]}
-  (dom/div :.user-info
-    (dom/div :.container
-      (dom/div :.row
-        (dom/div :.col-xs-12.col-md-10.offset-md-1
-          (dom/img :.user-img {:src (or image other/default-user-image)})
-          (dom/h4 name)
-          (dom/p bio)
-          (let [current-user-id (-> (prim/shared this :user/whoami) :user/id)]
-            (if (= id current-user-id)
-              (dom/button :.btn.btn-sm.btn-outline-secondary
-                "You have " followed-by-count " followers")
-              (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
-                {:onClick #(if (= :guest current-user-id)
-                             (js/alert "You must log in first")
-                             (if followed-by-me
-                               (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
-                               (prim/transact! this `[(mutations/follow {:user/id ~id})])))}
-                (dom/i :.ion-plus-round)
-                (if followed-by-me "Unfollow " "Follow ")
-                name "(" followed-by-count ")"))))))))
+  (let [whoami (prim/shared this :user/whoami)]
+    (dom/div :.user-info
+      (dom/div :.container
+        (dom/div :.row
+          (dom/div :.col-xs-12.col-md-10.offset-md-1
+            (dom/img :.user-img {:src (or image other/default-user-image)})
+            (dom/h4 name)
+            (dom/p bio)
+            (let [current-user-id (-> (prim/shared this :user/whoami) :user/id)]
+              (if (= id (:user/id whoami))
+                (dom/button :.btn.btn-sm.btn-outline-secondary
+                  "You have " followed-by-count " followers")
+                (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
+                  {:onClick #(if (= :guest (:user/id whoami))
+                               (js/alert "You must log in first")
+                               (if followed-by-me
+                                 (prim/transact! this `[(mutations/unfollow {:user/id ~id})])
+                                 (prim/transact! this `[(mutations/follow {:user/id ~id})])))}
+                  (dom/i :.ion-plus-round)
+                  (if followed-by-me "Unfollow" "Follow")
+                  name " (" followed-by-count ")")))))))))
 
 (def ui-profile (prim/factory Profile))
 
-(defsc ListSelector [this props {:keys [current-page current-user-name]}]
-  {:query []}
-  (let [{:pagination/keys [list-type list-id]} current-page
-        whoami                                 (prim/shared this :user/whoami)]
+(defsc ListSelector [this props {:keys [article-list current-user-name]}]
+  (let [{:app.articles.list/keys [list-type list-id]} article-list
+        whoami                                        (prim/shared this :user/whoami)]
     (dom/div :.articles-toggle
       (dom/ul :.nav.nav-pills.outline-active
         (dom/li :.nav-item
           (dom/div :.nav-link
-            {:className (when (= list-type :owned-articles/by-user-id) "active")
-             :onClick   #(prim/transact! this `[(load-page #:pagination{:list-type :owned-articles/by-user-id
-                                                                        :list-id   ~list-id
-                                                                        :size      5})])}
+            {:className (when (= list-type :app.articles/owned-by-user) "active")
+             :onClick   #(prim/transact! this
+                           `[(load-list #:app.articles.list{:list-type :app.articles/owned-by-user
+                                                            :list-id   ~list-id
+                                                            :direction :forward
+                                                            :size      5})])}
             (if (= (:user/id whoami) list-id)
               "My"
               (str current-user-name "'s"))
             " Articles"))
         (dom/li :.nav-item
           (dom/div :.nav-link
-            {:className (when (= list-type :liked-articles/by-user-id) "active")
-             :onClick   #(prim/transact! this `[(load-page #:pagination {:list-type :liked-articles/by-user-id
-                                                                         :list-id   ~list-id
-                                                                         :size      5})])}
+            {:className (when (= list-type :app.articles/liked-by-user) "active")
+             :onClick   #(prim/transact! this
+                           `[(load-list #:app.articles.list {:list-type :app.articles/liked-by-user
+                                                             :list-id   ~list-id
+                                                             :direction :forward
+                                                             :size      5})])}
             "Favorited Articles"))))))
 
 (def ui-list-selector (prim/factory ListSelector))
 
-(defsc ProfileScreen [this {:keys  [screen profile-to-view user-id current-page]}]
+(defsc ProfileScreen [this {:keys [screen profile-to-view user-id article-list]}]
   {:ident         (fn [] [screen user-id])
-   :initial-state (fn [params] {:screen                :screen.profile/by-user-id
-                                :user-id               :guest
-                                :profile-to-view       (prim/get-initial-state Profile #:user{:id :guest})})
+   :initial-state (fn [params] {:screen          :screen.profile/by-user-id
+                                :user-id         :guest
+                                :profile-to-view (prim/get-initial-state Profile #:user{:id :guest})})
    :query         (fn [] [:screen :user-id
-                          {:current-page (prim/get-query pagination/Page)}
+                          {:article-list (prim/get-query pagination/List)}
                           {:profile-to-view (prim/get-query Profile)}])}
   (dom/div :.profile-page
     (ui-profile profile-to-view)
     (dom/div :.container
       (dom/div :.row
         (dom/div :.col-xs-12.col-md-10.offset-md-1
-          (ui-list-selector (prim/computed {} {:current-page current-page
+          (ui-list-selector (prim/computed {} {:article-list      article-list
                                                :current-user-name (:user/name profile-to-view)}))
-          (pagination/ui-page (prim/computed current-page {:load-page #(prim/transact! this `[(load-page ~%)])})))))))
+          (pagination/ui-list article-list))))))
 
 (defmutation load-profile [{:keys [user-id]}]
   (action [{:keys [state] :as env}]
@@ -92,24 +96,24 @@
                    x
                    {:screen          :screen.profile/by-user-id
                     :user-id         user-id
-                    :current-page    {}
+                    :article-list    {}
                     :profile-to-view [:user/by-id user-id]}))))
     (df/load-action env [:user/by-id user-id] Profile)
-    (df/load-action env :paginated-list/articles
-      pagination/Page {:params #:pagination{:list-type :owned-articles/by-user-id
-                                            :list-id user-id
-                                            :size 5}
-                       :target [:screen.profile/by-user-id user-id :current-page]}))
+    (df/load-action env [:app.articles/list
+                         #:app.articles.list {:list-type :app.articles/owned-by-user
+                                              :list-id   user-id
+                                              :direction :forward
+                                              :size      5}]
+      pagination/List {:target [:screen.profile/by-user-id user-id :article-list]}))
   (remote [env]
     (df/remote-load env))
   (refresh [env] [:screen :profile-to-view]))
 
 ;; mutations
-(defmutation load-page [{:pagination/keys [list-id] :as page}]
+(defmutation load-list [{:app.articles.list/keys [list-type list-id] :as page}]
   (action [{:keys [state] :as env}]
-    (df/load-action env :paginated-list/articles
-      pagination/Page {:params page
-                       :target [:screen.profile/by-user-id list-id :current-page]}))
+    (df/load-action env [:app.articles/list page]
+      pagination/List {:target [:screen.profile/by-user-id list-id :article-list]}))
   (remote [env]
     (df/remote-load env))
   (refresh [env]

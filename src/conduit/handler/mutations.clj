@@ -124,3 +124,21 @@
     (if current-user
       (article/remove-tag db current-user article-id tag)
       {})))
+
+(defmutation conduit.ui.pagination/next-page [page-ident]
+  (action [{:keys         [parser] :app/keys [db current-user] :as env
+            list-subquery :query}]
+    (let [next-page-ident-value (assoc page-ident :app.articles.list.page/operation :next)
+          next-page-ident       [:app.articles/list next-page-ident-value]]
+      (-> env
+        (parser [{next-page-ident list-subquery}])
+        (get next-page-ident)))))
+
+(defmutation conduit.ui.pagination/previous-page [page-ident]
+  (action [{:keys [parser] :app/keys [db current-user] :as env
+            list-subquery :query}]
+    (let [next-page-ident-value (assoc page-ident :app.articles.list.page/operation :previous)
+          next-page-ident       [:app.articles/list next-page-ident-value]]
+      (-> env
+        (parser [{next-page-ident list-subquery}])
+        (get next-page-ident)))))

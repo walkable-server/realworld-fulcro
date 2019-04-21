@@ -57,13 +57,15 @@
     :screen.profile/by-user-id
     `[(conduit.ui.profile/load-profile ~route-params)]
     :screen/feed
-    `[(conduit.ui.home/load-feed #:pagination{:list-type :articles/by-feed
-                                              :list-id   ~(:feed-id route-params)
-                                              :size      5})]
+    `[(conduit.ui.home/load-list #:app.articles.list{:list-type :app.articles/on-feed
+                                                     :list-id   ~(:feed-id route-params)
+                                                     :direction :forward
+                                                     :size      5})]
     :screen/tag
-    `[(conduit.ui.home/load-tag #:pagination{:list-type :articles/by-tag
-                                             :list-id   ~(:tag route-params)
-                                             :size      5})]
+    `[(conduit.ui.home/load-list #:app.articles.list{:list-type :app.articles/with-tag
+                                                     :list-id   ~(:tag route-params)
+                                                     :direction :forward
+                                                     :size      5})]
     :screen/editor
     `[(conduit.ui.editor/load-article-to-editor ~route-params)
       (conduit.ui.editor/use-article-as-form ~route-params)]
