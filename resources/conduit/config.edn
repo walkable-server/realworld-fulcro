@@ -44,6 +44,9 @@
    :idents {:user/by-id    :user/id
             :article/by-id :article/id
 
+            :app/users
+            "user"
+
             :user/whoami
             "user"
 
