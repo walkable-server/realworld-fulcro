@@ -40,7 +40,7 @@
             (return/errors (user-error-message msg)))))))
   (update-user [db user-id user]
     (jdbc/update! (:spec db) "\"user\""
-      (-> user (select-keys [:username :name :email :bio :image :password]) hash-password)
+      (-> user (select-keys [:name :email :bio :image :password]) hash-password)
       ["id = ?" user-id]))
   (find-login [{db :spec} email password]
     (let [user (first (jdbc/find-by-keys db "\"user\"" {:email email}))]
