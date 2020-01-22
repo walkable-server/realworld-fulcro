@@ -108,14 +108,10 @@
 (def ui-page-router (prim/factory PageRouter))
 
 (defmutation next-page [page-ident]
-  #_
-  (action [{:keys [state] :as env}])
   (remote [{:keys [ast state]}]
     (returning ast state List)))
 
 (defmutation previous-page [page-ident]
-  #_
-  (action [{:keys [state] :as env}])
   (remote [{:keys [ast state]}]
     (returning ast state List)))
 
