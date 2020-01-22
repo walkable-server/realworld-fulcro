@@ -103,7 +103,7 @@
    :ident          (fn [] (page-ident props))
    :default-route  Page
    :router-targets {:app.articles.list/page Page}}
-  (dom/div "Bad route!"))
+  (dom/div "No such page!"))
 
 (def ui-page-router (prim/factory PageRouter))
 
@@ -115,3 +115,14 @@
   (remote [{:keys [ast state]}]
     (returning ast state List)))
 
+(defmutation go-to-page [page-ident]
+  (remote [{:keys [ast state]}]
+    (returning ast state List)))
+
+(defmutation go-to-first-page [list-ident]
+  (remote [{:keys [ast state]}]
+    (returning ast state List)))
+
+(defmutation go-to-last-page [list-ident]
+  (remote [{:keys [ast state]}]
+    (returning ast state List)))
