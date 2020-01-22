@@ -48,7 +48,7 @@
                     :screen/sign-up            account/SignUpScreen
                     :screen/article            article/ArticleScreen
                     :screen.profile/by-user-id profile/ProfileScreen}}
-  (dom/div "Not found!"))
+  (dom/div "Bad path!"))
 
 (def ui-top (prim/factory TopRouter))
 
@@ -107,9 +107,10 @@
 
 (defn started-callback [{:keys [reconciler] :as app}]
   (let [history (pushy/pushy
-                  (fn [routing-data]
+                  (fn dispatch [routing-data]
+                    (println (pr-str [:routing-data routing-data]))
                     (routes/nav-to* reconciler routing-data))
-                  (fn [url]
+                  (fn match [url]
                     (or (routes/from-path url)
                       {:handler      :screen/not-found})))]
     (reset! routes/navigator [history reconciler])
