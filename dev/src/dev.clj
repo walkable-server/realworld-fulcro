@@ -50,3 +50,50 @@
 
 (defn e [sql]
   (jdbc/execute! (db) sql))
+
+(comment
+  (q "select * from \"user\"")
+  (jdbc/insert! (db) "\"favorite\"" {"user_id" 1 "article_id" 5})
+  (try
+    (jdbc/insert! (db) "\"user\"" {:email "j@j"})
+
+    (catch org.postgresql.util.PSQLException e
+      (.getMessage e)))
+
+  "org.postgresql.util.PSQLException: ERROR: duplicate key value violates unique constraint \"user_email_key\"\n  Detail: Key (email)=(j@j) already exists."
+  )
+
+(defn w
+  ([query] (w query nil))
+  ([query user-id]
+   (let [f (-> system :conduit.handler.walkable/resolver)]
+     (:body (f {:identity {:user/id user-id} :body-params query})))))
+#_
+(w `[{[:article/by-id 3]
+      [:article/id (:article/liked-by-me {:filters false})]}]
+  1)
+
+#_
+(w `[{(:app/users {:filters [:in :user/id 2 3 13 17 20 21]})
+      [:user/id :user/followed-by-me]}]
+  1)
+#_
+(w `[{[:app.articles/list
+       ~(merge #:app.articles.list{:list-id   :global
+                                   :list-type :app.articles/on-feed
+                                   :size      3
+                                   :direction :forward}
+          #:app.articles.list.page {:operation :next ;;:current
+                                    :start     7
+                                    :end       5})]
+      [:app.articles.list.page/size
+       :app.articles.list.page/direction
+       :app.articles.list.page/start
+       :app.articles.list.page/total-items
+       :app.articles.list.page/end
+       {:app.articles.list/current-page
+        [:app.articles.list.page/first-item-id
+         :app.articles.list.page/last-item-id
+         {:app.articles.list.page/items
+          [:article/id]}]}]}]
+  1)
