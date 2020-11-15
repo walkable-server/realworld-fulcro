@@ -67,7 +67,7 @@
   ([query] (w query nil))
   ([query user-id]
    (let [f (-> system :conduit.handler.walkable/resolver)]
-     (:body (f {:identity {:user/id user-id} :body-params query})))))
+     (:body (f {:identity {:user/id user-id} :transit-params query})))))
 #_
 (w `[{[:article/by-id 3]
       [:article/id (:article/liked-by-me {:filters false})]}]

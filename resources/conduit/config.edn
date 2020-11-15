@@ -33,125 +33,126 @@
   {:up   [#duct/resource "migrations/create-table-comment-2018-04-23.sql"]
    :down [#duct/resource "migrations/drop-table-comment-2018-04-23.sql"]}
 
-  :conduit.handler.walkable/floor-plan
-  {:true-columns
-   [:user/email :user/name :user/username :user/bio :user/image
-    :article/slug :article/title :article/description :article/body :article/image
-    :article/created-at :article/updated-at
-    :tag/tag
-    :comment/id :comment/created-at :comment/updated-at :comment/body]
+  :conduit.handler.walkable/inputs-outputs
+  [{:input #{:user/id}
+    :output [:user/email :user/name :user/username :user/bio :user/image
+             :user/followed-by-me :user/followed-by-count]}
+   {:input #{:article/id}
+    :output [:article/slug :article/title :article/description :article/body :article/image
+             :article/created-at :article/updated-at
+             :article/liked-by-count :article/liked-by-me]}]
+  
+  :conduit.handler.walkable/connect
+  {:inputs-outputs #ig/ref :conduit.handler.walkable/inputs-outputs
+   :floor-plan
+   {:true-columns
+    [:user/email :user/name :user/username :user/bio :user/image
+     :article/slug :article/title :article/description :article/body :article/image
+     :article/created-at :article/updated-at
+     :tag/tag
+     :comment/id :comment/created-at :comment/updated-at :comment/body]
 
-   :idents {:user/by-id    :user/id
-            :article/by-id :article/id
-
-            :app/users
-            "user"
-
-            :user/whoami
-            "user"
-
-            [:feed.global/articles :feed.personal/articles]
+    :roots {[:feed.global/articles :feed.personal/articles
+             :app.articles.list/first-item-id :app.articles.list/last-item-id :app.articles.list/total-items]
             "article"
+            [:app/users :user/whoami] "user"
+            [:tags/all :tag/count] "tag"}
+    
+    :idents {:user/by-id    :user/id
+             :article/by-id :article/id}
+    :grouping {:tags/all {:group-by [:tag/tag]}}
 
-            :tags/all
-            "tag"
-            }
-   :grouping {:tags/all {:group-by [:tag/tag]}}
+    :pagination-fallbacks {:tags/all
+                           {:order-by {:default [:tag/count :desc]}
+                            :limit    {:default 20}}}
 
-   :pagination-fallbacks {:tags/all
-                          {:order-by {:default [:tag/count :desc]}
-                           :limit    {:default 20}}}
+    :joins {[:user/followed-by :user/followed-by-me :user/followed-by-count]
+            [:user/id :follow/followee-id :follow/follower-id :user/id]
 
-   :joins {[:user/followed-by :user/followed-by-me :user/followed-by-count]
-           [:user/id :follow/followee-id :follow/follower-id :user/id]
+            :article/tags [:article/id :tag/article-id]
 
-           :article/tags [:article/id :tag/article-id]
+            :article/comments [:article/id :comment/article-id]
 
-           :article/comments [:article/id :comment/article-id]
+            [:article/liked-by :article/liked-by-count :article/liked-by-me]
+            [:article/id :favorite/article-id :favorite/user-id :user/id]
 
-           [:article/liked-by :article/liked-by-count :article/liked-by-me]
-           [:article/id :favorite/article-id :favorite/user-id :user/id]
+            :article/author [:article/author-id :user/id]
 
-           :article/author [:article/author-id :user/id]
+            :comment/author [:comment/author-id :user/id]}
 
-           :comment/author [:comment/author-id :user/id]}
+    :pseudo-columns {}
 
-   :pseudo-columns {}
+    :aggregators {[:article/liked-by-count :user/followed-by-count :tag/count]
+                  [:count-*]
 
-   :aggregators {[:article/liked-by-count :user/followed-by-count :tag/count]
-                 [:count-*]
+                  :app.articles.list/total-items
+                  [:count-*]
 
-                 :app.articles.list/total-items
-                 [:count-*]
+                  :app.articles.list/first-item-id
+                  [:min :article/id]
 
-                 :app.articles.list/first-item-id
-                 [:min :article/id]
+                  :app.articles.list/last-item-id
+                  [:max :article/id]
 
-                 :app.articles.list/last-item-id
-                 [:max :article/id]
+                  [:user/followed-by-me :article/liked-by-me]
+                  [:< 0 [:count-*]]}
 
-                 [:user/followed-by-me :article/liked-by-me]
-                 [:< 0 [:count-*]]}
+    :reversed-joins {:user/follows  :user/followed-by
+                     :user/like     :article/liked-by
+                     :user/articles :article/author}
 
-   :reversed-joins {:user/follows  :user/followed-by
-                    :user/like     :article/liked-by
-                    :user/articles :article/author}
+    :extra-conditions
+    {[:feed.personal/articles]
+     {:article/author {:user/followed-by [:= app/current-user :user/id]}}
 
-   :extra-conditions
-   {[:feed.personal/articles]
-    {:article/author {:user/followed-by [:= app/current-user :user/id]}}
+     :article/liked-by-me
+     [:= app/current-user :user/id]
 
-    :article/liked-by-me
-    [:= app/current-user :user/id]
+     :user/whoami
+     [:= app/current-user :user/id]
 
-    :user/whoami
-    [:= app/current-user :user/id]
+     :user/followed-by-me
+     [:= app/current-user :user/id]}
 
-    :user/followed-by-me
-    [:= app/current-user :user/id]}
+    :cardinality {:user/whoami :one
 
-   :cardinality {:user/whoami :one
+                  [:article/author :comment/author]
+                  :one
 
-                 [:user/by-id :article/by-id]
-                 :one
-
-                 [:article/author :comment/author]
-                 :one
-
-                 [:articles/count-all :articles/count-feed]
-                 :one}}
-
-  :conduit.handler.transit-format/transit-json-format {}
+                  [:articles/count-all :articles/count-feed]
+                  :one}}}
 
   :conduit.handler.walkable/resolver
-  #:walkable.sql-query-builder {:com.wsscode.pathom.core/placeholder-prefixes #{"placeholder" "ph"}
-                                :duct/logger                                  #ig/ref :duct/logger
-                                :app/jwt-secret                               #duct/env "JWT_SECRET"
-                                :app/db                                       #ig/ref :duct.database/sql
-                                :floor-plan                                   #ig/ref :conduit.handler.walkable/floor-plan}
+  {:com.wsscode.pathom.core/placeholder-prefixes #{"placeholder" "ph"}
+   :duct/logger #ig/ref :duct/logger
+   :app/jwt-secret #duct/env "JWT_SECRET"
+   :app/db #ig/ref :duct.database/sql
+   :connect #ig/ref :conduit.handler.walkable/connect}
 
   :duct.router/ataraxy
-  {:routes     {[:post"/api"] ^:jws-auth ^:wrap-format [:api]}
-   :handlers   {:api #ig/ref :conduit.handler.walkable/resolver}
-   :middleware {:jws-auth      #ig/ref :duct.middleware.buddy/authentication
-                :wrap-format   #ig/ref :duct.middleware.web/format
-                :wrap-defaults #ig/ref :duct.middleware.web/defaults}}
+  {:routes     {"/" [:index]
+                [:post"/api"] ^:wrap-transit [:api]}
+   :handlers   {:api #ig/ref :conduit.handler.walkable/resolver
+                :index #ig/ref :conduit.handler.fulcro/index
+                ;; :api #ig/ref :conduit.handler.fulcro/api
+                }
+   :middleware {:jws-auth #ig/ref :duct.middleware.buddy/authentication
+                :wrap-transit #ig/ref :conduit.middleware.fulcro/wrap-transit}}
 
   :duct.middleware.buddy/authentication
   {:backend :jws
    :secret  #duct/env "JWT_SECRET"}
 
-  :duct.middleware.web/defaults {:security {:anti-forgery false}}
-  :duct.middleware.web/format   {:default-format "application/transit+json"
-                                 :formats        {"application/transit+json"
-                                                  #ig/ref :conduit.handler.transit-format/transit-json-format}}
+  :conduit.handler.fulcro/index {}
+  ;; :conduit.handler.fulcro/api {}
+
+  :conduit.middleware.fulcro/wrap-transit {}
   }
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"
  :duct.profile/prod  {}
 
-
- :duct.module/cljs {:main conduit.main}
+ :duct.module/cljs {:main conduit.client}
 
  :fulcro.module/cljs-build-options {}
 
