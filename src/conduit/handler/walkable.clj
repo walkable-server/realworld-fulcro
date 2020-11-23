@@ -3,7 +3,7 @@
             [walkable.sql-query-builder.emitter :as emitter]
             [integrant.core :as ig]
             [clojure.java.jdbc :as jdbc]
-            [conduit.handler.mutations]
+            [conduit.handler.mutations :refer [mutations]]
             [com.wsscode.pathom.connect :as pc]
             [com.wsscode.pathom.core :as p]))
 
@@ -129,9 +129,10 @@
                          pc/reader3
                          pc/open-ident-reader
                          p/env-placeholder-reader]
+             ::pc/mutation-join-globals [:tempids]
              ::p/placeholder-prefixes #{">"}}
     ::p/mutate pc/mutate
-    ::p/plugins [(pc/connect-plugin {::pc/register resolvers})
+    ::p/plugins [(pc/connect-plugin {::pc/register (into resolvers mutations)})
                  walkable-connect
                  p/elide-special-outputs-plugin
                  p/error-handler-plugin
