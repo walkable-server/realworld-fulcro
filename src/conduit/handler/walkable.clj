@@ -1,14 +1,11 @@
 (ns conduit.handler.walkable
   (:require [walkable.core :as walkable]
             [walkable.sql-query-builder.emitter :as emitter]
-            [walkable.sql-query-builder.floor-plan :as floor-plan]
-            [walkable.sql-query-builder.pathom-env :as env]
             [integrant.core :as ig]
             [clojure.java.jdbc :as jdbc]
             [conduit.handler.mutations]
             [com.wsscode.pathom.connect :as pc]
-            [com.wsscode.pathom.core :as p]
-            [conduit.util :as util :refer [list-ident-value]]))
+            [com.wsscode.pathom.core :as p]))
 
 #_(defn get-items-subquery [query]
   (->> query
@@ -122,15 +119,9 @@
                                      :start (-> items first :article/id)
                                      :end   (-> items last :article/id)})}))))
 
-#_(defn whoami-resolver [env]
-  (if (not= :user/whoami (env/dispatch-key env))
-    ::p/continue
-    (if-let [user-id (:app/current-user env)]
-      (let [{:keys [parser query]} env
-            ident [:user/by-id user-id]]
-        (-> (parser env [{ident query}])
-          (get ident)))
-      #:user {:id :guest :email "non@exist"})))
+
+(def resolvers
+  [])
 
 (defn pathom-parser [walkable-connect]
   (p/parser
@@ -140,7 +131,7 @@
                          p/env-placeholder-reader]
              ::p/placeholder-prefixes #{">"}}
     ::p/mutate pc/mutate
-    ::p/plugins [(pc/connect-plugin {::pc/register []})
+    ::p/plugins [(pc/connect-plugin {::pc/register resolvers})
                  walkable-connect
                  p/elide-special-outputs-plugin
                  p/error-handler-plugin
@@ -150,15 +141,55 @@
   (let [config (update-in config [:floor-plan]
                           assoc
                           :emitter emitter/postgres-emitter
-                          :variable-getters [{:key 'app/current-user
-                                              :fn (fn [env] (:app/current-user env))
+                          :variable-getters [{:key 'app.auth/current-user
+                                              :fn (fn [env] (:app.auth/current-user env))
                                               :cached? true}])]
     (walkable/connect-plugin config)))
 
-(defmethod ig/init-key ::inputs-outputs [_ io]
-  (into [] (for [{:keys [input output]} io]
-             {::pc/output output
-              ::pc/input input})))
+(defmethod ig/init-key ::inputs-outputs [_ _]
+  (let [User [:user/email :user/name :user/username :user/bio :user/image
+              :user/followed-by-me :user/followed-by-count]
+        Article [:article/slug :article/title :article/description
+                 :article/body :article/image
+                 :article/created-at :article/updated-at
+                 :article/liked-by-count :article/liked-by-me]
+        Tag [:tag/tag]
+        Comment [:comment/id :comment/created-at :comment/updated-at
+                 :comment/body]]
+    ;; idents
+    [{::pc/input #{:user/id}
+      ::pc/output User}
+     {::pc/input #{:article/id}
+      ::pc/output Article}
+     ;; roots
+     {::pc/input #{}
+      ::pc/output [{:app.auth/whoami User}]}
+     {::pc/input #{}
+      ::pc/output [{:app/users User}]}
+     {::pc/input #{}
+      ::pc/output [{:app.articles/list Article}]}
+     ;; roots with group-by
+     {::pc/input #{}
+      ::pc/output [{:app.tags/top-list [:tag/tag :tag/count]}]}
+     ;; joins
+     {::pc/input #{}
+      ::pc/output [{:user/followed-by User}]}
+     {::pc/input #{}
+      ::pc/output [{:user/follows User}]}
+     {::pc/input #{}
+      ::pc/output [{:article/tags Tag}]}
+     {::pc/input #{}
+      ::pc/output [{:article/comments Comment}]}
+     {::pc/input #{}
+      ::pc/output [{:article/liked-by User}]}
+     {::pc/input #{}
+      ::pc/output [{:user/likes Article}]}
+     {::pc/input #{}
+      ::pc/output [{:user/articles Article}]}
+     {::pc/input #{}
+      ::pc/output [{:article/author User}]}
+     {::pc/input #{}
+      ::pc/output [{:comment/author User}]}]))
 
 (defmethod ig/init-key ::resolver
   [_ {:app/keys [db] :keys [connect] :as env}]
@@ -168,17 +199,6 @@
       (jdbc/with-db-connection [conn (:spec db)]
         (let [env (->> #::walkable {:db conn
                                     :run jdbc/query
-                                    :app/current-user (:user/id current-user)}
+                                    :app.auth/current-user (:user/id current-user)}
                        (merge env))]
           {:body (parser env query)})))))
-
-;; p/env-plugin
-(comment
-  (let [my-plugin  {::p/wrap-parser   (fn [parser] (fn [env tx] (parser env tx)))
-                    ::p/wrap-read     (fn [reader] (fn [env] (reader env)))
-                    ::pc/wrap-resolve (fn [resolve] (fn [env input] (resolve env input)))}
-        the-parser (p/parser {::p/plugins [my-plugin
-                                           (p/env-plugin {::p/reader p/map-reader})]})]
-    (the-parser {:db {1 {:a 2}
-                      2 {:a 3}}}
-      [{[:id 1] [:a]}])))
