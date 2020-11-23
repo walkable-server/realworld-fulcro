@@ -68,15 +68,21 @@
   ([query user-id]
    (let [f (-> system :conduit.handler.walkable/resolver)]
      (:body (f {:identity {:user/id user-id} :transit-params query})))))
-#_
-(w `[{[:article/by-id 3]
-      [:article/id (:article/liked-by-me {:filters false})]}]
-  1)
 
 #_
-(w `[{(:app/users {:filters [:in :user/id 2 3 13 17 20 21]})
-      [:user/id :user/followed-by-me]}]
-  1)
+(w `[{(:app/users {:filters [:in :user/id 1 2 3 13 17 20 21]})
+      [:user/id :user/email :user/followed-by-me]}]
+   1)
+
+#_
+(w `[{[:user/id 1]
+     [:user/id :user/email :user/followed-by-me]}]
+   2)
+
+#_
+(w `[{:app.auth/whoami
+      [:user/id :user/email :user/followed-by-me]}]
+   1)
 #_
 (w `[{[:app.articles/list
        ~(merge #:app.articles.list{:list-id   :global
