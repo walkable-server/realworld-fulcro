@@ -33,14 +33,7 @@
   {:up   [#duct/resource "migrations/create-table-comment-2018-04-23.sql"]
    :down [#duct/resource "migrations/drop-table-comment-2018-04-23.sql"]}
 
-  :conduit.handler.walkable/inputs-outputs
-  [{:input #{:user/id}
-    :output [:user/email :user/name :user/username :user/bio :user/image
-             :user/followed-by-me :user/followed-by-count]}
-   {:input #{:article/id}
-    :output [:article/slug :article/title :article/description :article/body :article/image
-             :article/created-at :article/updated-at
-             :article/liked-by-count :article/liked-by-me]}]
+  :conduit.handler.walkable/inputs-outputs {}
   
   :conduit.handler.walkable/connect
   {:inputs-outputs #ig/ref :conduit.handler.walkable/inputs-outputs
@@ -52,17 +45,17 @@
      :tag/tag
      :comment/id :comment/created-at :comment/updated-at :comment/body]
 
-    :roots {[:feed.global/articles :feed.personal/articles
+    :roots {[:app.global-feed/articles :app.personal-feed/articles
              :app.articles.list/first-item-id :app.articles.list/last-item-id :app.articles.list/total-items]
             "article"
-            [:app/users :user/whoami] "user"
-            [:tags/all :tag/count] "tag"}
+            [:app/users :app.auth/whoami] "user"
+            [:app.tags/top-list :tag/count] "tag"}
     
-    :idents {:user/by-id    :user/id
-             :article/by-id :article/id}
-    :grouping {:tags/all {:group-by [:tag/tag]}}
+    :idents {:user/id    :user/id
+             :article/id :article/id}
+    :grouping {:app.tags/top-list {:group-by [:tag/tag]}}
 
-    :pagination-fallbacks {:tags/all
+    :pagination-fallbacks {:app.tags/top-list
                            {:order-by {:default [:tag/count :desc]}
                             :limit    {:default 20}}}
 
@@ -102,24 +95,21 @@
                      :user/articles :article/author}
 
     :extra-conditions
-    {[:feed.personal/articles]
-     {:article/author {:user/followed-by [:= app/current-user :user/id]}}
+    {[:app.personal-feed/articles]
+     {:article/author {:user/followed-by [:= app.auth/current-user :user/id]}}
 
      :article/liked-by-me
-     [:= app/current-user :user/id]
+     [:= app.auth/current-user :user/id]
 
-     :user/whoami
-     [:= app/current-user :user/id]
+     :app.auth/whoami
+     [:= app.auth/current-user :user/id]
 
      :user/followed-by-me
-     [:= app/current-user :user/id]}
+     [:= app.auth/current-user :user/id]}
 
-    :cardinality {:user/whoami :one
+    :cardinality {:app.auth/whoami :one
 
                   [:article/author :comment/author]
-                  :one
-
-                  [:articles/count-all :articles/count-feed]
                   :one}}}
 
   :conduit.handler.walkable/resolver
