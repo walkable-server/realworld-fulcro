@@ -1,14 +1,13 @@
 (ns conduit.ui.account
   (:require
-   [fulcro.client.primitives :as prim :refer [defsc]]
-   [conduit.ui.other :as other]
-   [conduit.ui.errors :as errors]
-   [fulcro.ui.form-state :as fs]
+   [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+   ;; [conduit.ui.other :as other]
+   [com.fulcrologic.fulcro.algorithms.form-state :as fs]
    [conduit.handler.mutations :as mutations]
-   [fulcro.client.mutations :as m :refer [defmutation]]
-   [fulcro.client.data-fetch :as df]
-   [fulcro.client.dom :as dom]
-   [conduit.ui.routes :as routes]))
+   [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
+   [com.fulcrologic.fulcro.data-fetch :as df]
+   [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
+   [com.fulcrologic.fulcro.dom :as dom]))
 
 (defsc Settings [this props]
   {:query [:user/image :user/name :user/bio :user/email]})
@@ -63,83 +62,74 @@
                   {:placeholder "Password",
                    :type        "password"
                    :value       (or password "")
-                   :onBlur      #(prim/transact! this
-                                    `[(fs/mark-complete! {:field :user/password})])
+                   :onBlur      #(comp/transact! this
+                                   `[(fs/mark-complete! {:field :user/password})])
                    :onChange    #(m/set-string! this :user/password :event %)}))
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
                 {:type "submit" :value "submit"}
                 "Update Settings"))))))))
 
-(def ui-settings-form (prim/factory SettingsForm))
-
-(defsc SignUpSubmission [this props]
-  {:query [:submission/status
-           :submission/errors
-           {:submission/result (prim/get-query other/UserTinyPreview)}]
-   :ident (fn [] [:submission/by-id :app/sign-up])})
+#_
+(def ui-settings-form (comp/factory SettingsForm))
 
 (defsc SignUpError [this error]
   (dom/li
-    (str
-      (condp = error
-        errors/email-taken
-        "That email is already taken"
-        "Unknown error"))))
+    (condp = error
+      :error/email-taken
+      "That email is already taken"
+      "Unknown error")))
 
-(def ui-sign-up-error (prim/factory SignUpError {:keyfn identity}))
+(def ui-sign-up-error (comp/factory SignUpError {:keyfn identity}))
 
-(defsc SignUpForm [this {:user/keys [name email] :as props}]
-  {:query         [:user/name :user/email fs/form-config-join
-                   {[:submission/by-id :app/sign-up] (prim/get-query SignUpSubmission)}]
-   :initial-state (fn [params] #:user{:name "" :email ""})
-   :ident         (fn [] [:root/sign-up-form :new-user])
+(defsc SignUpForm [this {:user/keys [id name email] :keys [error] :as props}]
+  {:query         [:user/id :user/name :user/email
+                   fs/form-config-join :error]
+   :initial-state #:user {:name "" :email ""}
+   :ident         (fn [] [:app.top-level/sign-up-form :new-user])
+   :route-segment ["sign-up"]
+   :will-enter    (fn [app _route-params]
+                    (dr/route-deferred [:app.top-level/sign-up-form :new-user]
+                      #(comp/transact! app `[(load-sign-up-form {})])))
    :form-fields   #{:user/name :user/email}}
-  (let [{:user/keys [password] :as state} (prim/get-state this)
-        whoami                            (prim/shared this :user/whoami)
-        logged-in?                        (number? (:user/id whoami))
-
-        {:submission/keys [status result errors]}
-        (get props [:submission/by-id :app/sign-up])]
+  (let [{:user/keys [password] :as state} (comp/get-state this)]
     (dom/div :.auth-page
       (dom/div :.container.page
         (dom/div :.row
-          (if logged-in?
+          (if id
             (dom/div :.col-md-6.offset-md-3.col-xs-12
               (dom/p :.text-xs-center
-                (if (= :ok status)
-                  (str "You have successfully signed up as " (:user/name result))
-                  (str "You have logged in as " (:user/name whoami)))))
+                (str "You have successfully signed up as " name)))
             (dom/div :.col-md-6.offset-md-3.col-xs-12
               (dom/h1 :.text-xs-center
                 "Sign up")
               (dom/p  :.text-xs-center
-                (dom/a {:href (routes/to-path {:handler :screen/log-in})}
+                ;; FIXME:
+                (dom/a {:onClick #(dr/change-route-relative! this this [:.. "log-in"])}
                   "Have an account?"))
-              (when (= :failed status)
+              (when error
                 (dom/ul :.error-messages
-                  (mapv ui-sign-up-error (get errors :user/email))
-                  (mapv ui-sign-up-error (get errors errors/other-category))))
+                  (ui-sign-up-error error)))
 
               (dom/form {:onSubmit #(do (.preventDefault %)
-                                        (prim/ptransact! this `[(sign-up ~(merge props state))
-                                                                (finish-sign-up {})]))}
+                                        (comp/transact! this `[(sign-up ~(merge (select-keys props [:user/name :user/email]) state))
+                                                               #_(finish-sign-up {})]))}
 
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg.form-control-success.form-control-warning.form-control-danger
                     {:placeholder "Your Name"
                      :type        "text"
-                     :value       name
-                     :onBlur      #(prim/transact! this
+                     :value       (or name "")
+                     :onBlur      #(comp/transact! this
                                      `[(fs/mark-complete! {:field :user/name})])
                      :onChange    #(m/set-string! this :user/name :event %)}))
                 (dom/fieldset {:classes ["form-group"
-                                         (when (and (= :failed status) (seq (get errors :user/email)))
+                                         (when error
                                            "has-danger has-feedback")]}
                   (dom/input :.form-control.form-control-lg.form-control-success.form-control-warning.form-control-danger
                     {:placeholder "Email"
                      :type        "text"
-                     :value       email
-                     :onBlur      #(prim/transact! this
+                     :value       (or email "")
+                     :onBlur      #(comp/transact! this
                                      `[(fs/mark-complete! {:field :user/email})])
                      :onChange    #(m/set-string! this :user/email :event %)}))
 
@@ -148,24 +138,17 @@
                     {:placeholder "Password"
                      :type        "password"
                      :value       (or password "")
-                     :onChange    #(prim/set-state! this {:user/password (.. % -target -value)})}) )
+                     :onChange    #(comp/set-state! this {:user/password (.. % -target -value)})}) )
                 (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
                   {:type "submit" :value "submit"}
                   "Sign up")))))))))
 
-(def ui-sign-up-form (prim/factory SignUpForm))
+(def ui-sign-up-form (comp/factory SignUpForm))
 
 (defmutation load-sign-up-form [_]
   (action [{:keys [state] :as env}]
     (swap! state
-      #(fs/add-form-config* % SignUpForm [:root/sign-up-form :new-user])))
-  (refresh [env] [:screen]))
-
-(defsc LogInSubmission [this props]
-  {:query [:submission/status
-           :submission/errors
-           {:submission/result (prim/get-query other/UserTinyPreview)}]
-   :ident (fn [] [:submission/by-id :app/log-in])})
+           #(fs/add-form-config* % SignUpForm (comp/get-ident SignUpForm {})))))
 
 (defsc LogInForm [this {:submission/keys [status result]}]
   (let [{:user/keys [email password] :as credentials} (prim/get-state this)
