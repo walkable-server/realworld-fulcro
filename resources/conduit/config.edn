@@ -115,7 +115,6 @@
   :conduit.handler.walkable/resolver
   {:com.wsscode.pathom.core/placeholder-prefixes #{"placeholder" "ph"}
    :duct/logger #ig/ref :duct/logger
-   :app/jwt-secret #duct/env "JWT_SECRET"
    :app/db #ig/ref :duct.database/sql
    :connect #ig/ref :conduit.handler.walkable/connect}
 
@@ -123,20 +122,15 @@
   {:routes     {"/" [:index]
                 [:post"/api"] ^:wrap-transit [:api]}
    :handlers   {:api #ig/ref :conduit.handler.walkable/resolver
-                :index #ig/ref :conduit.handler.fulcro/index
-                ;; :api #ig/ref :conduit.handler.fulcro/api
-                }
-   :middleware {:jws-auth #ig/ref :duct.middleware.buddy/authentication
-                :wrap-transit #ig/ref :conduit.middleware.fulcro/wrap-transit}}
-
+                :index #ig/ref :conduit.handler.fulcro/index}
+   :middleware {:wrap-transit #ig/ref :conduit.middleware.fulcro/wrap-transit}}
+  
   :duct.middleware.buddy/authentication
-  {:backend :jws
-   :secret  #duct/env "JWT_SECRET"}
+  {:backend :session}
 
   :conduit.handler.fulcro/index {}
-  ;; :conduit.handler.fulcro/api {}
 
-  :conduit.middleware.fulcro/wrap-transit {}
+  :conduit.middleware.fulcro/wrap-transit {:session-auth #ig/ref :duct.middleware.buddy/authentication}
   }
  :duct.profile/dev   #duct/include "dev"
  :duct.profile/local #duct/include "local"

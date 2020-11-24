@@ -3,8 +3,9 @@
             [integrant.core :as ig]))
 
 (defmethod ig/init-key ::wrap-transit
-  [_ options]
+  [_ {:keys [session-auth]}]
   (fn [handler]
     (-> handler
       (server/wrap-transit-params)
+      session-auth
       (server/wrap-transit-response))))
