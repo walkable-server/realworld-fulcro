@@ -9,7 +9,7 @@
    [com.fulcrologic.fulcro.dom :as dom]))
 
 (defrouter RootRouter [this props]
-  {:router-targets [account/SignUpForm]})
+  {:router-targets [account/SignUpForm account/LogInForm]})
 
 (def ui-route-router (comp/factory RootRouter))
 
