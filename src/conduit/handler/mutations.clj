@@ -8,9 +8,6 @@
             [com.wsscode.pathom.connect :as pc :refer [defmutation]]
             [com.fulcrologic.fulcro.algorithms.tempid :refer [tempid?]]))
 
-(def remove-user-namespace
-  (util/remove-namespace "user" [:username :name :email :bio :image :password]))
-
 (def remove-comment-namespace
   (util/remove-namespace "comment" [:body]))
 
@@ -20,7 +17,7 @@
 
 (defmutation sign-up [{:app/keys [db] :as env} new-user]
   {::pc/sym 'conduit.ui.account/sign-up}
-  (user/create-user db (rename-keys new-user remove-user-namespace)))
+  (user/create-user db new-user))
 
 (defmutation submit-article
   [{:app/keys [db] current-user :app.auth/current-user} diff]
@@ -51,8 +48,7 @@
   [{:app/keys [db] current-user :app.auth/current-user} diff]
   {}
   (if current-user
-    (user/update-user db current-user
-                      (-> (util/get-item diff) (rename-keys remove-user-namespace)))
+    (user/update-user db current-user (util/get-item diff))
     {}))
 
 (defmutation delete-article
