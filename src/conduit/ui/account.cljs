@@ -104,16 +104,16 @@
               (dom/h1 :.text-xs-center
                 "Sign up")
               (dom/p  :.text-xs-center
-                ;; FIXME:
-                (dom/a {:onClick #(dr/change-route-relative! this this [:.. "log-in"])}
+                (dom/a {:href "#"
+                        :onClick #(do (.preventDefault %)
+                                      (dr/change-route-relative! this this [:.. "log-in"]))}
                   "Have an account?"))
               (when error
                 (dom/ul :.error-messages
                   (ui-sign-up-error error)))
 
               (dom/form {:onSubmit #(do (.preventDefault %)
-                                        (comp/transact! this `[(sign-up ~(merge (select-keys props [:user/name :user/email]) state))
-                                                               #_(finish-sign-up {})]))}
+                                        (comp/transact! this `[(sign-up ~(merge (select-keys props [:user/name :user/email]) state))]))}
 
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg.form-control-success.form-control-warning.form-control-danger
@@ -147,111 +147,64 @@
 (def ui-sign-up-form (comp/factory SignUpForm))
 
 (defmutation load-sign-up-form [_]
-  (action [{:keys [state] :as env}]
+  (action [{:keys [app state] :as env}]
     (swap! state
-           #(fs/add-form-config* % SignUpForm (comp/get-ident SignUpForm {})))))
+      #(fs/add-form-config* % SignUpForm (comp/get-ident SignUpForm {})))))
 
-(defsc LogInForm [this {:submission/keys [status result]}]
-  (let [{:user/keys [email password] :as credentials} (prim/get-state this)
-
-        whoami     (prim/shared this :user/whoami)
-        logged-in? (number? (:user/id whoami))]
+(defsc LogInForm
+  [this {:user/keys [id name] :keys [error]}]
+  {:query [:user/id :user/name :user/email :error]
+   :initial-state #:user {:name "" :email ""}
+   :ident (fn [] [:app.top-level/log-in-form :log-in])
+   :route-segment ["log-in"]}
+  (let [{:user/keys [email password] :as credentials} (comp/get-state this)]
     (dom/div :.auth-page
       (dom/div :.container.page
         (dom/div :.row
-          (if logged-in?
+          (if id
             (dom/div :.col-md-6.offset-md-3.col-xs-12
               (dom/p :.text-xs-center
-                "You have logged in as " (:user/name whoami)))
+                "You have logged in as " name))
             (dom/div :.col-md-6.offset-md-3.col-xs-12
               (dom/h1 :.text-xs-center
                 "Log in")
               (dom/p :.text-xs-center
-                (dom/a {:href (routes/to-path {:handler :screen/sign-up})}
+                (dom/a {:href "#abc"
+                        :onClick #(do (.preventDefault %)
+                                      (dr/change-route-relative! this this [:.. "sign-up"]))}
                   "Don't have an account?"))
-              (when (= status :failed)
+              (when error
                 (dom/ul :.error-messages
                   (dom/li "Incorrect username or password!")))
               (dom/form {:onSubmit #(do (.preventDefault %)
-                                        (prim/ptransact! this `[(log-in ~credentials)
-                                                                (finish-log-in {})]))}
+                                        (comp/transact! this `[(log-in ~credentials)]))}
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg
                     {:placeholder "Email"
                      :type        "text"
                      :value       (or email "")
-                     :onChange    #(prim/update-state! this assoc :user/email (.. % -target -value))}))
+                     :onChange    #(comp/update-state! this assoc :user/email (.. % -target -value))}))
                 (dom/fieldset :.form-group
                   (dom/input :.form-control.form-control-lg
                     {:placeholder "Password"
                      :type        "password"
                      :value       (or password "")
-                     :onChange    #(prim/update-state! this assoc :user/password (.. % -target -value))}) )
+                     :onChange    #(comp/update-state! this assoc :user/password (.. % -target -value))}) )
                 (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
                   {:type "submit" :value "submit"}
                   "Log in")))))))))
 
-(def ui-log-in-form (prim/factory LogInForm))
-
-(defsc SignUpScreen [this {user :new-user}]
-  {:initial-state (fn [params] {:screen    :screen/sign-up
-                                :screen-id :top
-                                :new-user  #:user {:name "" :email ""}})
-   :ident         (fn [] [:screen/sign-up :top])
-   :query         [:screen :screen-id
-                   {:new-user (prim/get-query SignUpForm)}]}
-  (ui-sign-up-form user))
-
-(defsc LogInScreen [this {log-in-status [:submission/by-id :app/log-in]}]
-  {:initial-state (fn [params] {:screen    :screen/log-in
-                                :screen-id :top})
-   :ident         (fn [] [:screen/log-in :top])
-   :query         [:screen :screen-id
-                   {[:submission/by-id :app/log-in] (prim/get-query LogInSubmission)}]}
-  (ui-log-in-form log-in-status))
-
-(defsc SettingScreen [this {user [:root/settings-form :user]}]
-  {:initial-state (fn [params] {:screen             :screen/settings
-                                :screen-id          :top})
-   :query         [:screen :screen-id
-                   {[:root/settings-form :user] (prim/get-query SettingsForm)}]}
-  (ui-settings-form user))
+(def ui-log-in-form (comp/factory LogInForm))
 
 (defmutation log-in [credentials]
-  (remote [{:keys [ast state]}]
-    (m/returning ast state LogInSubmission)))
-
-(defn finish-log-in-or-sign-up
-  [submission-key {:keys [state reconciler]}]
-  (when (= :ok (get-in @state [:submission/by-id submission-key
-                               :submission/status]))
-    (when-let [current-user
-               (get-in @state [:submission/by-id submission-key
-                               :submission/result])]
-      (let [new-token (get-in @state (conj current-user :user/token))]
-        (reset! other/token-store (str "Token " new-token)))
-      (swap! state assoc :user/whoami current-user)
-      (prim/transact! reconciler `[(mutations/rerender-root)]))))
-
-(defmutation finish-log-in [_]
-  (action [env]
-    (finish-log-in-or-sign-up :app/log-in env)))
-
-(defmutation finish-sign-up [_]
-  (action [env]
-    (finish-log-in-or-sign-up :app/sign-up env)))
+  (remote [env] (m/returning env LogInForm)))
 
 (defmutation log-out [_]
-  (action [{:keys [state] :as env}]
-    (df/load-action env :user/whoami other/UserTinyPreview
-      {:params        {:logout true}
-       :post-mutation `mutations/rerender-root}))
-  (remote [env]
-    (df/remote-load env)))
+  ;; FIXME
+  (remote [env] true))
 
 (defmutation sign-up [new-user]
-  (remote [{:keys [ast state]}]
-    (m/returning ast state SignUpSubmission)))
+  (remote [env] (m/returning env SignUpForm)))
 
 (defmutation use-settings-as-form [_]
   (action [{:keys [state] :as env}]
