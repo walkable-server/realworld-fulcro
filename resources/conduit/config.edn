@@ -48,7 +48,7 @@
     :roots {[:app.global-feed/articles :app.personal-feed/articles
              :app.articles.list/first-item-id :app.articles.list/last-item-id :app.articles.list/total-items]
             "article"
-            [:app/users :app.auth/whoami] "user"
+            [:app/users :session/current-user] "user"
             [:app.tags/top-list :tag/count] "tag"}
     
     :idents {:user/id    :user/id
@@ -101,13 +101,13 @@
      :article/liked-by-me
      [:= app.auth/current-user :user/id]
 
-     :app.auth/whoami
+     :session/current-user
      [:= app.auth/current-user :user/id]
 
      :user/followed-by-me
      [:= app.auth/current-user :user/id]}
 
-    :cardinality {:app.auth/whoami :one
+    :cardinality {:session/current-user :one
 
                   [:article/author :comment/author]
                   :one}}}

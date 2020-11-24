@@ -12,15 +12,15 @@
   (util/remove-namespace "comment" [:body]))
 
 (defmutation log-in [{:app/keys [db] :as env} {:user/keys [email password]}]
-  {::pc/sym 'conduit.ui.account/log-in}
+  {::pc/sym 'conduit.session/login}
   (user/find-login db email password))
 
 (defmutation log-out [env _]
-  {::pc/sym 'conduit.ui.account/log-out}
+  {::pc/sym 'conduit.session/logout}
   {})
 
 (defmutation sign-up [{:app/keys [db] :as env} new-user]
-  {::pc/sym 'conduit.ui.account/sign-up}
+  {::pc/sym 'conduit.session/sign-up}
   (user/create-user db new-user))
 
 (defmutation submit-article

@@ -119,9 +119,14 @@
                                      :start (-> items first :article/id)
                                      :end   (-> items last :article/id)})}))))
 
+(pc/defresolver user-valid?
+  [env params]
+  {::pc/input  #{:user/id}
+   ::pc/output [:user/valid?]}
+  {:user/valid? (boolean (:user/id params))})
 
 (def resolvers
-  [])
+  [user-valid?])
 
 (defn pathom-parser [walkable-connect]
   (p/parser
@@ -148,10 +153,10 @@
     (walkable/connect-plugin config)))
 
 (defmethod ig/init-key ::inputs-outputs [_ _]
-  (let [User [:user/email :user/name :user/username :user/bio :user/image
+  (let [User [:user/id :user/email :user/name :user/username :user/bio :user/image
               :user/followed-by-me :user/followed-by-count]
-        Article [:article/slug :article/title :article/description
-                 :article/body :article/image
+        Article [:article/id :article/slug :article/title
+                 :article/description :article/body :article/image
                  :article/created-at :article/updated-at
                  :article/liked-by-count :article/liked-by-me]
         Tag [:tag/tag]
@@ -164,7 +169,7 @@
       ::pc/output Article}
      ;; roots
      {::pc/input #{}
-      ::pc/output [{:app.auth/whoami User}]}
+      ::pc/output [{:session/current-user User}]}
      {::pc/input #{}
       ::pc/output [{:app/users User}]}
      {::pc/input #{}
@@ -195,10 +200,10 @@
 (defn add-session [result session]
   (let [response {:body result}]
     (if-let [new-user
-             (or (get-in result '[conduit.ui.account/log-in :user/id])
-               (get-in result '[conduit.ui.account/sign-up :user/id]))]
+             (or (get-in result '[conduit.session/login :user/id])
+               (get-in result '[conduit.session/sign-up :user/id]))]
       (assoc response :session (assoc-in session [:identity :user/id] new-user))
-      (if (contains? result 'conduit.ui.account/log-out)
+      (if (contains? result 'conduit.session/logout)
         (assoc response :session {})
         (assoc response :session session)))))
 
