@@ -11,11 +11,17 @@
   (unfollow [db follower-id followee-id]))
 
 (defn hash-password [user]
-  (if (contains? user :password)
-    (if (seq (:password user))
-      (update user :password hashers/derive)
-      (dissoc user :password))
+  (if (contains? user :user/password)
+    (if (seq (:user/password user))
+      (update user :user/password hashers/derive)
+      (dissoc user :user/password))
     user))
+
+(defn user-in [user]
+  (select-keys user [:user/name :user/email :user/bio :user/image]))
+
+(defn user-out [{:keys [id]}]
+  {:user/id id})
 
 (defn user-error-message [msg]
   (condp re-find msg
@@ -25,21 +31,21 @@
 
 (extend-protocol User
   duct.database.sql.Boundary
-  (create-user [{db :spec} {:keys [password] :as user}]
-    (let [pw-hash (hashers/derive password)]
-      (try
-        (-> (jdbc/insert! db "\"user\""
-                          (-> user (select-keys [:name :email :bio :image])
-                              (assoc :password pw-hash)))
-            first
-            (dissoc :password))
-        (catch org.postgresql.util.PSQLException e
-          (let [msg (.getMessage e)]
-            {:error (user-error-message msg)})))))
+  (create-user [{db :spec} user]
+    (try
+      (->> (-> user user-in hash-password)
+           (jdbc/insert! db "\"user\"")
+           first
+           user-out)
+      (catch org.postgresql.util.PSQLException e
+        (let [msg (.getMessage e)]
+          {:error (user-error-message msg)}))))
   (update-user [db user-id user]
-    (jdbc/update! (:spec db) "\"user\""
-      (-> user (select-keys [:name :email :bio :image :password]) hash-password)
-      ["id = ?" user-id]))
+    (->> (jdbc/update! (:spec db) "\"user\""
+                       (-> user user-in hash-password)
+                       ["id = ?" user-id])
+         first
+         user-out))
   (find-login [{db :spec} email password]
     (let [user (first (jdbc/find-by-keys db "\"user\"" {:email email}))]
       (if (and user (hashers/check password (:password user)))
