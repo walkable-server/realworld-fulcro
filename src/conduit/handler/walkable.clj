@@ -192,14 +192,25 @@
      {::pc/input #{}
       ::pc/output [{:comment/author User}]}]))
 
+(defn add-session [result session]
+  (let [response {:body result}]
+    (if-let [new-user
+             (or (get-in result '[conduit.ui.account/log-in :user/id])
+               (get-in result '[conduit.ui.account/sign-up :user/id]))]
+      (assoc response :session (assoc-in session [:identity :user/id] new-user))
+      (if (contains? result 'conduit.ui.account/log-out)
+        (assoc response :session {})
+        (assoc response :session session)))))
+
 (defmethod ig/init-key ::resolver
   [_ {:app/keys [db] :keys [connect] :as env}]
   (let [parser (pathom-parser connect)]
-    (fn [{current-user :identity
-          query :transit-params}]
+    (fn [{current-user :identity edn-query :transit-params
+          :keys [session]}]
       (jdbc/with-db-connection [conn (:spec db)]
         (let [env (->> #::walkable {:db conn
                                     :run jdbc/query
                                     :app.auth/current-user (:user/id current-user)}
-                       (merge env))]
-          {:body (parser env query)})))))
+                    (merge env))
+              result (parser env edn-query)]
+          (add-session result session))))))
