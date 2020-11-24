@@ -15,6 +15,10 @@
   {::pc/sym 'conduit.ui.account/log-in}
   (user/find-login db email password))
 
+(defmutation log-out [env _]
+  {::pc/sym 'conduit.ui.account/log-out}
+  {})
+
 (defmutation sign-up [{:app/keys [db] :as env} new-user]
   {::pc/sym 'conduit.ui.account/sign-up}
   (user/create-user db new-user))
@@ -109,6 +113,7 @@
 
 (def mutations
   [log-in
+   log-out
    sign-up
    submit-article
    submit-comment
