@@ -89,7 +89,8 @@
    :route-segment ["sign-up"]
    :will-enter    (fn [app _route-params]
                     (dr/route-deferred [:app.top-level/sign-up-form :new-user]
-                      #(comp/transact! app `[(load-sign-up-form {})])))
+                      #(comp/transact! app `[(load-sign-up-form {})
+                                             (dr/target-ready {:target [:app.top-level/sign-up-form :new-user]})])))
    :form-fields   #{:user/name :user/email}}
   (let [{:user/keys [password] :as state} (comp/get-state this)]
     (dom/div :.auth-page
