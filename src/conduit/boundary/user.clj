@@ -18,7 +18,7 @@
     user))
 
 (defn user-in [user]
-  (select-keys user [:user/name :user/email :user/bio :user/image]))
+  (select-keys user [:user/name :user/password :user/email :user/bio :user/image]))
 
 (defn user-out [{:keys [id]}]
   {:user/id id})
