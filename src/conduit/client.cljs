@@ -47,6 +47,40 @@
                                                          :user/password password})])}
         "Login"))))
 
+(defsc SignUpForm [this {:ui/keys [email password error? busy?] :as props}]
+  {:query         [:ui/email :ui/password :ui/error? :ui/busy?]
+   :ident         (fn [] [:component/id :sign-up])
+   :route-segment ["sign-up"]
+   :initial-state {:ui/email    "foo@bar.com"
+                   :ui/error?   false
+                   :ui/busy?    false
+                   :ui/password "letmein"}}
+  (div :.ui.container.segment
+    (dom/div :.ui.form {:classes [(when error? "error")]}
+      (div :.field
+        (label "Username")
+        (input {:value    email
+                :disabled busy?
+                :onChange #(m/set-string! this :ui/email :event %)}))
+      (div :.field
+        (label "Password")
+        (input {:type      "password"
+                :value     password
+                :disabled  busy?
+                :onKeyDown (fn [evt]
+                             (when (evt/enter-key? evt)
+                               (comp/transact! this [(session/sign-up {:user/email    email
+                                                                     :user/password password})])))
+                :onChange  #(m/set-string! this :ui/password :event %)}))
+      (div :.ui.error.message
+        (div :.content
+          "Invalid Credentials"))
+      (button :.ui.primary.button
+        {:classes [(when busy? "loading")]
+         :onClick #(comp/transact! this [(session/sign-up {:user/email    email
+                                                         :user/password password})])}
+        "Sign-Up"))))
+
 (defsc Home [this props]
   {:query         [:pretend-data]
    :ident         (fn [] [:component/id :home])
@@ -64,7 +98,7 @@
     (h3 "Settings Screen")))
 
 (defrouter MainRouter [this props]
-  {:router-targets [LoginForm Home Settings]})
+  {:router-targets [LoginForm SignUpForm Home Settings]})
 
 (def ui-main-router (comp/factory MainRouter))
 
@@ -106,7 +140,8 @@
   (routing-start!)
   (uism/begin! APP session/session-machine ::session/sessions
     {:actor/user session/CurrentUser
-     :actor/login-form LoginForm}
+     :actor/login-form LoginForm
+     :actor/sign-up-form SignUpForm}
     {:desired-path (some-> js/window .-location .-pathname)})
   (df/load! APP :session/current-user CurrentUser {:post-mutation `finish-login}))
 

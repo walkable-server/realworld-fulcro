@@ -22,6 +22,17 @@
            ::uism/error-event :event/error}))
       (uism/activate :state/checking-credentials))))
 
+(defn handle-sign-up [{::uism/keys [event-data] :as env}]
+  (let [user-class (uism/actor-class env :actor/user)]
+    (-> env
+      (uism/trigger-remote-mutation :actor/sign-up-form `sign-up
+        (merge event-data
+          {::m/returning      user-class
+           ::targeting/target [:session/current-user]
+           ::uism/ok-event    :event/ok
+           ::uism/error-event :event/error}))
+      (uism/activate :state/checking-credentials))))
+
 (def main-events
   {:event/logout
    {::uism/handler
@@ -37,7 +48,8 @@
 (defstatemachine session-machine
   {::uism/actor-name
    #{:actor/user
-     :actor/login-form}
+     :actor/login-form
+     :actor/sign-up-form}
 
    ::uism/aliases
    {:logged-in? [:actor/user :user/valid?]}
@@ -70,6 +82,9 @@
     :state/bad-credentials
     {::uism/events main-events}
 
+    :state/email-taken
+    {::uism/events main-events}
+
     :state/idle
     {::uism/events main-events}
 
@@ -89,6 +104,23 @@
       :event/error
       {::uism/handler
        (fn [env] (uism/activate env :state/server-failed))}}}
+    
+    :state/signing-up
+    {::uism/events
+     {:event/ok
+      {::uism/handler
+       (fn [env]
+         (let [logged-in? (uism/alias-value env :logged-in?)
+               {:keys [desired-path]} (uism/retrieve env :config)]
+           (when (and logged-in? desired-path)
+             (route-to! desired-path))
+           (-> env
+             (uism/activate (if logged-in?
+                              :state/idle
+                              :state/email-taken)))))}
+      :event/error
+      {::uism/handler
+       (fn [env] (uism/activate env :state/server-failed))}}}
 
     :state/server-failed
     {::uism/events main-events}}})
@@ -103,7 +135,9 @@
         email ent/nbsp (a {:onClick
                            (fn [] (uism/trigger! this ::sessions :event/logout))}
                          "Logout"))
-      (a {:onClick #(dr/change-route this ["login"])} "Login"))))
+      (div 
+        (a {:onClick #(dr/change-route this ["login"])} "Login")
+        (a {:onClick #(dr/change-route this ["sign-up"])} "Sign up")))))
 
 (def ui-current-user (comp/factory CurrentUser))
 
@@ -136,6 +170,42 @@
                        (-> s
                          (show-login-busy* false)
                          (show-login-error* true)))))))
+  (refresh [_]
+    [:ui/error? :ui/busy?])
+  (remote [env]
+    (-> env
+      (m/returning CurrentUser)
+      (m/with-target [:session/current-user]))))
+
+(defn show-sign-up-busy* [state-map tf]
+  (assoc-in state-map [:component/id :sign-up :ui/busy?] tf))
+
+(defn show-sign-up-error* [state-map tf]
+  (assoc-in state-map [:component/id :sign-up :ui/error?] tf))
+
+(defmutation sign-up [_]
+  (action [{:keys [state]}]
+    (swap! state show-sign-up-busy* true))
+  (error-action [{:keys [state]}]
+    (log/error "Error action")
+    (swap! state (fn [s]
+                   (-> s
+                     (show-sign-up-busy* false)
+                     (show-sign-up-error* true)))))
+  (ok-action [{:keys [state]}]
+    (log/info "OK action")
+    (let [logged-in? (get-in @state [:session/current-user :user/valid?])]
+      (if logged-in?
+        (do
+          (swap! state (fn [s]
+                         (-> s
+                           (show-sign-up-busy* false)
+                           (show-sign-up-error* false))))
+          (route-to! "/home"))
+        (swap! state (fn [s]
+                       (-> s
+                         (show-sign-up-busy* false)
+                         (show-sign-up-error* true)))))))
   (refresh [_]
     [:ui/error? :ui/busy?])
   (remote [env]
