@@ -38,14 +38,15 @@
                                (comp/transact! this [(session/login {:user/email    email
                                                                      :user/password password})])))
                 :onChange  #(m/set-string! this :ui/password :event %)}))
-      (div :.ui.error.message
-        (div :.content
-          "Invalid Credentials"))
+      (when error?
+        (div :.ui.error.message
+          (div :.content
+            "Invalid Credentials")))
       (button :.ui.primary.button
         {:classes [(when busy? "loading")]
          :onClick #(comp/transact! this [(session/login {:user/email    email
                                                          :user/password password})])}
-        "Login"))))
+        (when busy? "loading... ") "Login"))))
 
 (defsc SignUpForm [this {:ui/keys [email password error? busy?] :as props}]
   {:query         [:ui/email :ui/password :ui/error? :ui/busy?]
@@ -70,16 +71,17 @@
                 :onKeyDown (fn [evt]
                              (when (evt/enter-key? evt)
                                (comp/transact! this [(session/sign-up {:user/email    email
-                                                                     :user/password password})])))
+                                                                       :user/password password})])))
                 :onChange  #(m/set-string! this :ui/password :event %)}))
-      (div :.ui.error.message
-        (div :.content
-          "Invalid Credentials"))
+      (when error?
+        (div :.ui.error.message
+          (div :.content
+            "Email is taken")))
       (button :.ui.primary.button
         {:classes [(when busy? "loading")]
          :onClick #(comp/transact! this [(session/sign-up {:user/email    email
-                                                         :user/password password})])}
-        "Sign-Up"))))
+                                                           :user/password password})])}
+        (when busy? "loading...") "Sign-Up"))))
 
 (defsc Home [this props]
   {:query         [:pretend-data]
