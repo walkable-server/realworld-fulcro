@@ -119,8 +119,8 @@
    :connect #ig/ref :conduit.handler.walkable/connect}
 
   :duct.router/ataraxy
-  {:routes     {"/" [:index]
-                [:post"/api"] ^:wrap-transit [:api]}
+  {:routes     {:get [:index]
+                [:post "/api"] ^:wrap-transit [:api]}
    :handlers   {:api #ig/ref :conduit.handler.walkable/resolver
                 :index #ig/ref :conduit.handler.fulcro/index}
    :middleware {:wrap-transit #ig/ref :conduit.middleware.fulcro/wrap-transit}}
