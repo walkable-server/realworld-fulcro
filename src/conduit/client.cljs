@@ -7,81 +7,11 @@
    [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
    [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
    [com.fulcrologic.fulcro.ui-state-machines :as uism]
-   [com.fulcrologic.fulcro.dom.events :as evt]
    [conduit.app :refer [APP routing-start! route-to!]]
    [conduit.session :as session :refer [CurrentUser ui-current-user]]
+   [conduit.ui.account :as account]
    [com.fulcrologic.fulcro.inspect.preload]
    [com.fulcrologic.fulcro.inspect.dom-picker-preload]))
-
-(defsc LoginForm [this {:ui/keys [email password error? busy?] :as props}]
-  {:query         [:ui/email :ui/password :ui/error? :ui/busy?]
-   :ident         (fn [] [:component/id :login])
-   :route-segment ["login"]
-   :initial-state {:ui/email    "foo@bar.com"
-                   :ui/error?   false
-                   :ui/busy?    false
-                   :ui/password "letmein"}}
-  (div :.ui.container.segment
-    (dom/div :.ui.form {:classes [(when error? "error")]}
-      (div :.field
-        (label "Username")
-        (input {:value    email
-                :disabled busy?
-                :onChange #(m/set-string! this :ui/email :event %)}))
-      (div :.field
-        (label "Password")
-        (input {:type      "password"
-                :value     password
-                :disabled  busy?
-                :onKeyDown (fn [evt]
-                             (when (evt/enter-key? evt)
-                               (comp/transact! this [(session/login {:user/email    email
-                                                                     :user/password password})])))
-                :onChange  #(m/set-string! this :ui/password :event %)}))
-      (when error?
-        (div :.ui.error.message
-          (div :.content
-            "Invalid Credentials")))
-      (button :.ui.primary.button
-        {:classes [(when busy? "loading")]
-         :onClick #(comp/transact! this [(session/login {:user/email    email
-                                                         :user/password password})])}
-        (when busy? "loading... ") "Login"))))
-
-(defsc SignUpForm [this {:ui/keys [email password error? busy?] :as props}]
-  {:query         [:ui/email :ui/password :ui/error? :ui/busy?]
-   :ident         (fn [] [:component/id :sign-up])
-   :route-segment ["sign-up"]
-   :initial-state {:ui/email    "foo@bar.com"
-                   :ui/error?   false
-                   :ui/busy?    false
-                   :ui/password "letmein"}}
-  (div :.ui.container.segment
-    (dom/div :.ui.form {:classes [(when error? "error")]}
-      (div :.field
-        (label "Username")
-        (input {:value    email
-                :disabled busy?
-                :onChange #(m/set-string! this :ui/email :event %)}))
-      (div :.field
-        (label "Password")
-        (input {:type      "password"
-                :value     password
-                :disabled  busy?
-                :onKeyDown (fn [evt]
-                             (when (evt/enter-key? evt)
-                               (comp/transact! this [(session/sign-up {:user/email    email
-                                                                       :user/password password})])))
-                :onChange  #(m/set-string! this :ui/password :event %)}))
-      (when error?
-        (div :.ui.error.message
-          (div :.content
-            "Email is taken")))
-      (button :.ui.primary.button
-        {:classes [(when busy? "loading")]
-         :onClick #(comp/transact! this [(session/sign-up {:user/email    email
-                                                           :user/password password})])}
-        (when busy? "loading...") "Sign-Up"))))
 
 (defsc Home [this props]
   {:query         [:pretend-data]
@@ -100,15 +30,20 @@
     (h3 "Settings Screen")))
 
 (defrouter MainRouter [this props]
-  {:router-targets [LoginForm SignUpForm Home Settings]})
+  {:router-targets [account/LoginForm account/SignUpForm Home Settings]})
 
 (def ui-main-router (comp/factory MainRouter))
 
 (defsc Root [_ {:root/keys    [ready? router]
                 :session/keys [current-user]}]
-  {:query         [:root/ready? {:root/router (comp/get-query MainRouter)}
-                   {:session/current-user (comp/get-query CurrentUser)}]
-   :initial-state {:root/router {}}}
+  {:query         [:root/ready?
+                   {:root/router (comp/get-query MainRouter)}
+                   [::uism/asm-id ::session/sessions]
+                   {:session/current-user (comp/get-query session/CurrentUser)}]
+   :initial-state (fn [_]
+                    {:root/ready? false
+                     :root/router (comp/get-initial-state MainRouter)
+                     :session/current-user (comp/get-initial-state session/CurrentUser)})}
   (let [logged-in? (:user/valid? current-user)]
     (div
       (div :.ui.top.fixed.menu
@@ -126,13 +61,6 @@
         (div :.ui.grid {:style {:marginTop "4em"}}
           (ui-main-router router))))))
 
-(defmutation finish-login [_]
-  (action [{:keys [app state]}]
-    (let [logged-in? (get-in @state [:session/current-user :user/valid?])]
-      (when-not logged-in?
-        (route-to! "/login"))
-      (swap! state assoc :root/ready? true))))
-
 (defn refresh []
   (app/mount! APP Root "app"))
 
@@ -142,10 +70,9 @@
   (routing-start!)
   (uism/begin! APP session/session-machine ::session/sessions
     {:actor/user session/CurrentUser
-     :actor/login-form LoginForm
-     :actor/sign-up-form SignUpForm}
-    {:desired-path (some-> js/window .-location .-pathname)})
-  (df/load! APP :session/current-user CurrentUser {:post-mutation `finish-login}))
+     :actor/login-form account/LoginForm
+     :actor/sign-up-form account/SignUpForm}
+    {:desired-path (some-> js/window .-location .-pathname)}))
 
 (start)
 
