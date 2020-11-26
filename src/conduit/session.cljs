@@ -17,6 +17,7 @@
       (uism/trigger-remote-mutation :actor/login-form `login
         (merge event-data
           {::m/returning      user-class
+           ;; for Root component
            ::targeting/target [:session/current-user]
            ::uism/ok-event    :event/ok
            ::uism/error-event :event/error}))
@@ -31,7 +32,7 @@
            ::targeting/target [:session/current-user]
            ::uism/ok-event    :event/ok
            ::uism/error-event :event/error}))
-      (uism/activate :state/checking-credentials))))
+      (uism/activate :state/signing-up))))
 
 (def main-events
   {:event/logout
@@ -40,8 +41,10 @@
       (route-to! "/login")
       (-> env
         (uism/trigger-remote-mutation :actor/login `logout {})
-        (uism/apply-action assoc-in [::session :current-user]
+        (uism/apply-action assoc-in [:session/session :current-user]
           {:user/id :nobody :user/valid? false})))}
+   :event/sign-up
+   {::uism/handler handle-sign-up}
    :event/login
    {::uism/handler handle-login}})
 
@@ -74,10 +77,13 @@
          (let [logged-in? (uism/alias-value env :logged-in?)]
            (when-not logged-in?
              (route-to! "/login"))
-           (uism/activate env :state/idle)))}
+           (-> (uism/activate env :state/idle)
+             (uism/apply-action assoc :root/ready? true))))}
       :event/error
       {::uism/handler
-       (fn [env] (uism/activate env :state/server-failed))}}}
+       (fn [env]
+         (-> (uism/activate env :state/server-failed)
+           (uism/apply-action assoc :root/ready? true)))}}}
 
     :state/bad-credentials
     {::uism/events main-events}
@@ -125,96 +131,17 @@
     :state/server-failed
     {::uism/events main-events}}})
 
-(defsc CurrentUser [this {:keys [:user/email :user/valid?] :as props}]
-  {:query         [:user/id :user/email :user/valid?]
+(defsc CurrentUser [this {:keys [:user/email :user/valid?]}]
+  {:query         [:user/id :user/name :user/email :user/valid?]
    :initial-state {:user/id :nobody :user/valid? false}
-   :ident         (fn [] [::session :current-user])}
+   :ident         (fn [] [:session/session :current-user])}
   (dom/div :.item
-    (if valid?
+    (when valid?
       (div :.content
-        email ent/nbsp (a {:onClick
-                           (fn [] (uism/trigger! this ::sessions :event/logout))}
-                         "Logout"))
-      (div 
-        (a {:onClick #(dr/change-route this ["login"])} "Login")
-        (a {:onClick #(dr/change-route this ["sign-up"])} "Sign up")))))
+        email
+        ent/nbsp
+        (a {:onClick
+            (fn [] (uism/trigger! this ::sessions :event/logout))}
+          "Logout")))))
 
 (def ui-current-user (comp/factory CurrentUser))
-
-(defn show-login-busy* [state-map tf]
-  (assoc-in state-map [:component/id :login :ui/busy?] tf))
-
-(defn show-login-error* [state-map tf]
-  (assoc-in state-map [:component/id :login :ui/error?] tf))
-
-(defmutation login [_]
-  (action [{:keys [state]}]
-    (swap! state show-login-busy* true))
-  (error-action [{:keys [state]}]
-    (log/error "Error action")
-    (swap! state (fn [s]
-                   (-> s
-                     (show-login-busy* false)
-                     (show-login-error* true)))))
-  (ok-action [{:keys [state]}]
-    (log/info "OK action")
-    (let [logged-in? (get-in @state [:session/current-user :user/valid?])]
-      (if logged-in?
-        (do
-          (swap! state (fn [s]
-                         (-> s
-                           (show-login-busy* false)
-                           (show-login-error* false))))
-          (route-to! "/home"))
-        (swap! state (fn [s]
-                       (-> s
-                         (show-login-busy* false)
-                         (show-login-error* true)))))))
-  (refresh [_]
-    [:ui/error? :ui/busy?])
-  (remote [env]
-    (-> env
-      (m/returning CurrentUser)
-      (m/with-target [:session/current-user]))))
-
-(defn show-sign-up-busy* [state-map tf]
-  (assoc-in state-map [:component/id :sign-up :ui/busy?] tf))
-
-(defn show-sign-up-error* [state-map tf]
-  (assoc-in state-map [:component/id :sign-up :ui/error?] tf))
-
-(defmutation sign-up [_]
-  (action [{:keys [state]}]
-    (swap! state show-sign-up-busy* true))
-  (error-action [{:keys [state]}]
-    (log/error "Error action")
-    (swap! state (fn [s]
-                   (-> s
-                     (show-sign-up-busy* false)
-                     (show-sign-up-error* true)))))
-  (ok-action [{:keys [state]}]
-    (log/info "OK action")
-    (let [logged-in? (get-in @state [:session/current-user :user/valid?])]
-      (if logged-in?
-        (do
-          (swap! state (fn [s]
-                         (-> s
-                           (show-sign-up-busy* false)
-                           (show-sign-up-error* false))))
-          (route-to! "/home"))
-        (swap! state (fn [s]
-                       (-> s
-                         (show-sign-up-busy* false)
-                         (show-sign-up-error* true)))))))
-  (refresh [_]
-    [:ui/error? :ui/busy?])
-  (remote [env]
-    (-> env
-      (m/returning CurrentUser)
-      (m/with-target [:session/current-user]))))
-
-(defmutation logout [_]
-  (action [{:keys [state]}]
-    (route-to! "/login")
-    (swap! state assoc :session/current-user {:user/id :nobody :user/valid? false}))
-  (remote [env] true))
