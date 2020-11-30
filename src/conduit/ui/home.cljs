@@ -16,7 +16,7 @@
           (dom/a :.nav-link
             {:className (when-not (match-route? current-route #{:screen/editor :screen/log-in :screen/sign-up})
                           "active")
-             :href      "/"}
+             :href      "/home"}
             "Home"))
         (when logged-in?
           (dom/li :.nav-item
