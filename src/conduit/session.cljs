@@ -135,11 +135,11 @@
   {:query         [:user/id :user/name :user/email :user/valid?]
    :initial-state {:user/id :nobody :user/valid? false}
    :ident         (fn [] [:session/session :current-user])}
-  (dom/div
-    (when valid?
-      (dom/li :.nav-item
-        (dom/div :.nav-link
-          {:onClick (fn [] (uism/trigger! this ::sessions :event/logout))}
-          "Log out")))))
+  (if valid?
+    (dom/li :.nav-item
+      (dom/div :.nav-link
+        {:onClick (fn [] (uism/trigger! this ::sessions :event/logout))}
+        "Log out"))
+    (dom/div)))
 
 (def ui-current-user (comp/factory CurrentUser))
