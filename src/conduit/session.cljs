@@ -131,17 +131,15 @@
     :state/server-failed
     {::uism/events main-events}}})
 
-(defsc CurrentUser [this {:keys [:user/email :user/valid?]}]
+(defsc CurrentUser [this {:keys [:user/valid?]}]
   {:query         [:user/id :user/name :user/email :user/valid?]
    :initial-state {:user/id :nobody :user/valid? false}
    :ident         (fn [] [:session/session :current-user])}
-  (dom/div :.item
+  (dom/div
     (when valid?
-      (div :.content
-        email
-        ent/nbsp
-        (a {:onClick
-            (fn [] (uism/trigger! this ::sessions :event/logout))}
-          "Logout")))))
+      (dom/li :.nav-item
+        (dom/div :.nav-link
+          {:onClick (fn [] (uism/trigger! this ::sessions :event/logout))}
+          "Log out")))))
 
 (def ui-current-user (comp/factory CurrentUser))
