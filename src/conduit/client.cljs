@@ -22,16 +22,8 @@
   (dom/div :.ui.container.segment
     (h3 "Home Screen")))
 
-(defsc Settings [this props]
-  {:query         [:pretend-data]
-   :ident         (fn [] [:component/id :settings])
-   :route-segment ["settings"]
-   :initial-state {}}
-  (dom/div :.ui.container.segment
-    (h3 "Settings Screen")))
-
 (defrouter MainRouter [this props]
-  {:router-targets [account/LoginForm account/SignUpForm Home Settings]})
+  {:router-targets [Home account/LoginForm account/SignUpForm account/Settings]})
 
 (def ui-main-router (comp/factory MainRouter))
 
