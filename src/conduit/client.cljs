@@ -10,6 +10,7 @@
    [conduit.app :refer [APP routing-start! route-to!]]
    [conduit.session :as session :refer [CurrentUser ui-current-user]]
    [conduit.ui.account :as account]
+   [conduit.ui.home :as home]
    [com.fulcrologic.fulcro.inspect.preload]
    [com.fulcrologic.fulcro.inspect.dom-picker-preload]))
 
@@ -46,20 +47,12 @@
                      :session/current-user (comp/get-initial-state session/CurrentUser)})}
   (let [logged-in? (:user/valid? current-user)]
     (div
-      (div :.ui.top.fixed.menu
-        (div :.item
-          (div :.content "My Cool App"))
-        (when logged-in?
-          (comp/fragment
-            (div :.item
-              (div :.content (a {:href "/home"} "Home")))
-            (div :.item
-              (div :.content (a {:href "/settings"} "Settings")))))
-        (div :.right.floated.item
-          (ui-current-user current-user)))
+      (home/ui-nav-bar {:logged-in? logged-in?
+                        :current-user current-user
+                        ;; FIXME
+                        :current-route []})
       (when ready?
-        (div :.ui.grid {:style {:marginTop "4em"}}
-          (ui-main-router router))))))
+        (ui-main-router router)))))
 
 (defn refresh []
   (app/mount! APP Root "app"))
