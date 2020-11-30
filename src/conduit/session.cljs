@@ -38,7 +38,7 @@
   {:event/logout
    {::uism/handler
     (fn [env]
-      (route-to! "/login")
+      #_(route-to! "/login")
       (-> env
         (uism/trigger-remote-mutation :actor/login `logout {})
         (uism/apply-action assoc-in [:session/session :current-user]
@@ -74,11 +74,11 @@
      {:event/ok
       {::uism/handler
        (fn [env]
-         (let [logged-in? (uism/alias-value env :logged-in?)]
+         #_(let [logged-in? (uism/alias-value env :logged-in?)]
            (when-not logged-in?
-             (route-to! "/login"))
-           (-> (uism/activate env :state/idle)
-             (uism/apply-action assoc :root/ready? true))))}
+             (route-to! "/login")))
+         (-> (uism/activate env :state/idle)
+             (uism/apply-action assoc :root/ready? true)))}
       :event/error
       {::uism/handler
        (fn [env]
