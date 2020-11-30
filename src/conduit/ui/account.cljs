@@ -3,8 +3,9 @@
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [com.fulcrologic.fulcro.algorithms.form-state :as fs]
    [com.fulcrologic.fulcro.ui-state-machines :as uism]
-   [com.fulcrologic.fulcro.mutations :as m]
-   [conduit.app :refer [route-to!]]
+   [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
+   [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
+   [conduit.handler.mutations :as mutations]
    [conduit.session :as session]
    [com.fulcrologic.fulcro.dom :as dom]))
 
@@ -136,16 +137,12 @@
                    :type    "submit" :value "submit"}
                   "Sign up")))))))))
 
-#_
-(defsc Settings [this props]
-  {:query [:user/image :user/name :user/bio :user/email]})
-
-#_
 (defsc SettingsForm
-  [this {:user/keys [id image name bio email password] :as props}]
+  [this {:user/keys [image name bio email password] :as props}]
   {:query [:user/id :user/image :user/name :user/bio :user/email :user/password
            fs/form-config-join]
-   :ident [:user/by-id :user/id]
+   :initial-state {:user/id :nobody}
+   :ident (fn [_] [:session/session :current-user])
    :form-fields #{:user/image :user/name :user/bio :user/email :user/password}}
   (dom/div :.settings-page
     (dom/div :.container.page
@@ -153,23 +150,25 @@
         (dom/div :.col-md-6.offset-md-3.col-xs-12
           (dom/h1 :.text-xs-center
             "Your Settings")
-          (dom/form {:onSubmit #(do (.preventDefault %) (comp/transact! this `[(mutations/submit-settings ~(fs/dirty-fields props false))]))}
+          (dom/form {:onSubmit
+                     #(do (.preventDefault %)
+                          (comp/transact! this [(mutations/submit-settings (fs/dirty-fields props false))]))}
             (dom/fieldset
               (dom/fieldset :.form-group
                 (dom/input :.form-control
                   {:placeholder "URL of profile picture",
                    :type        "text"
-                   :value       image
+                   :value       (or image "")
                    :onBlur      #(comp/transact! this
-                                   `[(fs/mark-complete! {:field :user/image})])
+                                   [(fs/mark-complete! {:field :user/image})])
                    :onChange    #(m/set-string! this :user/image :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Your Name",
                    :type        "text"
-                   :value       name
+                   :value       (or name "")
                    :onBlur      #(comp/transact! this
-                                   `[(fs/mark-complete! {:field :user/name})])
+                                   [(fs/mark-complete! {:field :user/name})])
                    :onChange    #(m/set-string! this :user/name :event %)}))
               (dom/fieldset :.form-group
                 (dom/textarea :.form-control.form-control-lg
@@ -177,15 +176,15 @@
                    :placeholder "Short bio about you"
                    :value       (or bio "")
                    :onBlur      #(comp/transact! this
-                                   `[(fs/mark-complete! {:field :user/bio})])
+                                   [(fs/mark-complete! {:field :user/bio})])
                    :onChange    #(m/set-string! this :user/bio :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
                   {:placeholder "Email",
                    :type        "text"
-                   :value       email
+                   :value       (or email "")
                    :onBlur      #(comp/transact! this
-                                   `[(fs/mark-complete! {:field :user/email})])
+                                   [(fs/mark-complete! {:field :user/email})])
                    :onChange    #(m/set-string! this :user/email :event %)}))
               (dom/fieldset :.form-group
                 (dom/input :.form-control.form-control-lg
@@ -193,20 +192,28 @@
                    :type        "password"
                    :value       (or password "")
                    :onBlur      #(comp/transact! this
-                                   `[(fs/mark-complete! {:field :user/password})])
+                                   [(fs/mark-complete! {:field :user/password})])
                    :onChange    #(m/set-string! this :user/password :event %)}))
               (dom/button :.btn.btn-lg.btn-primary.pull-xs-right
                 {:type "submit" :value "submit"}
                 "Update Settings"))))))))
 
-#_
 (def ui-settings-form (comp/factory SettingsForm))
 
-#_
 (defmutation use-settings-as-form [_]
-  (action [{:keys [state] :as env}]
-    (swap! state #(let [id (-> % :user/whoami second)]
-                    (-> %
-                      (assoc-in [:user/by-id id :user/password] "")
-                      (fs/add-form-config* SettingsForm [:user/by-id id])
-                      (assoc-in [:root/settings-form :user] [:user/by-id id]))))))
+  (action [{:keys [app state] :as env}]
+    (swap! state #(-> %
+                    (assoc-in [:session/session :current-user :user/password] "")
+                    (fs/add-form-config* SettingsForm [:session/session :current-user])
+                    (fs/mark-complete* [:session/session :current-user])))
+    (dr/target-ready! app [:component/id :settings])))
+
+(defsc Settings [this {:keys [settings]}]
+  {:query [{:settings (comp/get-query SettingsForm)}]
+   :initial-state (fn [_] {:settings (comp/get-initial-state SettingsForm {})})
+   :route-segment ["settings"]
+   :will-enter (fn [app _route-params]
+                 (dr/route-deferred [:component/id :settings]
+                   #(comp/transact! app [(use-settings-as-form {})])))
+   :ident (fn [] [:component/id :settings])}
+  (ui-settings-form settings))
