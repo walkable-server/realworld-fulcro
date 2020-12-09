@@ -1,6 +1,7 @@
 (ns conduit.handler.mutations 
   (:require [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [conduit.util :as util]
+            [conduit.app :as app]
             [com.rpl.specter :as s
              :refer [MAP-VALS ALL pred= NONE ;; pred filterer FIRST LAST
                      ]
@@ -19,6 +20,10 @@
 (defmutation submit-article [diff]
   (action [{:keys [state]}]
     (swap! state fs/entity->pristine* (util/get-ident diff)))
+  (ok-action [{:keys [:tempid->realid]}]
+    (when (seq tempid->realid)
+      (let [id (first (vals tempid->realid))]
+        (app/route-to! (str "/edit/" id)))))
   (remote [env] true))
 
 (defmutation submit-comment [{:keys [article-id diff]}]
