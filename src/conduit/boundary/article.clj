@@ -59,9 +59,7 @@
 
   (update-article [db author-id id article]
     (let [results (jdbc/query (:spec db)
-                    [(if (:article/tags article)
-                       "select id, article_id, tag from \"article\" left join \"tag\" on tag.article_id = article.id where author_id = ? and id = ?"
-                       "select id, article_id, tag from \"article\" where author_id = ? and id = ?")
+                    ["select id, article_id, tag from \"article\" left join \"tag\" on tag.article_id = article.id where author_id = ? and id = ?"
                      author-id id])]
       (when (seq results)
         (let [new-article (-> (rename-keys article remove-article-namespace)
