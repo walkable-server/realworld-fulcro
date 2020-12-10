@@ -19,10 +19,14 @@
 
 (def ui-tag-item (comp/factory TagItem {:keyfn :tag/tag}))
 
+(defsc ArticleEditor* [this props]
+  {:query         [:article/id :article/slug :article/title :article/description :article/body
+                   {:article/tags [:tag/tag]}]
+   :ident         :article/id})
+
 (defsc ArticleEditor [this {:article/keys [id slug title description body tags] :as props}]
   {:initial-state #:article{:id :none :body "" :title "" :description "" :slug ""}
-   :query         [:article/id :article/slug  :article/title :article/description :article/body
-                   :article/tags
+   :query         [:article/id :article/slug  :article/title :article/description :article/body :article/tags 
                    fs/form-config-join]
    :ident         :article/id
    :form-fields   #{:article/slug  :article/title
@@ -119,7 +123,7 @@
 
 (defmutation load-article-to-editor [{:article/keys [id]}]
   (action [{:keys [app]}]
-    (df/load! app [:article/id id] ArticleEditor)))
+    (df/load! app [:article/id id] ArticleEditor*)))
 
 (defmutation use-article-as-form [{:article/keys [id]}]
   (action [{:keys [app state]}]
