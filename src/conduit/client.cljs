@@ -10,6 +10,7 @@
    [conduit.app :refer [APP routing-start! route-to!]]
    [conduit.session :as session :refer [CurrentUser ui-current-user]]
    [conduit.ui.account :as account]
+   [conduit.ui.article :as article]
    [conduit.ui.editor :as editor]
    [conduit.ui.home :as home]
    [com.fulcrologic.fulcro.inspect.preload]
@@ -25,7 +26,7 @@
 
 (defrouter MainRouter [this props]
   {:router-targets [Home account/LoginForm account/SignUpForm account/Settings
-                    editor/New editor/Edit]})
+                    article/Article editor/New editor/Edit]})
 
 (def ui-main-router (comp/factory MainRouter))
 
