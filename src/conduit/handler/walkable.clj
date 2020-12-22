@@ -178,23 +178,23 @@
      {::pc/input #{}
       ::pc/output [{:app.tags/top-list [:tag/tag :tag/count]}]}
      ;; joins
-     {::pc/input #{}
+     {::pc/input #{:user/id}
       ::pc/output [{:user/followed-by User}]}
-     {::pc/input #{}
+     {::pc/input #{:user/id}
       ::pc/output [{:user/follows User}]}
-     {::pc/input #{}
+     {::pc/input #{:article/id}
       ::pc/output [{:article/tags Tag}]}
-     {::pc/input #{}
+     {::pc/input #{:article/id}
       ::pc/output [{:article/comments Comment}]}
-     {::pc/input #{}
+     {::pc/input #{:article/id}
       ::pc/output [{:article/liked-by User}]}
-     {::pc/input #{}
+     {::pc/input #{:user/id}
       ::pc/output [{:user/likes Article}]}
-     {::pc/input #{}
+     {::pc/input #{:user/id}
       ::pc/output [{:user/articles Article}]}
-     {::pc/input #{}
+     {::pc/input #{:article/id}
       ::pc/output [{:article/author User}]}
-     {::pc/input #{}
+     {::pc/input #{:comment/id}
       ::pc/output [{:comment/author User}]}]))
 
 (defn add-session [result session]
