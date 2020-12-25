@@ -174,7 +174,9 @@
      {::pc/input #{}
       ::pc/output [{:app/users User}]}
      {::pc/input #{}
-      ::pc/output [{:app.articles/list Article}]}
+      ::pc/output [{:app.global-feed/articles Article}]}
+     {::pc/input #{}
+      ::pc/output [{:app.personal-feed/articles Article}]}
      {::pc/input #{}
       ::pc/output [{:app.tags/top-list TagList}]}
      ;; roots with group-by
