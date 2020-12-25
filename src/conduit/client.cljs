@@ -18,7 +18,8 @@
    [com.fulcrologic.fulcro.inspect.dom-picker-preload]))
 
 (defrouter MainRouter [this props]
-  {:router-targets [home/GlobalFeed home/PersonalFeed account/LoginForm account/SignUpForm account/Settings
+  {:router-targets [home/GlobalFeed home/PersonalFeed home/ArticleByTag
+                    account/LoginForm account/SignUpForm account/Settings
                     article/Article editor/New editor/Edit profile/Profile]})
 
 (def ui-main-router (comp/factory MainRouter))
