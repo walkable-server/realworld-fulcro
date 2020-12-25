@@ -49,11 +49,13 @@
              :app.articles.list/first-item-id :app.articles.list/last-item-id :app.articles.list/total-items]
             "article"
             [:app/users :session/current-user] "user"
-            [:app.tags/top-list :tag/count] "tag"}
+            :app.tags/top-list "tag"}
     
     :grouping {:app.tags/top-list {:group-by [:tag/tag]}}
 
-    :pagination-fallbacks {:app.tags/top-list
+    :pagination-fallbacks {[:app.global-feed/articles :app.personal-feed/articles]
+                           {:order-by {:default [:article/created-at :desc]}}
+                           :app.tags/top-list
                            {:order-by {:default [:tag/count :desc]}
                             :limit    {:default 20}}}
 
@@ -71,9 +73,9 @@
 
             :comment/author [:comment/author-id :user/id]}
 
-    :pseudo-columns {}
+    :pseudo-columns {:tag/count [:count :tag/tag]}
 
-    :aggregators {[:article/liked-by-count :user/followed-by-count :tag/count]
+    :aggregators {[:article/liked-by-count :user/followed-by-count]
                   [:count-*]
 
                   :app.articles.list/total-items
