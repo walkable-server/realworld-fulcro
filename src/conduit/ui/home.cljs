@@ -113,15 +113,25 @@
 
 (defmutation load-global-feed [_]
   (action [{:keys [app]}]
-    (df/load! app :app.global-feed/articles preview/ArticlePreview {:target [:component/id :global-feed :articles]})
+    (df/load! app :app.global-feed/articles preview/ArticlePreview
+      {:target [:component/id :global-feed :articles]})
     (df/load! app :app.tags/top-list Tag)
     (dr/target-ready! app [:component/id :global-feed])))
 
 (defmutation load-personal-feed [_]
   (action [{:keys [app]}]
-    (df/load! app :app.personal-feed/articles preview/ArticlePreview {:target [:component/id :personal-feed :articles]})
+    (df/load! app :app.personal-feed/articles preview/ArticlePreview
+      {:target [:component/id :personal-feed :articles]})
     (df/load! app :app.tags/top-list Tag)
     (dr/target-ready! app [:component/id :personal-feed])))
+
+(defmutation load-tag-articles [{tag :tag/tag}]
+  (action [{:keys [app]}]
+    (df/load! app :app.global-feed/articles preview/ArticlePreview
+      {:target [:articles/by-tag tag :articles]
+       :params {:filters {:article/tags [:= tag :tag/tag]}}})
+    (df/load! app :app.tags/top-list Tag)
+    (dr/target-ready! app [:articles/by-tag tag])))
 
 (defsc GlobalFeed [this {:keys [articles] tags :app.tags/top-list}]
   {:ident         (fn [_] [:component/id :global-feed])
@@ -167,4 +177,31 @@
           (ui-feed-selector this {:ui/personal? true})
           (preview/article-list this {:ui/articles articles
                                       :ui/empty-message "No articles. Try to follow more people."}))
+        (ui-tags tags)))))
+
+(defsc ArticleByTag
+  [this {:keys [articles] tags :app.tags/top-list tag :tag/tag}]
+  {:ident         [:articles/by-tag :tag/tag]
+   :route-segment ["tag" :tag/tag]
+   :will-enter
+   (fn [app {:tag/keys [tag]}]
+     (comp/transact! app [(mutations/ensure-ident {:ident [:articles/by-tag tag]
+                                                   :state {:tag/tag tag}})])
+     (dr/route-deferred [:articles/by-tag tag]
+       #(comp/transact! app [(load-tag-articles {:tag/tag tag})])))
+   :initial-state (fn [_params]
+                    {:tag/tag  "fulcro"
+                     :articles (comp/get-initial-state preview/ArticlePreview {})})
+
+   :query [:tag/tag
+           {:articles (comp/get-query preview/ArticlePreview)}
+           {[:app.tags/top-list '_] (comp/get-query Tag)}]}
+  (dom/div :.home-page
+    (ui-banner)
+    (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-9
+          (ui-feed-selector this {:ui/tag tag})
+          (preview/article-list this {:ui/articles      articles
+                                      :ui/empty-message (str "No articles tagged with `" tag "`")}))
         (ui-tags tags)))))
