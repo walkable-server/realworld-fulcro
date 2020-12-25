@@ -1,22 +1,20 @@
 (ns conduit.ui.other
   (:require
-    [fulcro.client.primitives :as prim :refer [defsc]]
-    [fulcro.client.dom :as dom]))
-
-(def token-store (atom nil))
+    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+    [com.fulcrologic.fulcro.dom :as dom]))
 
 (def default-user-image
   "https://static.productionready.io/images/smiley-cyrus.jpg")
 
 (defsc UserTinyPreview [this props]
   {:query [:user/id :user/username :user/name :user/image]
-   :initial-state (fn [params] #:user{:id :guest})
-   :ident [:user/by-id :user/id]})
+   :initial-state {:user/id :none}
+   :ident :user/id})
 
 (defsc UserPreview [this props]
   {:query [:user/id :user/image :user/username :user/name :user/followed-by-me :user/followed-by-count]
-   :initial-state (fn [params] #:user{:id :guest})
-   :ident [:user/by-id :user/id]})
+   :initial-state {:user/id :none}
+   :ident :user/id})
 
 (defn focus-field [component ref-name]
   (let [input-field        (dom/node component ref-name)
