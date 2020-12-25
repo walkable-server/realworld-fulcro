@@ -6,17 +6,21 @@
    [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
    [conduit.handler.mutations :as mutations]
    [conduit.ui.other :as other]
+   [conduit.session :as session]
    [conduit.ui.comment :as comment]
    [com.fulcrologic.fulcro.dom :as dom]))
 
 (defsc ArticleMeta
-  [this {:article/keys [id created-at liked-by-count liked-by-me
-                        author]}]
+  [this {:article/keys [id created-at liked-by-count liked-by-me author]
+         :ui/keys [current-user]}]
   {:ident :article/id
+   :initial-state
+   (fn [_] {:article/id :none
+            :ui/current-user (comp/get-initial-state session/CurrentUser)})
    :query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
+           {:ui/current-user (comp/get-query session/CurrentUser)}
            {:article/author (comp/get-query other/UserPreview)}]}
-  (let [whoami                     (comp/shared this :user/whoami)
-        {current-user-id :user/id} whoami]
+  (let [current-user-id (:user/id current-user)]
     (dom/div :.article-meta
       (dom/a {:href (str "/profile/" (:user/id author))}
         (dom/img {:src (:user/image author other/default-user-image)}))
@@ -64,7 +68,7 @@
 (defsc Article [this {:article/keys [id slug title body image comments]
                       :keys         [ph/article]}]
   {:ident         :article/id
-   :initial-state (fn [params] #:article{:id :none :comments (comp/get-initial-state comment/Comment #:comment{:id :none})})
+   :initial-state (fn [_] #:article{:id :none :comments (comp/get-initial-state comment/Comment #:comment{:id :none})})
    :route-segment ["article" :article/id]
    :will-enter (fn [app {:article/keys [id]}]
                  (let [id (if (string? id) (js/parseInt id) id)]
