@@ -11,6 +11,7 @@
    [conduit.session :as session :refer [CurrentUser ui-current-user]]
    [conduit.ui.account :as account]
    [conduit.ui.article :as article]
+   [conduit.ui.profile :as profile]
    [conduit.ui.editor :as editor]
    [conduit.ui.home :as home]
    [com.fulcrologic.fulcro.inspect.preload]
@@ -25,8 +26,8 @@
     (h3 "Home Screen")))
 
 (defrouter MainRouter [this props]
-  {:router-targets [Home account/LoginForm account/SignUpForm account/Settings
-                    article/Article editor/New editor/Edit]})
+  {:router-targets [home/GlobalFeed account/LoginForm account/SignUpForm account/Settings
+                    article/Article editor/New editor/Edit profile/Profile]})
 
 (def ui-main-router (comp/factory MainRouter))
 
