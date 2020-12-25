@@ -89,7 +89,7 @@
                   [:< 0 [:count-*]]}
 
     :reversed-joins {:user/follows  :user/followed-by
-                     :user/like     :article/liked-by
+                     :user/likes    :article/liked-by
                      :user/articles :article/author}
 
     :extra-conditions
