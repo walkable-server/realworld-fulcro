@@ -119,9 +119,9 @@
 
 (defmutation load-personal-feed [_]
   (action [{:keys [app]}]
-    (df/load! app :app.personal-feed/articles preview/ArticlePreview)
+    (df/load! app :app.personal-feed/articles preview/ArticlePreview {:target [:component/id :personal-feed :articles]})
     (df/load! app :app.tags/top-list Tag)
-    (dr/target-ready! app [:component/id :global-feed])))
+    (dr/target-ready! app [:component/id :personal-feed])))
 
 (defsc GlobalFeed [this {:keys [articles] tags :app.tags/top-list}]
   {:ident         (fn [_] [:component/id :global-feed])
@@ -144,4 +144,27 @@
           (ui-feed-selector this {:ui/global? true})
           (preview/article-list this {:ui/articles articles
                                       :ui/empty-message "No articles"}))
+        (ui-tags tags)))))
+
+(defsc PersonalFeed [this {:keys [articles] tags :app.tags/top-list}]
+  {:ident         (fn [_] [:component/id :personal-feed])
+   :route-segment ["personal"]
+   :will-enter
+   (fn [app _route-params]
+     (comp/transact! app [(mutations/ensure-ident {:ident [:component/id :personal-feed]})])
+     (dr/route-deferred [:component/id :personal-feed]
+       #(comp/transact! app [(load-personal-feed {})])))
+   :initial-state (fn [_params]
+                    {:articles (comp/get-initial-state preview/ArticlePreview {})})
+
+   :query [{:articles (comp/get-query preview/ArticlePreview)}
+           {[:app.tags/top-list '_] (comp/get-query Tag)}]}
+  (dom/div :.home-page
+    (ui-banner)
+    (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-9
+          (ui-feed-selector this {:ui/personal? true})
+          (preview/article-list this {:ui/articles articles
+                                      :ui/empty-message "No articles. Try to follow more people."}))
         (ui-tags tags)))))
