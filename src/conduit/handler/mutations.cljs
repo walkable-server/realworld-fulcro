@@ -17,6 +17,10 @@
             [conduit.ui.other :as other]
             [com.fulcrologic.fulcro.algorithms.form-state :as fs]))
 
+(defmutation ensure-ident [{:keys [ident]}]
+  (action [{:keys [state]}]
+    (swap! state update-in ident merge {})))
+
 (defmutation submit-article [diff]
   (action [{:keys [state]}]
     (swap! state fs/entity->pristine* (util/get-ident diff)))
