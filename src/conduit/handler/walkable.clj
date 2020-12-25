@@ -160,6 +160,7 @@
                  :article/created-at :article/updated-at
                  :article/liked-by-count :article/liked-by-me]
         Tag [:tag/tag]
+        TagList [:tag/tag :tag/count]
         Comment [:comment/id :comment/created-at :comment/updated-at
                  :comment/body]]
     ;; idents
@@ -174,6 +175,8 @@
       ::pc/output [{:app/users User}]}
      {::pc/input #{}
       ::pc/output [{:app.articles/list Article}]}
+     {::pc/input #{}
+      ::pc/output [{:app.tags/top-list TagList}]}
      ;; roots with group-by
      {::pc/input #{}
       ::pc/output [{:app.tags/top-list [:tag/tag :tag/count]}]}
