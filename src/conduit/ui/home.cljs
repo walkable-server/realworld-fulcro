@@ -1,5 +1,11 @@
 (ns conduit.ui.home
   (:require
+   [com.fulcrologic.fulcro.data-fetch :as df]
+   [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
+   [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
+   [conduit.handler.mutations :as mutations]
+   [conduit.ui.article-preview :as preview]
+   [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [conduit.session :as session :refer [ui-current-user]]
    [com.fulcrologic.fulcro.dom :as dom]))
 
@@ -56,3 +62,86 @@
         "An interactive learning project from "
         (dom/a {:href "https://thinkster.io"} "Thinkster")
         ". Code &amp; design licensed under MIT."))))
+
+(defsc Banner [this _]
+  (dom/div :.banner
+    (dom/div :.container
+      (dom/h1 :.logo-font "conduit")
+      (dom/p "A place to show off your tech stack."))))
+
+(def ui-banner (comp/factory Banner))
+
+(defsc Tag [this {:tag/keys [tag]}]
+  {:query [:tag/tag :tag/count]}
+  (dom/a :.tag-pill.tag-default
+    {:href (str "/tag/" tag)} tag))
+
+(def ui-tag (comp/factory Tag {:keyfn :tag/tag}))
+
+(defsc Tags [this tags]
+  (dom/div :.col-md-3
+    (dom/div :.sidebar
+      (dom/p "Popular Tags")
+      (dom/div :.tag-list
+        (map ui-tag tags)))))
+
+(def ui-tags (comp/factory Tags))
+
+(defn ui-feed-selector
+  [this {:ui/keys [tag personal? global?]}]
+  (let [not-logged-in false]
+    (dom/div :.feed-toggle
+      (dom/ul :.nav.nav-pills.outline-active
+        (when (or (not not-logged-in)
+                (and not-logged-in personal?))
+          (dom/li :.nav-item
+            (dom/a :.nav-link
+              (merge {:className (if personal? "active" "disabled")
+                      :href      "/personal"}
+                (when not-logged-in
+                  {:onClick #(js/alert "You must log in first")}))
+              "Your Feed")))
+        (dom/li :.nav-item
+          (dom/a :.nav-link
+            {:className (if global? "active" "disabled")
+             :href "/home"}
+            "Global Feed"))
+        (when tag
+          (dom/li :.nav-item
+            (dom/div :.nav-link.active
+              "Tagged with `" tag "`")))))))
+
+(defmutation load-global-feed [_]
+  (action [{:keys [app]}]
+    (df/load! app :app.global-feed/articles preview/ArticlePreview {:target [:component/id :global-feed :articles]})
+    (df/load! app :app.tags/top-list Tag)
+    (dr/target-ready! app [:component/id :global-feed])))
+
+(defmutation load-personal-feed [_]
+  (action [{:keys [app]}]
+    (df/load! app :app.personal-feed/articles preview/ArticlePreview)
+    (df/load! app :app.tags/top-list Tag)
+    (dr/target-ready! app [:component/id :global-feed])))
+
+(defsc GlobalFeed [this {:keys [articles] tags :app.tags/top-list}]
+  {:ident         (fn [_] [:component/id :global-feed])
+   :route-segment ["home"]
+   :will-enter
+   (fn [app _route-params]
+     (comp/transact! app [(mutations/ensure-ident {:ident [:component/id :global-feed]})])
+     (dr/route-deferred [:component/id :global-feed]
+       #(comp/transact! app [(load-global-feed {})])))
+   :initial-state (fn [_params]
+                    {:articles (comp/get-initial-state preview/ArticlePreview {})})
+
+   :query [{:articles (comp/get-query preview/ArticlePreview)}
+           {[:app.tags/top-list '_] (comp/get-query Tag)}]}
+  (dom/div :.home-page
+    (ui-banner)
+    (dom/div :.container.page
+      (dom/div :.row
+        (dom/div :.col-md-9
+          (ui-feed-selector this {:ui/global? true})
+          (preview/article-list this {:ui/articles articles
+                                      :ui/empty-message "No articles"}))
+        (ui-tags tags)))))
