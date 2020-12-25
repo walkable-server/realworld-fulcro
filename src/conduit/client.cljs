@@ -17,14 +17,6 @@
    [com.fulcrologic.fulcro.inspect.preload]
    [com.fulcrologic.fulcro.inspect.dom-picker-preload]))
 
-(defsc Home [this props]
-  {:query         [:pretend-data]
-   :ident         (fn [] [:component/id :home])
-   :route-segment ["home"]
-   :initial-state {}}
-  (dom/div :.ui.container.segment
-    (h3 "Home Screen")))
-
 (defrouter MainRouter [this props]
   {:router-targets [home/GlobalFeed account/LoginForm account/SignUpForm account/Settings
                     article/Article editor/New editor/Edit profile/Profile]})
