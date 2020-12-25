@@ -51,8 +51,6 @@
             [:app/users :session/current-user] "user"
             [:app.tags/top-list :tag/count] "tag"}
     
-    :idents {:user/id    :user/id
-             :article/id :article/id}
     :grouping {:app.tags/top-list {:group-by [:tag/tag]}}
 
     :pagination-fallbacks {:app.tags/top-list
