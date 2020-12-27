@@ -1,6 +1,7 @@
 (ns conduit.boundary.article
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.set :refer [rename-keys]]
+            [clojure.string :as str]
             [conduit.util :as util]
             [duct.database.sql]))
 
@@ -27,7 +28,7 @@
 (defn delete-non-existing-where-clause [article-id existing]
   (concat
     [(str "article_id = ? and tag not in ("
-        (clojure.string/join ", " (repeat (count existing) \?))
+        (str/join ", " (repeat (count existing) \?))
         ")")
      article-id]
     (vec existing)))
