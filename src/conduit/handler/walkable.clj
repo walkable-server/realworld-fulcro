@@ -7,6 +7,13 @@
             [com.wsscode.pathom.connect :as pc]
             [com.wsscode.pathom.core :as p]))
 
+;; TODO: keep this for dev env only
+(pc/defresolver index-explorer [env _]
+  {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
+   ::pc/output [:com.wsscode.pathom.viz.index-explorer/index]}
+  {:com.wsscode.pathom.viz.index-explorer/index
+   (get env ::pc/indexes)})
+
 (pc/defresolver user-valid?
   [env params]
   {::pc/input  #{:user/id}
@@ -14,7 +21,7 @@
   {:user/valid? (boolean (:user/id params))})
 
 (def resolvers
-  [user-valid?])
+  [index-explorer user-valid?])
 
 (defn pathom-parser [walkable-connect]
   (p/parser
