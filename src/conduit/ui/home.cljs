@@ -152,8 +152,9 @@
       (dom/div :.row
         (dom/div :.col-md-9
           (ui-feed-selector this {:ui/global? true})
-          (preview/article-list this {:ui/articles articles
-                                      :ui/empty-message "No articles"}))
+          (preview/ui-article-list this
+            {:ui/articles articles
+             :ui/empty-message "No articles"}))
         (ui-tags tags)))))
 
 (defsc PersonalFeed [this {:keys [articles] tags :app.tags/top-list}]
@@ -175,8 +176,9 @@
       (dom/div :.row
         (dom/div :.col-md-9
           (ui-feed-selector this {:ui/personal? true})
-          (preview/article-list this {:ui/articles articles
-                                      :ui/empty-message "No articles. Try to follow more people."}))
+          (preview/ui-article-list this
+            {:ui/articles articles
+             :ui/empty-message "No articles. Try to follow more people."}))
         (ui-tags tags)))))
 
 (defsc ArticleByTag
@@ -202,6 +204,7 @@
       (dom/div :.row
         (dom/div :.col-md-9
           (ui-feed-selector this {:ui/tag tag})
-          (preview/article-list this {:ui/articles      articles
-                                      :ui/empty-message (str "No articles tagged with `" tag "`")}))
+          (preview/ui-article-list this
+            {:ui/articles articles
+             :ui/empty-message (str "No articles tagged with `" tag "`")}))
         (ui-tags tags)))))

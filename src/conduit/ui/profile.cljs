@@ -104,7 +104,7 @@
       (dom/div :.row
         (dom/div :.col-xs-12.col-md-10.offset-md-1
           (ui-list-selector this props)
-          (preview/article-list this
+          (preview/ui-article-list this
             {:ui/articles
              (if (= current-tab :articles)
                articles
