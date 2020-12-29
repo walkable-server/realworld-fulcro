@@ -16,6 +16,11 @@
    :initial-state {:user/id :none}
    :ident :user/id})
 
+(defn display-name [user]
+  (or (:user/name user)
+    (:user/username user)
+    (str "user-" (:user/id user))))
+
 (defn focus-field [component ref-name]
   (let [input-field        (dom/node component ref-name)
         input-field-length (.. input-field -value -length)]
