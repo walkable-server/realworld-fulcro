@@ -2,22 +2,19 @@
   (:require
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [conduit.handler.mutations :as mutations]
-   [conduit.ui.other :as other]
+   [conduit.ui.other :as other :refer [display-name]]
    [conduit.session :as session]
    [com.fulcrologic.fulcro.dom :as dom]))
 
-(defsc ArticlePreviewMeta
+(defn ui-article-preview-meta
   [this {:article/keys [author created-at liked-by-count liked-by-me]}
    {:keys [like unlike]}]
-  {:query [:article/id :article/created-at :article/liked-by-count :article/liked-by-me
-           {:article/author (comp/get-query other/UserPreview)}]
-   :ident :article/id}
   (dom/div :.article-meta
     (dom/a {:href (str "/profile/" (:user/id author))}
       (dom/img {:src (:user/image author other/default-user-image)}))
     (dom/div :.info
       (dom/a :.author {:href (str "/profile/" (:user/id author))}
-        (:user/name author))
+        (display-name author))
       (dom/span :.date
         (other/js-date->string created-at)))
     (dom/button :.btn.btn-sm.pull-xs-right
@@ -28,25 +25,24 @@
          :onClick #(like)})
       (dom/i :.ion-heart) " " liked-by-count)))
 
-(def ui-article-preview-meta (comp/factory ArticlePreviewMeta {:keyfn :article/id}))
-
 (defsc ArticlePreview
-  [this {:article/keys [id author-id slug title description]
-         :keys [ph/article] :ui/keys [current-user]}
+  [this {:article/keys [id author-id title description]
+         :as article :ui/keys [current-user]}
    {:keys [on-delete]}]
   {:ident :article/id
-   :initial-state (fn [_] {:ui/current-user (comp/get-initial-state session/CurrentUser)
-                           :article/id :none})
+   :initial-state (fn [_] {:article/id :none
+                           :ui/current-user (comp/get-initial-state session/CurrentUser)})
    :query [:article/id :article/author-id :article/slug :article/title :article/description :article/body
-           {:ui/current-user (comp/get-query session/CurrentUser)}
-           {:ph/article (comp/get-query ArticlePreviewMeta)}]}
+           :article/created-at :article/liked-by-count :article/liked-by-me
+           {:article/author (comp/get-query other/UserPreview)}
+           {:ui/current-user (comp/get-query session/CurrentUser)}]}
   (let [current-user-id (:user/id current-user)]
     (dom/div :.article-preview
       (let [like #(if (number? current-user-id)
                     (comp/transact! this [(mutations/like {:article/id id})])
                     (js/alert "You must log in first"))
             unlike #(comp/transact! this [(mutations/unlike {:article/id id})])]
-        (ui-article-preview-meta (comp/computed article {:like like :unlike unlike})))
+        (ui-article-preview-meta this article {:like like :unlike unlike}))
       (when (= current-user-id author-id)
         (dom/span :.pull-xs-right
           (dom/a {:href (str "/edit/" id)}
@@ -59,14 +55,13 @@
         (dom/p description)
         (dom/span "Read more...")))))
 
-(def ui-article-preview (comp/factory ArticlePreview {:keyfn :article/id}))
+(def ui-article-preview (comp/computed-factory ArticlePreview {:keyfn :article/id}))
 
-(defn article-list
-  [component {:ui/keys [articles empty-message]} ]
-  (let [delete-article (fn [article]
-                         (comp/transact! component [(mutations/delete-article article)]))]
+(defn ui-article-list [this {:ui/keys [articles empty-message]}]
+  (let [delete-article
+        (fn [article] (comp/transact! this [(mutations/delete-article article)]))]
     (dom/div
-      (if (seq articles)
-        (map (fn [a] (ui-article-preview (comp/computed a {:on-delete delete-article})))
+      (if (sequential? articles)
+        (mapv #(ui-article-preview % {:on-delete delete-article})
           articles)
         empty-message))))
