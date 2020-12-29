@@ -3,7 +3,7 @@
    [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
    [conduit.handler.mutations :as mutations]
    [conduit.session :as session]
-   [conduit.ui.other :as other]
+   [conduit.ui.other :as other :refer [display-name]]
    [conduit.ui.article-preview :as preview]
    [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
    [com.fulcrologic.fulcro.data-fetch :as df]
@@ -31,11 +31,6 @@
   (action [{:keys [app]}]
     (df/load! app [:user/id id] Profile
       {:focus #{:user/likes}})))
-
-(defn display-name [user]
-  (or (:user/name user)
-    (:user/username user)
-    (str "user-" (:user/id user))))
 
 (defn ui-list-selector 
   [this {:user/keys [id]
