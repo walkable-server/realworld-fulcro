@@ -63,13 +63,11 @@
         (dom/a {:href "https://thinkster.io"} "Thinkster")
         ". Code &amp; design licensed under MIT."))))
 
-(defsc Banner [this _]
+(defn ui-banner []
   (dom/div :.banner
     (dom/div :.container
       (dom/h1 :.logo-font "conduit")
       (dom/p "A place to show off your tech stack."))))
-
-(def ui-banner (comp/factory Banner))
 
 (defsc Tag [this {:tag/keys [tag]}]
   {:query [:tag/tag :tag/count]}
@@ -78,14 +76,12 @@
 
 (def ui-tag (comp/factory Tag {:keyfn :tag/tag}))
 
-(defsc Tags [this tags]
+(defn ui-tags [tags]
   (dom/div :.col-md-3
     (dom/div :.sidebar
       (dom/p "Popular Tags")
       (dom/div :.tag-list
         (map ui-tag tags)))))
-
-(def ui-tags (comp/factory Tags))
 
 (defn ui-feed-selector
   [this {:ui/keys [tag personal? global?]}]
