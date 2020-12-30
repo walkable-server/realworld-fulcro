@@ -22,7 +22,9 @@
    (fn [p]
      (let [route-segments (vec (rest (str/split p "/")))]
        (log/spy :info route-segments)
-       (dr/change-route APP route-segments)))
+       (if (empty route-segments)
+         (dr/change-route APP ["home"])
+         (dr/change-route APP route-segments))))
    identity))
 
 (defn routing-start! []
