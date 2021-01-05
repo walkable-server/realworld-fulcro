@@ -77,7 +77,8 @@
    :route-segment ["profile" :user/id]
    :will-enter (fn [app {:user/keys [id]}] 
                  (let [id (if (string? id) (js/parseInt id) id)]
-                   (comp/transact! app [(mutations/ensure-ident {:ident [:user/id id]})])
+                   (comp/transact! app [(mutations/ensure-ident {:ident [:user/id id]
+                                                                 :state {:ui/current-tab :articles}})])
                    (dr/route-deferred [:user/id id]
                      #(comp/transact! app [(load-profile {:user/id id})]))))}
   (dom/div :.profile-page
