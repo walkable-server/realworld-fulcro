@@ -27,41 +27,39 @@
 
 (defsc ArticlePreview
   [this {:article/keys [id author-id title description]
-         :as article :ui/keys [current-user]}
-   {:keys [on-delete]}]
+         :as article}
+   {:keys [on-delete current-user]}]
   {:ident :article/id
-   :initial-state (fn [_] {:article/id :none
-                           :ui/current-user (comp/get-initial-state session/CurrentUser)})
+   :initial-state (fn [_] {:article/id :none})
    :query [:article/id :article/author-id :article/slug :article/title :article/description :article/body
            :article/created-at :article/liked-by-count :article/liked-by-me
-           {:article/author (comp/get-query other/UserPreview)}
-           {:ui/current-user (comp/get-query session/CurrentUser)}]}
-  (let [current-user-id (:user/id current-user)]
-    (dom/div :.article-preview
-      (let [like #(if (number? current-user-id)
-                    (comp/transact! this [(mutations/like {:article/id id})])
-                    (js/alert "You must log in first"))
-            unlike #(comp/transact! this [(mutations/unlike {:article/id id})])]
-        (ui-article-preview-meta this article {:like like :unlike unlike}))
-      (when (= current-user-id author-id)
-        (dom/span :.pull-xs-right
-          (dom/a {:href (str "/edit/" id)}
-            (dom/i :.ion-edit " "))
-          (dom/i :.ion-trash-a
-            {:onClick #(on-delete {:article/id id})} " ")))
-      (dom/a :.preview-link
-        {:href (str "/article/" id)}
-        (dom/h1 title)
-        (dom/p description)
-        (dom/span "Read more...")))))
+           {:article/author (comp/get-query other/UserPreview)}]}
+  (dom/div :.article-preview
+    (let [like #(if (:user/valid? current-user)
+                  (comp/transact! this [(mutations/like {:article/id id})])
+                  (js/alert "You must log in first"))
+          unlike #(comp/transact! this [(mutations/unlike {:article/id id})])]
+      (ui-article-preview-meta this article {:like like :unlike unlike}))
+    ;; TODO: add and use `:article/can-edit` attribute instead
+    (when (= (:user/id current-user) author-id)
+      (dom/span :.pull-xs-right
+        (dom/a {:href (str "/edit/" id)}
+          (dom/i :.ion-edit " "))
+        (dom/i :.ion-trash-a
+          {:onClick #(on-delete {:article/id id})} " ")))
+    (dom/a :.preview-link
+      {:href (str "/article/" id)}
+      (dom/h1 title)
+      (dom/p description)
+      (dom/span "Read more..."))))
 
 (def ui-article-preview (comp/computed-factory ArticlePreview {:keyfn :article/id}))
 
-(defn ui-article-list [this {:ui/keys [articles empty-message]}]
+(defn ui-article-list [this {:ui/keys [articles empty-message current-user]}]
   (let [delete-article
         (fn [article] (comp/transact! this [(mutations/delete-article article)]))]
     (dom/div
       (if (sequential? articles)
-        (mapv #(ui-article-preview % {:on-delete delete-article})
+        (mapv #(ui-article-preview % {:on-delete delete-article :current-user current-user})
           articles)
         empty-message))))
