@@ -19,7 +19,7 @@
 (defmutation load-profile [{:user/keys [id]}]
   (action [{:keys [app]}]
     (df/load! app [:user/id id] Profile
-      {:without #{:user/likes}})
+      {:without #{:user/likes [:session/session :current-user]}})
     (dr/target-ready! app [:user/id id])))
 
 (defmutation load-profile-articles [{:user/keys [id]}]
@@ -59,21 +59,19 @@
 (defsc Profile
   [this {:user/keys [id name image bio followed-by-me followed-by-count
                      likes articles]
-         :ui/keys [current-user current-tab]
+         :ui/keys [current-tab]
          :as props}]
   {:ident :user/id
    :initial-state (fn [_]
                     #:user{:id :none
                            :user/likes (comp/get-initial-state preview/ArticlePreview {})
-                           :user/articles (comp/get-initial-state preview/ArticlePreview {})
-                           :ui/current-tab :articles
-                           :ui/current-user (comp/get-initial-state session/CurrentUser {})})
+                           :user/articles (comp/get-initial-state preview/ArticlePreview {})})
    :query [:user/id :user/name :user/username :user/image :user/bio
            :user/followed-by-me :user/followed-by-count
            {:user/likes (comp/get-query preview/ArticlePreview)}
            {:user/articles (comp/get-query preview/ArticlePreview)}
            :ui/current-tab
-           {:ui/current-user (comp/get-query session/CurrentUser)}]
+           {[:session/session :current-user] (comp/get-query session/CurrentUser)}]
    :route-segment ["profile" :user/id]
    :will-enter (fn [app {:user/keys [id]}] 
                  (let [id (if (string? id) (js/parseInt id) id)]
@@ -81,33 +79,35 @@
                                                                  :state {:ui/current-tab :articles}})])
                    (dr/route-deferred [:user/id id]
                      #(comp/transact! app [(load-profile {:user/id id})]))))}
-  (dom/div :.profile-page
-    (dom/div :.user-info
+  (let [current-user (get props [:session/session :current-user])]
+    (dom/div :.profile-page
+      (dom/div :.user-info
+        (dom/div :.container
+          (dom/div :.row
+            (dom/div :.col-xs-12.col-md-10.offset-md-1
+              (dom/img :.user-img {:src (or image other/default-user-image)})
+              (dom/h4 name)
+              (dom/p bio)
+              (if (= id (:user/id current-user))
+                (dom/button :.btn.btn-sm.btn-outline-secondary
+                  "You have " followed-by-count " followers")
+                (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
+                  {:onClick #(if (= :none (:user/id current-user))
+                               (js/alert "You must log in first")
+                               (if followed-by-me
+                                 (comp/transact! this [(mutations/unfollow {:user/id id})])
+                                 (comp/transact! this [(mutations/follow {:user/id id})])))}
+                  (dom/i :.ion-plus-round)
+                  (if followed-by-me "Unfollow" "Follow")
+                  name " (" followed-by-count ")"))))))
       (dom/div :.container
         (dom/div :.row
           (dom/div :.col-xs-12.col-md-10.offset-md-1
-            (dom/img :.user-img {:src (or image other/default-user-image)})
-            (dom/h4 name)
-            (dom/p bio)
-            (if (= id (:user/id current-user))
-              (dom/button :.btn.btn-sm.btn-outline-secondary
-                "You have " followed-by-count " followers")
-              (dom/button :.btn.btn-sm.btn-outline-secondary.action-btn
-                {:onClick #(if (= :none (:user/id current-user))
-                             (js/alert "You must log in first")
-                             (if followed-by-me
-                               (comp/transact! this [(mutations/unfollow {:user/id id})])
-                               (comp/transact! this [(mutations/follow {:user/id id})])))}
-                (dom/i :.ion-plus-round)
-                (if followed-by-me "Unfollow" "Follow")
-                name " (" followed-by-count ")"))))))
-    (dom/div :.container
-      (dom/div :.row
-        (dom/div :.col-xs-12.col-md-10.offset-md-1
-          (ui-list-selector this props)
-          (preview/ui-article-list this
-            {:ui/articles
-             (if (= current-tab :articles)
-               articles
-               likes)
-             :ui/empty-message "no articles"}))))))
+            (ui-list-selector this props)
+            (preview/ui-article-list this
+              {:ui/articles
+               (if (= current-tab :articles)
+                 articles
+                 likes)
+               :ui/current-user current-user
+               :ui/empty-message "no articles"})))))))
