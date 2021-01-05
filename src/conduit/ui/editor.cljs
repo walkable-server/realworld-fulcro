@@ -5,7 +5,7 @@
    [conduit.handler.mutations :as mutations]
    [com.fulcrologic.fulcro.algorithms.tempid :as tempid :refer [tempid?]]
    [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
-   [conduit.app :as app]
+   [conduit.session :as session]
    [com.fulcrologic.fulcro.data-fetch :as df]
    [com.fulcrologic.fulcro.routing.dynamic-routing :as dr]
    [com.fulcrologic.fulcro.dom :as dom]))
@@ -133,8 +133,9 @@
                       [:article/id id])))
     (dr/target-ready! app [:component/id :edit])))
 
-(defsc New [this {:keys [article]}]
-  {:query [{:article (comp/get-query ArticleEditor)}]
+(defsc New [this {:keys [article] :as props}]
+  {:query [{:article (comp/get-query ArticleEditor)}
+           {[:session/session :current-user] (comp/get-query session/CurrentUser)}]
    :initial-state (fn [_] {:article (comp/get-initial-state ArticleEditor {})})
    :route-segment ["new"]
    :will-enter (fn [app _route-params]
@@ -142,10 +143,14 @@
                    #(comp/transact! app [(create-temp-article-if-not-found {})
                                          (use-current-temp-article-as-form {})])))
    :ident (fn [] [:component/id :new])}
-  (ui-article-editor article))
+  (let [{:keys [:user/valid?]} (get props [:session/session :current-user])]
+    (if valid?
+      (ui-article-editor article)
+      "You must log in first")))
 
-(defsc Edit [this {:keys [article]}]
-  {:query [{:article (comp/get-query ArticleEditor)}]
+(defsc Edit [this {:keys [article] :as props}]
+  {:query [{:article (comp/get-query ArticleEditor)}
+           {[:session/session :current-user] (comp/get-query session/CurrentUser)}]
    :initial-state (fn [_] {:article (comp/get-initial-state ArticleEditor {})})
    :route-segment ["edit" :article/id]
    :will-enter (fn [app {:article/keys [id]}]
@@ -154,4 +159,7 @@
                      #(comp/transact! app [(load-article-to-editor {:article/id id})
                                            (use-article-as-form {:article/id id})]))))
    :ident (fn [] [:component/id :edit])}
-  (ui-article-editor article))
+  (let [{:keys [:user/valid?]} (get props [:session/session :current-user])]
+    (if valid?
+      (ui-article-editor article)
+      "You must log in first")))
