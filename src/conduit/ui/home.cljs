@@ -129,7 +129,7 @@
     (df/load! app :app.tags/top-list Tag)
     (dr/target-ready! app [:articles/by-tag tag])))
 
-(defsc GlobalFeed [this {:keys [articles] tags :app.tags/top-list}]
+(defsc GlobalFeed [this {:keys [articles] tags :app.tags/top-list :as props}]
   {:ident         (fn [_] [:component/id :global-feed])
    :route-segment ["home"]
    :will-enter
@@ -141,6 +141,7 @@
                     {:articles (comp/get-initial-state preview/ArticlePreview {})})
 
    :query [{:articles (comp/get-query preview/ArticlePreview)}
+           {[:session/session :current-user] (comp/get-query session/CurrentUser)}
            {[:app.tags/top-list '_] (comp/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
@@ -150,10 +151,11 @@
           (ui-feed-selector this {:ui/global? true})
           (preview/ui-article-list this
             {:ui/articles articles
+             :ui/current-user (get props [:session/session :current-user])
              :ui/empty-message "No articles"}))
         (ui-tags tags)))))
 
-(defsc PersonalFeed [this {:keys [articles] tags :app.tags/top-list}]
+(defsc PersonalFeed [this {:keys [articles] tags :app.tags/top-list :as props}]
   {:ident         (fn [_] [:component/id :personal-feed])
    :route-segment ["personal"]
    :will-enter
@@ -165,6 +167,7 @@
                     {:articles (comp/get-initial-state preview/ArticlePreview {})})
 
    :query [{:articles (comp/get-query preview/ArticlePreview)}
+           {[:session/session :current-user] (comp/get-query session/CurrentUser)}
            {[:app.tags/top-list '_] (comp/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
@@ -174,11 +177,12 @@
           (ui-feed-selector this {:ui/personal? true})
           (preview/ui-article-list this
             {:ui/articles articles
+             :ui/current-user (get props [:session/session :current-user])
              :ui/empty-message "No articles. Try to follow more people."}))
         (ui-tags tags)))))
 
 (defsc ArticleByTag
-  [this {:keys [articles] tags :app.tags/top-list tag :tag/tag}]
+  [this {:keys [articles] tags :app.tags/top-list tag :tag/tag :as props}]
   {:ident         [:articles/by-tag :tag/tag]
    :route-segment ["tag" :tag/tag]
    :will-enter
@@ -193,6 +197,7 @@
 
    :query [:tag/tag
            {:articles (comp/get-query preview/ArticlePreview)}
+           {[:session/session :current-user] (comp/get-query session/CurrentUser)}
            {[:app.tags/top-list '_] (comp/get-query Tag)}]}
   (dom/div :.home-page
     (ui-banner)
@@ -202,5 +207,6 @@
           (ui-feed-selector this {:ui/tag tag})
           (preview/ui-article-list this
             {:ui/articles articles
+             :ui/current-user (get props [:session/session :current-user])
              :ui/empty-message (str "No articles tagged with `" tag "`")}))
         (ui-tags tags)))))
