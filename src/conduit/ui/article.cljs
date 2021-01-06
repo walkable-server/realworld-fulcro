@@ -65,29 +65,34 @@
 
 (declare load-article)
 
-(defsc Article [this {:article/keys [id slug title body image comments]
-                      :keys         [ph/article]}]
+(defsc Article
+  [this {:article/keys [id slug title body image comments]
+         :keys [ph/article] :as props}]
   {:ident         :article/id
    :initial-state (fn [_] #:article{:id :none :comments (comp/get-initial-state comment/Comment #:comment{:id :none})})
+   :initLocalState (fn [this _] {:editing-comment-id :none})
    :route-segment ["article" :article/id]
-   :will-enter (fn [app {:article/keys [id]}]
-                 (let [id (if (string? id) (js/parseInt id) id)]
-                   (dr/route-deferred [:article/id id]
-                     #(comp/transact! app [(load-article {:article/id id})]))))
+   :will-enter    (fn [app {:article/keys [id]}]
+                    (let [id (if (string? id) (js/parseInt id) id)]
+                      (comp/transact! app [(mutations/ensure-ident {:ident [:article/id id]})])
+                      (dr/route-deferred [:article/id id]
+                        #(comp/transact! app [(load-article {:article/id id})]))))
    :query         [:article/id :article/slug :article/title
                    :article/body :article/image
                    {:article/comments (comp/get-query comment/Comment)}
-                   {:ph/article (comp/get-query ArticleMeta)}]}
+                   {:ph/article (comp/get-query ArticleMeta)}
+                   {[:session/session :current-user] (comp/get-query session/CurrentUser)}]}
   (let [delete-comment #(comp/transact! this
                           [(mutations/delete-comment {:article/id id :comment/id %})])
 
         editing-comment-id     (comp/get-state this :editing-comment-id)
         set-editing-comment-id #(comp/set-state! this {:editing-comment-id %})
 
-        computed-map {:article-id             id
-                      :delete-comment         delete-comment
-                      :editing-comment-id     editing-comment-id
-                      :set-editing-comment-id set-editing-comment-id}]
+        computed-map {:article-id id
+                      :delete-comment delete-comment
+                      :editing-comment-id editing-comment-id
+                      :set-editing-comment-id set-editing-comment-id
+                      :current-user (get props [:session/session :current-user])}]
     (dom/div :.article-page
       (dom/div :.banner
         (dom/div :.container
@@ -101,12 +106,13 @@
         (dom/div :.article-actions (ui-article-meta article))
         (dom/div :.row
           (dom/div :.col-xs-12.col-md-8.offset-md-2
-            (comment/ui-comment-form (comp/computed #:comment{:id :none} computed-map))
-            (mapv #(comment/ui-comment (comp/computed % computed-map))
+            (when (= :none editing-comment-id)
+              (comment/ui-comment-form #:comment{:id :none} computed-map))
+            (mapv #(comment/ui-comment % computed-map)
               comments)))))))
 
 (defmutation load-article [{:article/keys [id]}]
   (action [{:keys [app]}]
     (let [ident [:article/id id]]
-      (df/load! app ident Article)
+      (df/load! app ident Article {:without #{[:session/session :current-user]}})
       (dr/target-ready! app ident))))
