@@ -27,7 +27,7 @@
                     :diff {[:comment/id (if (= :none id) (tempid/tempid) id)]
                            state}})])
               (if (= :none id)
-                (comp/set-state! this {})
+                (comp/set-state! this {:comment/body ""})
                 (set-editing-comment-id :none))))}
       (dom/div :.card-block
         (dom/textarea :.form-control
