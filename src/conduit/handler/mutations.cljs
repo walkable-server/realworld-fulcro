@@ -33,13 +33,15 @@
 (defmutation submit-comment [{:keys [article-id diff]}]
   (action [{:keys [state]}]
     (swap! state #(let [ident (util/get-ident diff)
-                        id    (second ident)]
+                        id    (second ident)
+                        current-user (get-in % [:session/session :current-user])]
                     (-> %
                       (update-in ident merge
                         (if (number? id)
                           #:comment{:updated-at (js/Date.)}
-                          #:comment{:id         id
-                                    :author     (:user/whoami %)
+                          #:comment{:id id
+                                    :author current-user
+                                    :can-edit true
                                     :created-at (js/Date.)})
                         (util/get-item diff))
                       (update-in [:article/id article-id :article/comments]
