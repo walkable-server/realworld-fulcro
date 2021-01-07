@@ -53,10 +53,12 @@
         Article [:article/id :article/slug :article/title
                  :article/description :article/body :article/image
                  :article/created-at :article/updated-at
+                 :article/can-edit
                  :article/liked-by-count :article/liked-by-me]
         Tag [:tag/tag]
         TagList [:tag/tag :tag/count]
         Comment [:comment/id :comment/created-at :comment/updated-at
+                 :comment/can-edit
                  :comment/body]]
     ;; idents
     [{::pc/input #{:user/id}

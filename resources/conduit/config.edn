@@ -73,7 +73,9 @@
 
             :comment/author [:comment/author-id :user/id]}
 
-    :pseudo-columns {:tag/count [:count :tag/tag]}
+    :pseudo-columns {:tag/count [:count :tag/tag]
+                     :comment/can-edit [:= app.auth/current-user :comment/author-id]
+                     :article/can-edit [:= app.auth/current-user :article/author-id]}
 
     :aggregators {[:article/liked-by-count :user/followed-by-count]
                   [:count-*]
