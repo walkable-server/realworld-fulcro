@@ -51,14 +51,15 @@
 (def ui-comment-form (comp/computed-factory CommentForm {:keyfn :comment/id}))
 
 (defsc Comment
-  [this {:comment/keys [id author body created-at] :as props}
-   {:keys [delete-comment editing-comment-id set-editing-comment-id current-user]
+  [this {:comment/keys [id author body created-at can-edit] :as props}
+   {:keys [delete-comment editing-comment-id set-editing-comment-id]
     :as computed-map}]
   {:ident :comment/id
    :initial-state (fn [{:comment/keys [id]}]
                     #:comment{:id id
                               :author (comp/get-initial-state other/UserTinyPreview #:user{:id :guest})})
    :query [:comment/id :comment/created-at :comment/body
+           :comment/can-edit
            {:comment/author (comp/get-query other/UserTinyPreview)}]}
   (if (= editing-comment-id id)
     (ui-comment-form props computed-map)
@@ -74,7 +75,7 @@
           (:user/name author))
         (dom/span :.date-posted
           (other/js-date->string created-at))
-        (when (= (:user/id current-user) (:user/id author))
+        (when can-edit
           (dom/span :.mod-options
             (dom/i :.ion-edit {:onClick #(set-editing-comment-id id) } " ")
             (dom/i :.ion-trash-a {:onClick #(delete-comment id) } " ")))))))
