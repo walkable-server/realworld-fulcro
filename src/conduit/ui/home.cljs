@@ -9,7 +9,9 @@
    [conduit.session :as session :refer [ui-current-user]]
    [com.fulcrologic.fulcro.dom :as dom]))
 
-(defn ui-nav-bar [{:keys [logged-in? current-route current-user]}]
+(defsc NavBar
+  [this props {:keys [logged-in? current-route current-user]}]
+  {:ident (fn [_] [:component/id :nav-bar])}
   (dom/nav :.navbar.navbar-light
     (dom/div :.container
       (dom/div :.navbar-brand
@@ -57,6 +59,8 @@
               "Sign up")))
 
         (ui-current-user current-user)))))
+
+(def ui-nav-bar (comp/computed-factory NavBar {}))
 
 (defn ui-footer [{}]
   (dom/footer

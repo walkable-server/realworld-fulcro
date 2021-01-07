@@ -38,11 +38,12 @@
                      :session/current-user (comp/get-initial-state session/CurrentUser)})}
   (let [logged-in? (:user/valid? current-user)]
     (div {}
-      (home/ui-nav-bar {:logged-in? logged-in?
-                        :current-user current-user
-                        :current-route (-> props
-                                         (get [::dr/id ::MainRouter])
-                                         ::dr/current-route)})
+      (home/ui-nav-bar {}
+        {:logged-in? logged-in?
+         :current-user current-user
+         :current-route (-> props
+                          (get [::dr/id ::MainRouter])
+                          ::dr/current-route)})
       (when ready?
         (ui-main-router router)))))
 
