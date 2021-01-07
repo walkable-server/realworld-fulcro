@@ -26,12 +26,12 @@
       (dom/i :.ion-heart) " " liked-by-count)))
 
 (defsc ArticlePreview
-  [this {:article/keys [id author-id title description]
+  [this {:article/keys [id title description can-edit]
          :as article}
    {:keys [on-delete current-user]}]
   {:ident :article/id
    :initial-state (fn [_] {:article/id :none})
-   :query [:article/id :article/author-id :article/slug :article/title :article/description :article/body
+   :query [:article/id :article/author-id :article/slug :article/title :article/description :article/body :article/can-edit
            :article/created-at :article/liked-by-count :article/liked-by-me
            {:article/author (comp/get-query other/UserPreview)}]}
   (dom/div :.article-preview
@@ -40,8 +40,7 @@
                   (js/alert "You must log in first"))
           unlike #(comp/transact! this [(mutations/unlike {:article/id id})])]
       (ui-article-preview-meta this article {:like like :unlike unlike}))
-    ;; TODO: add and use `:article/can-edit` attribute instead
-    (when (= (:user/id current-user) author-id)
+    (when can-edit
       (dom/span :.pull-xs-right
         (dom/a {:href (str "/edit/" id)}
           (dom/i :.ion-edit " "))
