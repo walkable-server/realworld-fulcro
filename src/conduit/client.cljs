@@ -24,10 +24,12 @@
 
 (def ui-main-router (comp/factory MainRouter))
 
-(defsc Root [_ {:root/keys    [ready? router]
-                :session/keys [current-user]}]
+(defsc Root
+  [this
+   {:root/keys [ready? router] :session/keys [current-user] :as props}]
   {:query         [:root/ready?
                    {:root/router (comp/get-query MainRouter)}
+                   [::dr/id ::MainRouter]
                    [::uism/asm-id ::session/sessions]
                    {:session/current-user (comp/get-query session/CurrentUser)}]
    :initial-state (fn [_]
@@ -35,11 +37,12 @@
                      :root/router (comp/get-initial-state MainRouter)
                      :session/current-user (comp/get-initial-state session/CurrentUser)})}
   (let [logged-in? (:user/valid? current-user)]
-    (div
+    (div {}
       (home/ui-nav-bar {:logged-in? logged-in?
                         :current-user current-user
-                        ;; FIXME
-                        :current-route []})
+                        :current-route (-> props
+                                         (get [::dr/id ::MainRouter])
+                                         ::dr/current-route)})
       (when ready?
         (ui-main-router router)))))
 
