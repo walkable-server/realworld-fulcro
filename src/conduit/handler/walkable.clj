@@ -1,6 +1,5 @@
 (ns conduit.handler.walkable
   (:require [walkable.core :as walkable]
-            [walkable.sql-query-builder.emitter :as emitter]
             [integrant.core :as ig]
             [clojure.java.jdbc :as jdbc]
             [conduit.handler.mutations :refer [mutations]]
@@ -38,66 +37,13 @@
                  p/error-handler-plugin
                  p/trace-plugin]}))
 
-(defmethod ig/init-key ::connect [_ config]
-  (let [config (update-in config [:floor-plan]
-                          assoc
-                          :emitter emitter/postgres-emitter
-                          :variable-getters [{:key 'app.auth/current-user
-                                              :fn (fn [env] (:app.auth/current-user env))
-                                              :cached? true}])]
-    (walkable/connect-plugin config)))
-
-(defmethod ig/init-key ::inputs-outputs [_ _]
-  (let [User [:user/id :user/email :user/name :user/username :user/bio :user/image
-              :user/followed-by-me :user/followed-by-count]
-        Article [:article/id :article/slug :article/title
-                 :article/description :article/body :article/image
-                 :article/created-at :article/updated-at
-                 :article/can-edit
-                 :article/liked-by-count :article/liked-by-me]
-        Tag [:tag/tag]
-        TagList [:tag/tag :tag/count]
-        Comment [:comment/id :comment/created-at :comment/updated-at
-                 :comment/can-edit
-                 :comment/body]]
-    ;; idents
-    [{::pc/input #{:user/id}
-      ::pc/output User}
-     {::pc/input #{:article/id}
-      ::pc/output Article}
-     ;; roots
-     {::pc/input #{}
-      ::pc/output [{:session/current-user User}]}
-     {::pc/input #{}
-      ::pc/output [{:app/users User}]}
-     {::pc/input #{}
-      ::pc/output [{:app.global-feed/articles Article}]}
-     {::pc/input #{}
-      ::pc/output [{:app.personal-feed/articles Article}]}
-     {::pc/input #{}
-      ::pc/output [{:app.tags/top-list TagList}]}
-     ;; roots with group-by
-     {::pc/input #{}
-      ::pc/output [{:app.tags/top-list [:tag/tag :tag/count]}]}
-     ;; joins
-     {::pc/input #{:user/id}
-      ::pc/output [{:user/followed-by User}]}
-     {::pc/input #{:user/id}
-      ::pc/output [{:user/follows User}]}
-     {::pc/input #{:article/id}
-      ::pc/output [{:article/tags Tag}]}
-     {::pc/input #{:article/id}
-      ::pc/output [{:article/comments Comment}]}
-     {::pc/input #{:article/id}
-      ::pc/output [{:article/liked-by User}]}
-     {::pc/input #{:user/id}
-      ::pc/output [{:user/likes Article}]}
-     {::pc/input #{:user/id}
-      ::pc/output [{:user/articles Article}]}
-     {::pc/input #{:article/id}
-      ::pc/output [{:article/author User}]}
-     {::pc/input #{:comment/id}
-      ::pc/output [{:comment/author User}]}]))
+(defmethod ig/init-key ::connect [_ registry]
+  (walkable/connect-plugin {:db-type :postgres
+                            :registry (concat registry
+                                        [{:key 'app.auth/current-user
+                                          :type :variable
+                                          :compute (fn [env] (:app.auth/current-user env))}])
+                            :query-env #(jdbc/query (:db-spec %1) %2)}))
 
 (defn add-session [result session]
   (let [response {:body result}]
@@ -110,14 +56,13 @@
         (assoc response :session session)))))
 
 (defmethod ig/init-key ::resolver
-  [_ {:app/keys [db] :keys [connect] :as env}]
+  [_ [{:keys [:connect]} {:keys [:app/db] :as env}]]
   (let [parser (pathom-parser connect)]
-    (fn [{current-user :identity edn-query :transit-params
-          :keys [session]}]
+    (fn [{:keys [:session]
+          current-user :identity
+          edn-query :transit-params}]
       (jdbc/with-db-connection [conn (:spec db)]
-        (let [env (->> #::walkable {:db conn
-                                    :run jdbc/query
-                                    :app.auth/current-user (:user/id current-user)}
-                    (merge env))
+        (let [env (merge env {:db-spec conn
+                              :app.auth/current-user (:user/id current-user)})
               result (parser env edn-query)]
           (add-session result session))))))
