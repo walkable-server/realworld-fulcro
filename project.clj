@@ -22,7 +22,7 @@
                  [cheshire "5.10.0"]
                  [duct/handler.sql "0.4.0"]
                  [buddy/buddy-hashers "1.6.0"]
-                 [com.fulcrologic/fulcro "3.4.10" :exclusions [com.cognitect/transit-clj]]
+                 [com.fulcrologic/fulcro "3.4.12" :exclusions [com.cognitect/transit-clj]]
                  [walkable/transit-clj "1.0.343"]
                  [com.fulcrologic/fulcro-garden-css "3.0.8"]
                  [walkable "1.3.0-alpha0" :exclusions [com.wsscode/pathom]]
