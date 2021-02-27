@@ -1,7 +1,6 @@
 (ns conduit.main
   (:gen-class)
-  (:require [clojure.java.io :as io]
-            [duct.core :as duct]))
+  (:require [duct.core :as duct]))
 
 (duct/load-hierarchy)
 

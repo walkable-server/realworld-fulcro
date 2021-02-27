@@ -1,6 +1,7 @@
 (ns conduit.boundary.article
   (:require [clojure.java.jdbc :as jdbc]
             [clojure.set :refer [rename-keys]]
+            [clojure.string :as str]
             [conduit.util :as util]
             [duct.database.sql]))
 
@@ -27,7 +28,7 @@
 (defn delete-non-existing-where-clause [article-id existing]
   (concat
     [(str "article_id = ? and tag not in ("
-        (clojure.string/join ", " (repeat (count existing) \?))
+        (str/join ", " (repeat (count existing) \?))
         ")")
      article-id]
     (vec existing)))
@@ -59,9 +60,7 @@
 
   (update-article [db author-id id article]
     (let [results (jdbc/query (:spec db)
-                    [(if (:article/tags article)
-                       "select id, article_id, tag from \"article\" left join \"tag\" on tag.article_id = article.id where author_id = ? and id = ?"
-                       "select id, article_id, tag from \"article\" where author_id = ? and id = ?")
+                    ["select id, article_id, tag from \"article\" left join \"tag\" on tag.article_id = article.id where author_id = ? and id = ?"
                      author-id id])]
       (when (seq results)
         (let [new-article (-> (rename-keys article remove-article-namespace)

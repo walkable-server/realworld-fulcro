@@ -19,11 +19,3 @@
   (into {}
     (for [k ks]
       [(keyword namespace (name k)) k])))
-
-(defn page-number [total items-per-page]
-  (if (zero? total)
-    1
-    (+ (quot total items-per-page)
-      (if (zero? (rem total items-per-page))
-        0
-        1))))
